@@ -29,15 +29,22 @@ function LoginContent() {
     if (!email || !password) return;
     setLoading(true);
     try {
-      await signIn("password", {
+      const result = await signIn("password", {
         email,
         password,
-        redirectTo: callbackUrl,
+        redirect: false,
       });
+      console.log("signIn result:", JSON.stringify(result));
+      if (result?.error) {
+        toastError("Sign in failed", result.error);
+      } else {
+        success("Welcome back!", "Signed in successfully.");
+        window.location.href = callbackUrl;
+      }
     } catch (e) {
-      // NextAuth v5 throws NEXT_REDIRECT on success — only real errors land here
-      if ((e as Error).message?.includes("NEXT_REDIRECT")) return;
-      toastError("Sign in failed", (e as Error).message ?? "Invalid email or password");
+      console.error("signIn exception:", e);
+      toastError("Sign in failed", (e as Error).message ?? "Unknown error");
+    } finally {
       setLoading(false);
     }
   };
@@ -73,7 +80,12 @@ function LoginContent() {
       });
       if (!verifyRes.ok) throw new Error((await verifyRes.json()).error);
       const { userId } = await verifyRes.json();
-      await signIn("otp", { userId, redirectTo: callbackUrl });
+      const result = await signIn("otp", { userId, redirect: false });
+      console.log("OTP signIn result:", JSON.stringify(result));
+      if (result?.error) {
+        throw new Error(result.error);
+      }
+      window.location.href = callbackUrl;
     } catch (e) {
       toastError("Invalid code", (e as Error).message);
     } finally {
