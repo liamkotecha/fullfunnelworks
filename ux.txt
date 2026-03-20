@@ -1,0 +1,612 @@
+# Prompt 09 — GA4 Integration: Portal Events & Measurement Protocol
+
+## CONTEXT
+
+You are adding Google Analytics 4 tracking to the Full Funnel Works portal. This covers two distinct things:
+
+1. **Client-side events** — tracked from the portal using `gtag` as clients and consultants use the app
+2. **Server-side events** — sent via GA4 Measurement Protocol from API routes when pipeline stage changes occur, closing the loop between the WordPress lead form and client conversion
+
+This prompt depends on Prompts 06 and 07 being complete (Prospect model and pipeline must exist).
+
+**Key files to read before starting:**
+- `src/app/layout.tsx` — root layout, you will add GA script here
+- `src/models/Prospect.ts` — has `gaClientId` field from Prompt 06
+- `src/models/Settings.ts` — has settings singleton, you will extend
+- `src/app/api/admin/settings/route.ts` — settings API to extend
+- `src/app/(admin)/admin/settings/page.tsx` — settings UI to extend
+- `src/app/api/webhooks/lead/route.ts` — you will add server event here
+- `src/app/api/prospects/[id]/route.ts` — you will add server events on stage change
+- `src/app/api/responses/[clientId]/[section]/[sub]/route.ts` — you will add event here
+- `src/app/api/invoices/[id]/route.ts` — you will add event on payment
+- `src/types/index.ts` — extend settings types
+
+**Do not modify:**
+- Any auth files
+- Any model files except Settings
+- Any existing UI components
+- The lead scoring or assignment logic
+
+---
+
+## WHAT YOU ARE BUILDING
+
+A complete GA4 tracking layer that:
+- Never breaks the application if analytics fails
+- Is configurable from admin settings (on/off, which events to track)
+- Tracks the full funnel from WordPress form submission through to paying client
+- Is silent — no console noise in production
+
+---
+
+## STEP 1 — EXTEND SETTINGS MODEL
+
+In `src/models/Settings.ts`, add GA4 configuration fields:
+
+```typescript
+// Add to ISettings interface:
+ga4MeasurementId?:  string      // G-XXXXXXXXXX
+ga4ApiSecret?:      string      // for Measurement Protocol
+ga4Enabled:         boolean     // master toggle, default false
+ga4TrackedEvents:   IGA4EventConfig
+
+interface IGA4EventConfig {
+  leadReceived:         boolean    // default true
+  leadQualified:        boolean    // default true
+  proposalSent:         boolean    // default true
+  dealWon:              boolean    // default true
+  dealLost:             boolean    // default false
+  clientConverted:      boolean    // default true
+  assessmentStarted:    boolean    // default true
+  sectionCompleted:     boolean    // default false  (high volume)
+  moduleCompleted:      boolean    // default true
+  invoicePaid:          boolean    // default true
+  reportDownloaded:     boolean    // default false
+}
+```
+
+Add to Settings schema with defaults matching above.
+
+Update `src/app/api/admin/settings/route.ts` to include GA4 fields in GET and PATCH.
+
+---
+
+## STEP 2 — GA4 ANALYTICS LIBRARY
+
+Create `src/lib/analytics.ts`:
+
+```typescript
+/**
+ * analytics.ts — GA4 tracking utilities.
+ *
+ * TWO modes:
+ *
+ * 1. Client-side: trackEvent() — calls window.gtag() if available
+ *    Used in portal pages and admin pages
+ *    Never throws — silent fail if gtag not loaded
+ *
+ * 2. Server-side: trackServerEvent() — calls GA4 Measurement Protocol API
+ *    Used in API routes after significant business events
+ *    Never throws — silent fail on network error or missing config
+ *    Returns void (fire-and-forget — do not await in critical paths)
+ */
+
+// ── Client-side ──────────────────────────────────────────────
+
+/**
+ * trackEvent — fire a GA4 event from the browser.
+ * Safe to call even if GA4 is not configured — checks for gtag existence first.
+ */
+export function trackEvent(
+  eventName: string,
+  params?: Record<string, string | number | boolean>
+): void {
+  try {
+    if (typeof window === "undefined") return
+    if (typeof (window as any).gtag !== "function") return
+    ;(window as any).gtag("event", eventName, params ?? {})
+  } catch {
+    // silent
+  }
+}
+
+// ── Server-side ──────────────────────────────────────────────
+
+export interface ServerEventPayload {
+  measurementId: string     // G-XXXXXXXXXX
+  apiSecret:     string
+  clientId:      string     // GA4 client_id (from _ga cookie)
+  sessionId?:    string     // GA4 session_id (optional, improves attribution)
+  eventName:     string
+  params?:       Record<string, string | number | boolean>
+}
+
+/**
+ * trackServerEvent — send a GA4 event via Measurement Protocol.
+ * Non-blocking — call without await in API routes.
+ *
+ * Endpoint: https://www.google-analytics.com/mp/collect
+ * Docs: https://developers.google.com/analytics/devguides/collection/protocol/ga4
+ */
+export async function trackServerEvent(payload: ServerEventPayload): Promise<void> {
+  try {
+    const url = `https://www.google-analytics.com/mp/collect?measurement_id=${payload.measurementId}&api_secret=${payload.apiSecret}`
+    await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        client_id:  payload.clientId,
+        events: [{
+          name:   payload.eventName,
+          params: {
+            session_id:   payload.sessionId,
+            engagement_time_msec: "1",
+            ...(payload.params ?? {}),
+          },
+        }],
+      }),
+    })
+  } catch {
+    // silent
+  }
+}
+
+/**
+ * getGA4Settings — fetches GA4 config from Settings model.
+ * Cached module-level for 5 minutes to avoid DB hit on every request.
+ * Returns null if GA4 not configured or disabled.
+ */
+let settingsCache: { data: GA4Config | null; fetchedAt: number } | null = null
+
+export interface GA4Config {
+  measurementId: string
+  apiSecret:     string
+  trackedEvents: Record<string, boolean>
+}
+
+export async function getGA4Settings(): Promise<GA4Config | null>
+```
+
+Implement `getGA4Settings` with the 5-minute cache. It should:
+1. Check cache — return cached value if < 5 minutes old
+2. Otherwise: `Settings.findOne()`, extract GA4 fields
+3. Return null if `!ga4Enabled` or if `measurementId` or `apiSecret` are missing
+4. Cache and return the config
+
+---
+
+## STEP 3 — GA4 SCRIPT IN ROOT LAYOUT
+
+In `src/app/layout.tsx`, add the GA4 script using Next.js 14's built-in `@next/third-parties` package:
+
+```typescript
+// Next 14 has this built in — no install needed
+import { GoogleAnalytics } from "@next/third-parties/google"
+```
+
+The measurement ID needs to be available at build time for the script tag, but we're storing it in the database (configurable at runtime). Solution: use an environment variable as the primary source, with database override:
+
+```typescript
+// In layout.tsx:
+// Read from env var: NEXT_PUBLIC_GA4_MEASUREMENT_ID
+// If set, render <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID} />
+// If not set, render nothing (admin will configure via settings)
+```
+
+Add to `.env.local`:
+```
+NEXT_PUBLIC_GA4_MEASUREMENT_ID=G-XXXXXXXXXX
+```
+
+This approach means the GA4 script is injected server-side via the env var. The database settings (`ga4ApiSecret`, `ga4Enabled`, tracked events) are used server-side only.
+
+---
+
+## STEP 4 — SERVER-SIDE EVENTS: PIPELINE STAGE CHANGES
+
+In `src/app/api/prospects/[id]/route.ts` (PATCH handler), after a successful stage change, fire a server-side event:
+
+```typescript
+// After saving prospect with new stage:
+void (async () => {
+  const config = await getGA4Settings()
+  if (!config) return
+
+  const eventMap: Partial<Record<ProspectStage, { eventName: string; configKey: string }>> = {
+    sql:         { eventName: "lead_qualified",   configKey: "leadQualified" },
+    proposal:    { eventName: "proposal_sent",    configKey: "proposalSent" },
+    won:         { eventName: "deal_won",         configKey: "dealWon" },
+    lost:        { eventName: "deal_lost",        configKey: "dealLost" },
+  }
+
+  const mapping = eventMap[newStage]
+  if (!mapping) return
+  if (!config.trackedEvents[mapping.configKey]) return
+  if (!prospect.gaClientId) return   // can't track without browser client_id
+
+  await trackServerEvent({
+    measurementId: config.measurementId,
+    apiSecret:     config.apiSecret,
+    clientId:      prospect.gaClientId,
+    eventName:     mapping.eventName,
+    params: {
+      business_name: prospect.businessName,
+      lead_score:    prospect.leadScore,
+      deal_value:    prospect.dealValue ? prospect.dealValue / 100 : 0,
+      currency:      "GBP",
+    },
+  })
+})()
+```
+
+Note the `void (async () => { ... })()` pattern — this fires the event without blocking the API response.
+
+### Lead received event (webhook)
+
+In `src/app/api/webhooks/lead/route.ts`, after creating the prospect:
+
+```typescript
+// Fire server-side event if ga4 configured and gaClientId present
+void (async () => {
+  const config = await getGA4Settings()
+  if (!config || !config.trackedEvents.leadReceived) return
+  if (!prospect.gaClientId) return
+
+  await trackServerEvent({
+    measurementId: config.measurementId,
+    apiSecret:     config.apiSecret,
+    clientId:      prospect.gaClientId,
+    eventName:     "generate_lead",   // GA4 recommended event name
+    params: {
+      business_name:     prospect.businessName,
+      lead_score:        prospect.leadScore,
+      primary_challenge: prospect.primaryChallenge ?? "",
+      company_size:      prospect.companySize ?? "",
+      source:            "web_form",
+    },
+  })
+})()
+```
+
+### Client conversion event
+
+In `src/app/api/prospects/[id]/convert/route.ts`, after creating the client:
+
+```typescript
+void (async () => {
+  const config = await getGA4Settings()
+  if (!config || !config.trackedEvents.clientConverted) return
+  if (!prospect.gaClientId) return
+
+  await trackServerEvent({
+    measurementId: config.measurementId,
+    apiSecret:     config.apiSecret,
+    clientId:      prospect.gaClientId,
+    eventName:     "purchase",    // GA4 recommended event for conversion
+    params: {
+      transaction_id: String(newClient._id),
+      value:          prospect.dealValue ? prospect.dealValue / 100 : 0,
+      currency:       "GBP",
+      items: [{
+        item_name: "Consulting Engagement",
+        item_id:   String(newClient._id),
+      }],
+    },
+  })
+})()
+```
+
+### Invoice paid event
+
+In `src/app/api/webhooks/stripe/route.ts` (from Prompt 02), on `invoice.paid`, after updating Invoice status:
+
+```typescript
+void (async () => {
+  const config = await getGA4Settings()
+  if (!config || !config.trackedEvents.invoicePaid) return
+
+  // Fetch prospect linked to this client to get gaClientId
+  const prospect = await Prospect.findOne({ clientId: invoice.clientId })
+    .select("gaClientId businessName")
+    .lean()
+  if (!prospect?.gaClientId) return
+
+  await trackServerEvent({
+    measurementId: config.measurementId,
+    apiSecret:     config.apiSecret,
+    clientId:      prospect.gaClientId,
+    eventName:     "invoice_paid",
+    params: {
+      value:    invoice.amountPence / 100,
+      currency: "GBP",
+    },
+  })
+})()
+```
+
+---
+
+## STEP 5 — CLIENT-SIDE EVENTS: PORTAL ACTIONS
+
+Create a portal analytics hook `src/hooks/usePortalAnalytics.ts`:
+
+```typescript
+"use client"
+
+import { trackEvent } from "@/lib/analytics"
+
+/**
+ * usePortalAnalytics — provides event tracking functions for portal pages.
+ * All functions are safe to call — silent fail if GA4 not loaded.
+ */
+export function usePortalAnalytics() {
+  return {
+    trackAssessmentStarted: (section: string) =>
+      trackEvent("assessment_started", { section }),
+
+    trackSectionCompleted: (section: string, subSection: string, score: number) =>
+      trackEvent("section_completed", { section, sub_section: subSection, completion_score: score }),
+
+    trackModuleCompleted: (moduleId: string) =>
+      trackEvent("module_completed", { module_id: moduleId }),
+
+    trackReportDownloaded: () =>
+      trackEvent("report_downloaded"),
+
+    trackPortalPageView: (pageName: string) =>
+      trackEvent("portal_page_view", { page_name: pageName }),
+  }
+}
+```
+
+**Integrate client-side events:**
+
+In `src/app/api/responses/[clientId]/[section]/[sub]/route.ts` — this is server-side so cannot use gtag directly. Instead, return a flag in the response when the subsection is newly completed:
+
+```typescript
+// Add to response when subSection just reached 100%:
+{ answeredCount, totalCount, lastSavedAt, justCompleted: boolean }
+```
+
+In `src/components/framework/AutosaveField.tsx` (read first), after a successful save where `justCompleted === true`:
+
+```typescript
+// Call trackEvent("section_completed", { section, sub_section: sub })
+```
+
+In `src/app/(portal)/portal/assessment/page.tsx` (and other module entry pages), on mount, if this is the first time visiting (no existing responses for this section):
+
+```typescript
+trackEvent("assessment_started", { section: "assessment" })
+```
+
+---
+
+## STEP 6 — SETTINGS UI: GA4 CONFIGURATION
+
+In `src/app/(admin)/admin/settings/page.tsx`, add a "Analytics" settings section:
+
+```
+Analytics (Google Analytics 4)
+
+[Toggle: Enable GA4 tracking]
+
+Measurement ID:
+  [text input: G-XXXXXXXXXX]
+  Note: Also set NEXT_PUBLIC_GA4_MEASUREMENT_ID in your environment variables
+  for client-side page view tracking.
+
+API Secret (for server-side events):
+  [masked text input]   [Reveal] [Copy]
+  Create this in GA4 → Admin → Data Streams → Measurement Protocol API secrets
+
+Events to track:
+  ✓ Lead received (web form submission)
+  ✓ Lead qualified (moved to SQL)
+  ✓ Proposal sent
+  ✓ Deal won
+  ☐ Deal lost
+  ✓ Client converted
+  ✓ Assessment started
+  ☐ Section completed  (high volume — enable with caution)
+  ✓ Module completed
+  ✓ Invoice paid
+  ☐ Report downloaded
+
+[Test connection]   [Save settings]
+```
+
+**Test connection button:**
+
+Calls a new route `POST /api/admin/analytics/test` which:
+1. Fetches GA4 settings from DB
+2. Sends a test event via Measurement Protocol: `{ eventName: "test_connection" }`
+3. Note: Measurement Protocol always returns 204 regardless of success — display: "Test event sent. Check GA4 DebugView (Admin → DebugView) within 60 seconds to confirm receipt."
+4. Returns `{ sent: true }` or error if config missing
+
+---
+
+## STEP 7 — WORDPRESS/ELEMENTOR: GA4 HIDDEN FIELDS
+
+Extend the setup page at `src/app/(admin)/admin/crm/setup/page.tsx` (from Prompt 06) with a new section:
+
+```
+GA4 Funnel Tracking Setup
+
+To track leads from form submission through to client conversion, add two
+hidden fields to your Elementor form. These capture the visitor's GA4
+identifiers so server-side events can be attributed to the correct user session.
+
+Hidden Field 1: GA4 Client ID
+  Field ID: field_ga_client_id
+  Type: Hidden
+  Default value (Dynamic — Custom JS):
+
+  ┌──────────────────────────────────────────────────────────┐
+  │  (function() {                                           │
+  │    try {                                                 │
+  │      var match = document.cookie.match(/_ga=([^;]+)/);  │
+  │      if (!match) return '';                              │
+  │      var parts = match[1].split('.');                    │
+  │      return parts.slice(-2).join('.');                   │
+  │    } catch(e) { return ''; }                             │
+  │  })()                                                    │
+  └──────────────────────────────────────────────────────────┘
+  [Copy]
+
+Hidden Field 2: Referrer URL
+  Field ID: field_referrer_url
+  Type: Hidden
+  Default value (Dynamic — Custom JS):
+
+  ┌──────────────────────────────────────────────────────────┐
+  │  (function() {                                           │
+  │    try { return document.referrer || ''; }               │
+  │    catch(e) { return ''; }                               │
+  │  })()                                                    │
+  └──────────────────────────────────────────────────────────┘
+  [Copy]
+
+How the funnel works:
+
+  WordPress visitor → fills form → Elementor captures _ga cookie value
+          ↓
+  Webhook fires → portal creates Prospect with gaClientId stored
+          ↓
+  When consultant moves prospect through stages → portal sends server-side
+  GA4 events with the same gaClientId → GA4 connects browser session to
+  business outcome
+          ↓
+  Result: GA4 shows full funnel from page_view → generate_lead → deal_won
+
+Important notes:
+• This only works if the visitor has not blocked GA4 or used incognito mode
+• Server-side events appear in standard reports after 24-48 hours
+• Use GA4 DebugView to verify events during testing
+• Attribution will be directionally correct but not 100% complete
+
+Verify your setup:
+  1. Submit a test lead via your WordPress form
+  2. Check the CRM pipeline — lead should appear with a GA Client ID value
+  3. Move the lead to SQL stage in the pipeline
+  4. Wait 24-48 hours and check GA4 → Reports → Engagement → Events
+     for "lead_qualified" event
+```
+
+---
+
+## STEP 8 — PROSPECT DETAIL: GA CLIENT ID INDICATOR
+
+In `src/app/(admin)/admin/crm/prospects/[id]/page.tsx` (from Prompt 07), add a small indicator in the metadata section:
+
+```
+GA4 tracking:  ✓ Client ID captured   (green tick)
+               ✗ No client ID          (grey — form submitted without GA4 cookie)
+```
+
+This helps the admin understand which prospects have complete funnel tracking and which do not.
+
+---
+
+## STEP 9 — GA4 EVENT REFERENCE CARD
+
+Create a simple reference as a comment block at the top of `src/lib/analytics.ts`:
+
+```typescript
+/**
+ * GA4 EVENT REFERENCE
+ * ===================
+ *
+ * Server-side events (Measurement Protocol — require gaClientId):
+ *
+ *   generate_lead          — lead received via web form webhook
+ *   lead_qualified         — prospect moved to SQL stage
+ *   proposal_sent          — prospect moved to proposal stage
+ *   deal_won               — prospect marked as won
+ *   deal_lost              — prospect marked as lost
+ *   purchase               — prospect converted to client
+ *   invoice_paid           — Stripe invoice.paid webhook received
+ *
+ * Client-side events (gtag — fire from browser):
+ *
+ *   assessment_started     — first response saved in any assessment section
+ *   section_completed      — subsection reaches 100% completion
+ *   module_completed       — all subsections in a module reach 100%
+ *   report_downloaded      — client downloads their PDF report
+ *   portal_page_view       — client navigates to a portal page
+ *
+ * GA4 recommended event names used where applicable:
+ *   generate_lead, purchase — standard GA4 names for better reporting
+ */
+```
+
+---
+
+## PACKAGES TO INSTALL
+
+None. `@next/third-parties` is built into Next.js 14. All other dependencies exist.
+
+---
+
+## ACCEPTANCE CRITERIA
+
+**Settings model**
+- [ ] GA4 fields added to Settings schema with correct defaults
+- [ ] `ga4Enabled` defaults to false
+- [ ] All tracked event toggles present with correct defaults
+
+**Analytics library**
+- [ ] `trackEvent` is silent when `window.gtag` not present
+- [ ] `trackEvent` is silent when called server-side
+- [ ] `trackServerEvent` posts to correct Measurement Protocol URL
+- [ ] `trackServerEvent` never throws
+- [ ] `getGA4Settings` returns null when disabled or missing config
+- [ ] `getGA4Settings` caches result for 5 minutes
+- [ ] Cache invalidated after 5 minutes (not stale forever)
+
+**GA4 script**
+- [ ] `GoogleAnalytics` component added to root layout
+- [ ] Only renders when `NEXT_PUBLIC_GA4_MEASUREMENT_ID` is set
+- [ ] Does not break layout when env var is absent
+
+**Server-side events**
+- [ ] `generate_lead` fires on webhook lead creation when `gaClientId` present
+- [ ] `lead_qualified` fires when prospect moves to SQL
+- [ ] `proposal_sent` fires when prospect moves to proposal
+- [ ] `deal_won` fires when prospect moves to won
+- [ ] `deal_lost` fires when prospect moves to lost
+- [ ] `purchase` fires on prospect conversion
+- [ ] `invoice_paid` fires on Stripe webhook
+- [ ] All server events fire without blocking API response (void pattern)
+- [ ] None fire when `gaClientId` is absent
+- [ ] None fire when GA4 disabled in settings
+- [ ] None fire when event type is disabled in settings
+
+**Client-side events**
+- [ ] `usePortalAnalytics` hook exports all tracking functions
+- [ ] `assessment_started` tracked on first visit to assessment section
+- [ ] `section_completed` tracked when subsection hits 100% (`justCompleted` flag)
+- [ ] `report_downloaded` tracked on download (Prompt 05 page)
+
+**Settings UI**
+- [ ] GA4 section renders in settings page
+- [ ] Master toggle saves correctly
+- [ ] Measurement ID saves correctly
+- [ ] API secret masked with reveal option
+- [ ] All event toggles save correctly
+- [ ] Test connection sends event and shows correct message
+- [ ] Instructions mention DebugView for verification
+
+**Setup page**
+- [ ] Hidden field JS snippets correct and copyable
+- [ ] GA4 Client ID extraction uses correct cookie parsing (`.slice(-2).join('.')`)
+- [ ] Funnel diagram renders clearly
+- [ ] Important notes about limitations present
+
+**Prospect detail**
+- [ ] GA4 tracking indicator shows correctly for captured vs missing client ID
+
+**General**
+- [ ] No analytics errors appear in browser console
+- [ ] Application works normally when GA4 is disabled
+- [ ] Application works normally when GA4 is enabled but Measurement Protocol fails

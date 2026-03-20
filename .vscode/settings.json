@@ -1,0 +1,15 @@
+{
+  "files.exclude": {
+    "_temp/**": true
+  },
+  "search.exclude": {
+    "_temp/**": true
+  },
+  "eslint.options": {
+    "ignorePattern": ["_temp/**"]
+  },
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
+  "css.validate": false
+}

@@ -1,0 +1,184 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-cream font-sans text-slate-900 antialiased;
+    font-size: 16px;
+    line-height: 1.65;
+  }
+
+  /* ── Global select reset ── */
+  select {
+    @apply appearance-none cursor-pointer bg-no-repeat;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
+    background-position: right 0.625rem center;
+    background-size: 1rem 1rem;
+    padding-right: 2.25rem;
+  }
+
+  /* Portal heading scale — matches the portal UI (slate-900, not navy) */
+  h1 {
+    @apply font-sans text-2xl font-bold text-slate-900 leading-tight tracking-tight;
+  }
+  h2 {
+    @apply font-sans text-xl font-bold text-slate-900 leading-snug;
+  }
+  h3 {
+    @apply font-sans text-lg font-bold text-slate-900 leading-snug;
+  }
+  h4 {
+    @apply font-sans text-base font-semibold text-slate-900;
+  }
+  h5 {
+    @apply font-sans text-sm font-semibold text-slate-900;
+  }
+  h6 {
+    @apply font-sans text-xs font-bold text-slate-900;
+  }
+
+  p {
+    @apply font-sans text-sm text-slate-600 leading-relaxed;
+  }
+
+  * {
+    @apply border-gray-200;
+  }
+}
+
+@layer components {
+  /* ── TYPE SCALE ─────────────────────────────────────────────
+   *
+   *  All classes derived from the portal UI reference design.
+   *  Use these on new pages to stay consistent automatically.
+   *
+   *  .type-question   →  question / card title          bold lg  slate-900
+   *  .type-body        →  guidance, descriptions, body   reg  sm   slate-600
+   *  .type-sub         →  sub-prompts, italic hints       reg  sm   slate-500
+   *  .type-overline    →  "WHY THIS MATTERS", "Q1.", tabs  bold xs  slate-600  uppercase tracked
+   *  .type-meta        →  counters, timestamps, captions  reg  xs  slate-400
+   *  .type-label       →  form field labels               med  sm  slate-700
+   *  .type-input       →  textarea / input content        reg  sm  slate-700
+   *
+   * ─────────────────────────────────────────────────────────── */
+
+  /* Question / card heading — "Where will growth come from..." */
+  .type-question {
+    @apply font-sans text-lg font-bold text-slate-900 leading-snug;
+  }
+
+  /* Body — guidance text, "Why this matters" paragraph */
+  .type-body {
+    @apply font-sans text-sm text-slate-600 leading-relaxed;
+  }
+
+  /* Sub-prompt — italic hint below a question */
+  .type-sub {
+    @apply font-sans text-sm text-slate-500 leading-relaxed;
+  }
+
+  /* Overline — "WHY THIS MATTERS", "QUESTION 1 OF 10", tab labels */
+  .type-overline {
+    @apply font-sans text-xs font-bold text-slate-600 uppercase tracking-widest;
+  }
+
+  /* Meta — counter "1/10", char count, timestamps */
+  .type-meta {
+    @apply font-sans text-xs text-slate-400 tabular-nums;
+  }
+
+  /* Label — inline field labels above inputs */
+  .type-label {
+    @apply font-sans text-sm font-medium text-slate-700;
+  }
+
+  /* Input — text inside textarea / text input */
+  .type-input {
+    @apply font-sans text-sm text-slate-700 placeholder:text-slate-400;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-navy text-cream font-sans font-semibold text-[15px]
+    transition-all duration-200 hover:bg-navy-600 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-cream border border-gray-200 text-navy font-sans font-semibold text-[15px]
+    transition-all duration-200 hover:bg-gray-50 hover:border-navy/30 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-gold {
+    @apply inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-gold text-navy font-sans font-semibold text-[15px]
+    transition-all duration-200 hover:bg-gold-dark active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-red-600 text-white font-sans font-semibold text-[15px]
+    transition-all duration-200 hover:bg-red-700 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .input-field {
+    @apply w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 font-sans
+    placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-200 focus:border-slate-400
+    transition-colors duration-150 disabled:bg-slate-50 disabled:cursor-not-allowed;
+  }
+
+  .textarea-field {
+    @apply w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 font-sans
+    placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-200 focus:border-slate-400
+    transition-colors duration-150 resize-y disabled:bg-slate-50 disabled:cursor-not-allowed;
+  }
+
+  .card {
+    @apply bg-white rounded-lg p-6 shadow;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold;
+  }
+
+  .badge-success {
+    @apply badge bg-brand-green/10 text-brand-green border border-brand-green/30;
+  }
+
+  .badge-warning {
+    @apply badge bg-amber-50 text-amber-700 border border-amber-200;
+  }
+
+  .badge-error {
+    @apply badge bg-red-50 text-red-700 border border-red-200;
+  }
+
+  .badge-info {
+    @apply badge bg-blue-50 text-blue-700 border border-blue-200;
+  }
+
+  .badge-neutral {
+    @apply badge bg-gray-100 text-gray-700 border border-gray-200;
+  }
+
+  .skeleton {
+    @apply animate-pulse bg-gray-200 rounded-lg;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400;
+}

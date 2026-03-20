@@ -1,0 +1,373 @@
+import type { SectionId } from "@/lib/concept-map";
+
+// ── Auth ─────────────────────────────────────────────────────
+
+export type UserRole = "admin" | "consultant" | "client";
+
+export interface SessionUser {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+}
+
+// ── Client ────────────────────────────────────────────────────
+
+export type ClientStatus = "invited" | "onboarding" | "active" | "paused";
+
+export interface ClientDTO {
+  _id: string;
+  id: string;
+  businessName: string;
+  status: ClientStatus;
+  email: string;
+  name: string;
+  notes?: string;
+  assignedConsultant?: { _id: string; name: string; email: string } | null;
+  onboardingCompletedAt?: string | null;
+  overallProgress?: number;
+  // Contact details
+  contactName?: string;
+  jobTitle?: string;
+  contactEmail?: string;
+  phone?: string;
+  invoicingEmail?: string;
+  website?: string;
+  // Address
+  addressLine1?: string;
+  addressLine2?: string;
+  city?: string;
+  postcode?: string;
+  country?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ── Modules ───────────────────────────────────────────────────
+
+export type ModuleId =
+  | "assessment"
+  | "people"
+  | "product"
+  | "process"
+  | "roadmap"
+  | "kpis"
+  | "gtm"
+  | "modeller"
+  | "hiring";
+
+export type StalenessStatus = "active" | "nudge" | "stalled" | "at_risk" | "terminated";
+
+// ── Invoice ───────────────────────────────────────────────────
+
+export type PaymentModel = "upfront" | "on_completion" | "milestone";
+export type InvoiceStatus = "draft" | "sent" | "paid" | "overdue" | "void";
+
+export interface InvoiceDTO {
+  id: string;
+  clientId: string;
+  clientName?: string;
+  projectId: string;
+  moduleId?: string;
+  title: string;
+  description?: string;
+  amountPence: number;
+  amountFormatted: string;
+  status: InvoiceStatus;
+  paymentModel: PaymentModel;
+  gracePeriodDays?: number;
+  gracePeriodEndsAt?: string | null;
+  stripePaymentUrl?: string | null;
+  paidAt?: string | null;
+  sentAt?: string | null;
+  dueDate?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const INVOICE_STATUS_META: Record<InvoiceStatus, { label: string; badge: string }> = {
+  draft:   { label: "Draft",   badge: "neutral" },
+  sent:    { label: "Sent",    badge: "warning" },
+  paid:    { label: "Paid",    badge: "success" },
+  overdue: { label: "Overdue", badge: "error" },
+  void:    { label: "Void",    badge: "neutral" },
+};
+
+export const PAYMENT_MODEL_META: Record<PaymentModel, { label: string; description: string }> = {
+  upfront:       { label: "Upfront",       description: "Module locked until paid" },
+  on_completion: { label: "On completion", description: "Module unlocked, due on completion" },
+  milestone:     { label: "Milestone",     description: "Module unlocked with grace period" },
+};
+
+export const MODULE_META: Record<ModuleId, { label: string; description: string; icon: string }> = {
+  assessment: { label: "Assessment",         description: "SWOT, MOST, Gap Analysis and Leadership review", icon: "Search" },
+  people:     { label: "People",             description: "Team structure, challenges and capability mapping", icon: "Users" },
+  product:    { label: "Product",            description: "Product challenges and outcome mapping", icon: "Target" },
+  process:    { label: "Process",            description: "Sales process, methodology and checklist", icon: "Settings" },
+  roadmap:    { label: "Roadmap",            description: "Strategic milestones and 90-day planning", icon: "MapPin" },
+  kpis:       { label: "KPIs",               description: "Key performance indicators and tracking", icon: "BarChart3" },
+  gtm:        { label: "GTM Playbook",       description: "Market intelligence and competitive analysis", icon: "Map" },
+  modeller:   { label: "Financial Modeller", description: "P&L scenario modelling and forecasting", icon: "Calculator" },
+  hiring:     { label: "Hiring Plan",        description: "12-month hiring plan with financial impact", icon: "UserPlus" },
+};
+
+// ── Project ───────────────────────────────────────────────────
+
+export type ProjectStatus = "not_started" | "in_progress" | "blocked" | "completed";
+
+export interface BlockDTO {
+  _id: string;
+  reason: string;
+  raisedAt: string;
+  resolvedAt?: string | null;
+}
+
+export interface MilestoneDTO {
+  _id: string;
+  title: string;
+  dueDate?: string | null;
+  completedAt?: string | null;
+}
+
+export interface ProjectDTO {
+  _id: string;
+  id: string;
+  title: string;
+  description?: string;
+  status: ProjectStatus;
+  blocks: BlockDTO[];
+  package: string;
+  milestones: MilestoneDTO[];
+  assignedTo?: { _id: string; name: string } | null;
+  clientId: string | { _id: string; businessName: string };
+  clientName?: string;
+  dueDate?: string | null;
+  activeModules: ModuleId[];
+  lastActivityAt: string;
+  staleness: StalenessStatus;
+  terminatedAt?: string | null;
+  terminatedReason?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ── Intake ────────────────────────────────────────────────────
+
+export interface IntakeResponseDTO {
+  _id: string;
+  clientId: string;
+  completedBy: "client" | "admin";
+  responses: Record<string, unknown>;
+  sectionProgress: Record<SectionId, boolean>;
+  submittedAt?: string | null;
+  lastSavedAt?: string | null;
+}
+
+// ── Consultant Notes ──────────────────────────────────────────
+
+export interface ConsultantNoteDTO {
+  fieldId: string;
+  note: string;
+  updatedAt: string;
+}
+
+// ── Toast ─────────────────────────────────────────────────────
+
+export type ToastVariant = "success" | "error" | "warning" | "info";
+
+export interface Toast {
+  id: string;
+  variant: ToastVariant;
+  title: string;
+  message?: string;
+  duration?: number;
+}
+
+// ── Pagination ────────────────────────────────────────────────
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+// ── API ───────────────────────────────────────────────────────
+
+export interface ApiError {
+  error: string;
+  details?: unknown;
+}
+
+// ── Onboarding Wizard ─────────────────────────────────────────
+
+export type OnboardingStep = "invite" | "intake" | "package" | "review";
+
+export const ONBOARDING_STEPS: { id: OnboardingStep; label: string; description: string }[] = [
+  { id: "invite",  label: "Invite Client",    description: "Send onboarding invitation" },
+  { id: "intake",  label: "Complete Intake",  description: "Fill the growth strategy form" },
+  { id: "package", label: "Assign Package",   description: "Select consulting package" },
+  { id: "review",  label: "Review & Confirm", description: "Confirm and save" },
+];
+
+// ── Consulting Packages ───────────────────────────────────────
+
+export const CONSULTING_PACKAGES = [
+  { id: "growth-starter",    name: "Growth Starter",    description: "90-day foundation programme for early-stage SMBs" },
+  { id: "scale-accelerator", name: "Scale Accelerator", description: "6-month full funnel transformation" },
+  { id: "enterprise-growth", name: "Enterprise Growth", description: "12-month comprehensive capability build" },
+  { id: "advisory-retainer", name: "Advisory Retainer", description: "Ongoing monthly strategic advisory" },
+] as const;
+
+export type PackageId = typeof CONSULTING_PACKAGES[number]["id"];
+
+// ── Project Status Labels ─────────────────────────────────────
+
+export const PROJECT_STATUS_META: Record<ProjectStatus, { label: string; color: string; badge: string }> = {
+  not_started: { label: "Not Started",  color: "gray",    badge: "neutral" },
+  in_progress:  { label: "In Progress", color: "blue",    badge: "info" },
+  blocked:      { label: "Blocked",     color: "red",     badge: "error" },
+  completed:    { label: "Completed",   color: "emerald", badge: "success" },
+};
+
+export const CLIENT_STATUS_META: Record<ClientStatus, { label: string; badge: string }> = {
+  invited:     { label: "Invited",     badge: "info" },
+  onboarding:  { label: "Onboarding",  badge: "warning" },
+  active:      { label: "Active",      badge: "success" },
+  paused:      { label: "Paused",      badge: "neutral" },
+};
+
+// ── Prospect / CRM ───────────────────────────────────────────
+
+export type ProspectStage = "mql" | "sql" | "discovery" | "proposal" | "negotiating" | "won" | "lost";
+export type LeadSource = "web_form" | "manual" | "referral" | "event" | "other";
+
+export interface ProspectDTO {
+  id: string;
+  businessName: string;
+  contactName: string;
+  contactEmail: string;
+  phone?: string;
+  website?: string;
+  companySize?: string;
+  revenueRange?: string;
+  primaryChallenge?: string;
+  hearAboutUs?: string;
+  message?: string;
+  stage: ProspectStage;
+  dealValue?: number;
+  dealValueFormatted?: string;
+  lostReason?: string;
+  assignedConsultant?: { id: string; name: string; email: string } | null;
+  leadScore: number;
+  leadScoreBreakdown: {
+    companySizeScore: number;
+    revenueScore: number;
+    challengeScore: number;
+    completenessScore: number;
+    total: number;
+  };
+  source: LeadSource;
+  gaClientId?: string;
+  qualifiedAt?: string | null;
+  proposalSentAt?: string | null;
+  wonAt?: string | null;
+  convertedAt?: string | null;
+  clientId?: string | null;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+  daysInStage: number;
+  activityLog?: ActivityLogEntryDTO[];
+  tasks?: ProspectTaskDTO[];
+  stageEnteredAt?: Record<string, string>;
+}
+
+export interface ActivityLogEntryDTO {
+  _id: string;
+  type: "stage_change" | "note" | "assignment" | "system";
+  message: string;
+  createdBy?: { _id: string; name: string } | null;
+  createdAt: string;
+}
+
+export interface ProspectTaskDTO {
+  _id: string;
+  title: string;
+  dueDate?: string | null;
+  assignedTo?: { _id: string; name: string } | null;
+  completedAt?: string | null;
+  createdAt: string;
+}
+
+export const PROSPECT_STAGE_META: Record<ProspectStage, { label: string; colour: string }> = {
+  mql:         { label: "MQL",         colour: "blue" },
+  sql:         { label: "SQL",         colour: "indigo" },
+  discovery:   { label: "Discovery",   colour: "purple" },
+  proposal:    { label: "Proposal",    colour: "amber" },
+  negotiating: { label: "Negotiating", colour: "orange" },
+  won:         { label: "Won",         colour: "green" },
+  lost:        { label: "Lost",        colour: "gray" },
+};
+
+// ── Settings ──────────────────────────────────────────────────
+
+export interface GA4EventConfigDTO {
+  leadReceived: boolean;
+  leadQualified: boolean;
+  proposalSent: boolean;
+  dealWon: boolean;
+  dealLost: boolean;
+  clientConverted: boolean;
+  assessmentStarted: boolean;
+  sectionCompleted: boolean;
+  moduleCompleted: boolean;
+  invoicePaid: boolean;
+  reportDownloaded: boolean;
+}
+
+export interface SettingsDTO {
+  leadNotificationEmail?: string;
+  autoResponseReplyTo?: string;
+  calendlyUrl?: string;
+  autoAssignEnabled: boolean;
+  ga4MeasurementId?: string;
+  ga4ApiSecret?: string;
+  ga4Enabled: boolean;
+  ga4TrackedEvents: GA4EventConfigDTO;
+}
+
+// ── Consultant Capacity ───────────────────────────────────────
+
+export interface ConsultantProfileDTO {
+  maxActiveClients: number;
+  availabilityStatus: "available" | "limited" | "unavailable";
+  holidayUntil?: string | null;
+  specialisms: string[];
+  roundRobinWeight: number;
+  lastAssignedAt?: string | null;
+  totalLeadsAssigned: number;
+  currentActiveClients: number;
+  capacityPercent: number;
+}
+
+export interface ConsultantDTO {
+  id: string;
+  name: string;
+  email: string;
+  profile: ConsultantProfileDTO;
+}
+
+// ── Assignment Log ────────────────────────────────────────────
+
+export interface AssignmentLogDTO {
+  id: string;
+  prospectId: string;
+  prospectName?: string;
+  assignedTo?: string | null;
+  assignedToName?: string | null;
+  reason: string;
+  skipped: { consultantId: string; name: string; reason: string }[];
+  autoAssigned: boolean;
+  createdAt: string;
+}

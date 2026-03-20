@@ -1,0 +1,367 @@
+# VS Code Agent Prompt — Business Consulting Portal
+
+## HOW TO USE THIS PROMPT
+Paste this entire prompt into your VS Code AI agent (Copilot, Cursor, Cline, etc.) and run it from the directory that contains your HTML file. The agent will read the HTML before generating a single line of application code.
+
+---
+
+## CONTEXT & MISSION
+
+You are building a **private, portal-only web application** for a business consulting / coaching firm. There is no public-facing site. Everything is behind the login wall.
+
+Your first task — before writing any application code — is to **read and deeply understand the existing HTML file in the current directory**. That HTML is the single source of truth for:
+- All copy, headings, labels, and body text (do not alter a single word)
+- The exact order and sequence of every information-gathering section and form step
+- The intent and flow of the client onboarding journey
+
+Treat the HTML like a wireframe signed off by the client. Pixel-perfect text fidelity is a hard requirement.
+
+---
+
+## STEP 0 — FILE SETUP (do this first)
+
+1. Identify the `.html` file in the current working directory.
+2. Move it into a folder called `_temp/` (e.g. `_temp/concept.html`). Do NOT delete it.
+3. Scaffold the Next.js project in the **current directory** (not a subdirectory):
+   ```bash
+   npx create-next-app@latest . \
+     --typescript \
+     --tailwind \
+     --eslint \
+     --app \
+     --src-dir \
+     --import-alias "@/*"
+   ```
+4. Install additional dependencies:
+   ```bash
+   npm install mongoose framer-motion @sendgrid/mail \
+     next-auth@beta @simplewebauthn/server @simplewebauthn/browser \
+     nodemailer otplib \
+     zod react-hook-form @hookform/resolvers \
+     lucide-react clsx tailwind-merge \
+     date-fns
+   ```
+
+---
+
+## STEP 1 — READ THE HTML
+
+Open `_temp/concept.html` and extract:
+
+1. **Section inventory** — list every distinct section, heading, and form block in document order. Do not reorder them.
+2. **All form fields** — field names, types, placeholder text, helper text, validation hints.
+3. **Information gathering sequences** — if the HTML implies a multi-step or wizard flow, preserve that exact step order.
+4. **Copy blocks** — introductory paragraphs, instructions, CTAs. Copy them verbatim.
+5. **Any implied status labels, categories, or taxonomy** (e.g. project stages, block types).
+
+Store this extracted structure as a comment block or type definition file at `src/lib/concept-map.ts` so the rest of the build references it. Do not rely on memory.
+
+---
+
+## TECH STACK
+
+| Layer | Choice |
+|---|---|
+| Framework | Next.js 14+ (App Router) |
+| Language | TypeScript |
+| Styling | Tailwind CSS |
+| Animation | Framer Motion |
+| Database | MongoDB via Mongoose |
+| Auth | Passkey (WebAuthn) + Email OTP |
+| Email | SendGrid |
+| Forms | React Hook Form + Zod |
+| Icons | Lucide React |
+
+---
+
+## ARCHITECTURE
+
+```
+src/
+├── app/
+│   ├── (auth)/
+│   │   ├── login/page.tsx              # Login: passkey or OTP tabs
+│   │   └── verify/page.tsx             # OTP verification screen
+│   ├── (portal)/
+│   │   ├── layout.tsx                  # Authenticated shell + sidebar
+│   │   ├── dashboard/page.tsx          # Overview / home
+│   │   ├── clients/
+│   │   │   ├── page.tsx                # Client list
+│   │   │   ├── [id]/page.tsx           # Client detail
+│   │   │   └── [id]/onboarding/page.tsx  # Admin-side onboarding wizard
+│   │   ├── projects/
+│   │   │   ├── page.tsx                # Projects overview with status + blocks
+│   │   │   └── [id]/page.tsx           # Single project detail
+│   │   └── intake/
+│   │       └── page.tsx                # Client-facing intake (read from HTML)
+│   └── api/
+│       ├── auth/
+│       │   ├── passkey/
+│       │   │   ├── register/route.ts
+│       │   │   ├── authenticate/route.ts
+│       │   │   └── verify/route.ts
+│       │   └── otp/
+│       │       ├── send/route.ts
+│       │       └── verify/route.ts
+│       ├── clients/route.ts
+│       ├── clients/[id]/route.ts
+│       └── projects/route.ts
+├── components/
+│   ├── ui/                             # Base primitives (Button, Input, Badge, Modal, Toast)
+│   ├── auth/                           # PasskeyButton, OTPInput
+│   ├── layout/                         # Sidebar, TopBar, BreadCrumb
+│   ├── clients/                        # ClientCard, ClientStatus, OnboardingProgress
+│   ├── projects/                       # ProjectCard, StatusBadge, BlockAlert
+│   ├── intake/                         # Wizard steps (sourced from HTML)
+│   └── notifications/                  # Toast, Banner, InlineAlert
+├── lib/
+│   ├── concept-map.ts                  # Extracted HTML structure reference
+│   ├── db.ts                           # Mongoose connection
+│   ├── auth.ts                         # NextAuth config
+│   ├── sendgrid.ts                     # Email helper
+│   ├── webauthn.ts                     # SimpleWebAuthn helpers
+│   └── otp.ts                          # OTP generation + verification
+├── models/
+│   ├── User.ts
+│   ├── Client.ts
+│   ├── Project.ts
+│   ├── IntakeResponse.ts
+│   └── Notification.ts
+└── types/
+    └── index.ts
+```
+
+---
+
+## MODELS
+
+### User.ts
+```typescript
+// Roles: 'admin' | 'consultant' | 'client'
+// Fields: email, name, role, passkeyCredentials[], otpSecret, otpExpiry, createdAt
+```
+
+### Client.ts
+```typescript
+// Fields: userId (ref), businessName, status ('invited'|'onboarding'|'active'|'paused'),
+//         onboardingCompletedAt, assignedConsultant (ref User),
+//         intakeResponses (ref IntakeResponse), notes, createdAt
+```
+
+### Project.ts
+```typescript
+// Fields: clientId (ref), title, description, status ('not_started'|'in_progress'|'blocked'|'completed'),
+//         blocks: [{ reason, raisedAt, resolvedAt }],
+//         package (coaching package name), milestones[], assignedTo (ref User),
+//         dueDate, createdAt, updatedAt
+```
+
+### IntakeResponse.ts
+```typescript
+// Fields: clientId (ref), completedBy ('client'|'admin'),
+//         responses: Map<string, any>,   // keyed by field names from HTML
+//         sectionProgress: Map<string, boolean>,
+//         submittedAt, lastSavedAt
+```
+
+---
+
+## AUTHENTICATION
+
+### Passkey (WebAuthn)
+- Use `@simplewebauthn/server` on the API routes and `@simplewebauthn/browser` on the client.
+- Registration flow: `POST /api/auth/passkey/register` → returns options → browser creates credential → `POST /api/auth/passkey/verify`.
+- Authentication flow: `POST /api/auth/passkey/authenticate` → returns options → browser signs challenge → `POST /api/auth/passkey/verify`.
+- Store credential public key, counter, and transports in the User model.
+
+### Email OTP
+- On login form submit (email entered), call `POST /api/auth/otp/send`.
+- Generate a 6-digit OTP with `otplib`, hash it, store with 10-minute expiry on the User document.
+- Send via SendGrid using the template in `src/lib/sendgrid.ts`.
+- Verification screen (`/verify`) accepts the 6-digit code → `POST /api/auth/otp/verify` → issue NextAuth session.
+
+### Login Page UX
+- Two clearly labelled tabs: **"Sign in with Passkey"** and **"Email Code"**.
+- Passkey tab: single "Continue with Passkey" button, animated fingerprint/key icon via Framer Motion.
+- OTP tab: email input → submit → transitions (Framer Motion `AnimatePresence`) to 6-box OTP input.
+- Show inline feedback for every state: sending, sent, wrong code, expired, success.
+- Never redirect without a toast/notification confirming what just happened.
+
+---
+
+## ADMIN ONBOARDING FLOW
+
+This is an admin-only wizard for setting up a new client. It must cover:
+
+1. **Invite** — Enter client name + email → send branded onboarding invitation email via SendGrid → client record created with status `invited`.
+2. **Intake on behalf** — Admin can fill the intake form for the client (mark `completedBy: 'admin'`). The intake form sections and field order must exactly match what was extracted from the HTML in Step 1.
+3. **Assign package** — Dropdown of coaching/consulting packages → creates the first Project record linked to this client.
+4. **Review & confirm** — Summary screen showing all entered data before saving.
+
+Show a persistent **onboarding progress indicator** (step dots or a sidebar stepper with Framer Motion transitions between steps).
+
+---
+
+## PROJECTS OVERVIEW
+
+The projects page is the operational heart of the portal:
+
+- **Kanban-style or table view** (toggle between them) showing all active projects.
+- Each project card shows: client name, package/type, current status badge, days active, assigned consultant.
+- **Block alerts** — if `status === 'blocked'`, render a prominent amber/red alert on the card showing the block reason and how long it has been open. The Projects page header must show a running count of currently blocked projects.
+- **Filters**: by status, by consultant, by date range.
+- Clicking a project opens a slide-over panel (Framer Motion `motion.div` from the right) with full detail, timeline of status changes, and block history.
+- Admin can change status, add/resolve blocks, and add notes directly from the panel without navigating away.
+
+---
+
+## UX & NOTIFICATION REQUIREMENTS
+
+This is a top priority. Every user action must have clear, immediate feedback.
+
+### Toast Notifications
+- Implement a global toast system (top-right, stacked).
+- Use Framer Motion for enter/exit animations.
+- Four variants: `success` (green), `error` (red), `warning` (amber), `info` (blue).
+- Auto-dismiss after 5 seconds with a visible countdown progress bar on the toast.
+- Always fire a toast after: login, logout, form save, form submit, status change, email sent, OTP sent, block raised, block resolved.
+
+### Inline Form Feedback
+- Real-time Zod validation on blur.
+- Field-level error messages animate in with Framer Motion.
+- On multi-step intake: show a section completion indicator (checkmark animates in when a section is fully valid).
+
+### Empty States
+- Every list and table has a designed empty state (icon + message + CTA where appropriate).
+- Use Framer Motion fade-in on empty state render.
+
+### Loading States
+- Skeleton loaders for all data-fetching components.
+- Button loading states (spinner replaces icon, button disabled) during async operations.
+
+### Confirmation Dialogs
+- Destructive actions (delete client, resolve block, etc.) require a modal confirmation.
+- Modal uses Framer Motion scale + fade entrance.
+
+---
+
+## DESIGN SYSTEM & AESTHETIC
+
+Create a **refined, professional** design language appropriate for a high-end business consulting firm:
+
+- **Palette**: Deep navy (`#0F1F3D`) primary, warm white (`#FAFAF8`) background, slate greys for secondary text, a single sharp accent — gold (`#C9A84C`). Define all as Tailwind CSS variables in `tailwind.config.ts`.
+- **Typography**: Use `DM Serif Display` for headings paired with `DM Sans` for body text. Load both via `next/font/google`.
+- **Spacing**: Generous whitespace. Cards with subtle box-shadow, not heavy borders.
+- **Sidebar**: Fixed left sidebar, collapsible to icon-only. Shows portal logo, nav links with animated active indicator, user avatar + name at bottom, logout button.
+- **Motion principles**: Page entrance — subtle fade + slight upward translate (300ms ease-out). Staggered list items. Hover states on all interactive elements. Keep animations purposeful, not decorative.
+- **Avoid**: Purple gradients, Inter/Roboto, rounded pill buttons, generic SaaS blue, cluttered layouts.
+
+---
+
+## ENVIRONMENT VARIABLES
+
+Create a `.env.local.example` file with the following (no real values, just keys):
+```
+MONGODB_URI=
+NEXTAUTH_SECRET=
+NEXTAUTH_URL=http://localhost:3000
+SENDGRID_API_KEY=
+SENDGRID_FROM_EMAIL=
+SENDGRID_FROM_NAME=
+WEBAUTHN_RP_NAME=
+WEBAUTHN_RP_ID=localhost
+WEBAUTHN_ORIGIN=http://localhost:3000
+```
+
+---
+
+## EMAIL TEMPLATES (SendGrid)
+
+Create the following in `src/lib/email-templates/`:
+
+1. **onboarding-invite.ts** — Branded welcome email to new client. Include portal URL, brief intro from the consulting firm, CTA button "Set Up Your Account". Brand voice must be consistent with the HTML document.
+2. **otp.ts** — Clean, minimal email. 6-digit code displayed large and prominently. 10-minute expiry notice. No clutter.
+3. **project-update.ts** — Notify client when their project status changes.
+4. **block-raised.ts** — Notify assigned consultant when a block is raised on their project.
+
+All emails share a consistent header/footer wrapper with the firm name and a footer unsubscribe link.
+
+---
+
+## BUILD ORDER
+
+Follow this sequence strictly. Complete and verify each phase before moving to the next.
+
+**Phase 1 — Foundation**
+- [ ] Read HTML, create `concept-map.ts`
+- [ ] Move HTML to `_temp/`
+- [ ] Scaffold Next.js project
+- [ ] Configure Tailwind palette + fonts
+- [ ] MongoDB connection with connection caching (`src/lib/db.ts`)
+- [ ] All Mongoose models
+
+**Phase 2 — Auth**
+- [ ] NextAuth config
+- [ ] Passkey registration + authentication API routes
+- [ ] OTP send + verify API routes
+- [ ] SendGrid OTP email template
+- [ ] Login page UI (both tabs, Framer Motion transitions)
+- [ ] OTP verification page
+- [ ] Auth middleware (protect all portal routes at edge)
+
+**Phase 3 — Shell & Navigation**
+- [ ] Authenticated layout with sidebar
+- [ ] Global toast notification system
+- [ ] Loading and error boundaries
+
+**Phase 4 — Client & Onboarding**
+- [ ] Client list page
+- [ ] Admin onboarding wizard (4 steps, strictly following HTML sequence)
+- [ ] Intake form (all sections and text verbatim from HTML)
+- [ ] Client detail page
+- [ ] Onboarding invite email
+
+**Phase 5 — Projects**
+- [ ] Projects overview (cards + status + block alerts + blocked count header)
+- [ ] Slide-over detail panel
+- [ ] Status management + block raise/resolve
+- [ ] Project assignment from onboarding wizard
+
+**Phase 6 — Polish**
+- [ ] All empty states
+- [ ] All skeleton loaders
+- [ ] Framer Motion page transitions
+- [ ] Mobile responsiveness check
+- [ ] `.env.local.example`
+- [ ] README with local setup, MongoDB Atlas, and SendGrid instructions
+
+---
+
+## CRITICAL RULES — NEVER VIOLATE THESE
+
+1. **Never alter any text from the HTML** — not a word, not punctuation, not capitalisation.
+2. **Never reorder information-gathering sections** — the sequence is intentional and client-approved.
+3. **Every user action must produce visible feedback** — no silent operations anywhere.
+4. **Auth routes must be protected at middleware level** — not just client-side redirects.
+5. **MongoDB connection must use connection caching** — never open a new connection per request in serverless.
+6. **All forms must have Zod schemas** — no unvalidated data reaches the database.
+7. **Passkey and OTP are both first-class auth methods** — do not deprioritise one over the other.
+8. **The `_temp/` folder and the HTML file inside it must never be deleted.**
+
+---
+
+## DELIVERABLE CHECKLIST
+
+Before considering the build complete, verify every item:
+
+- [ ] HTML text appears verbatim throughout the intake form
+- [ ] Intake section order matches the HTML exactly
+- [ ] Passkey registration and login works end-to-end
+- [ ] OTP email sends and verifies correctly
+- [ ] Admin can complete all 4 onboarding wizard steps
+- [ ] Projects page shows blocked projects with prominent block alerts
+- [ ] Blocked project count shown in the Projects page header
+- [ ] Toast fires for every action listed in the UX section
+- [ ] No unprotected portal routes
+- [ ] `.env.local.example` is complete
+- [ ] README covers local setup, MongoDB Atlas, and SendGrid configuration
