@@ -1,5 +1,5 @@
 "use client";
-import { useState, Suspense, ClipboardEvent } from "react";
+import { useState, useTransition, Suspense, ClipboardEvent } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Lock, Mail, ArrowRight, Eye, EyeOff } from "lucide-react";
@@ -20,6 +20,7 @@ function LoginContent() {
   const [otpStep, setOtpStep] = useState<"email" | "code">("email");
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const { success, error: toastError } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -28,16 +29,13 @@ function LoginContent() {
   const handlePasswordLogin = async () => {
     if (!email || !password) return;
     setLoading(true);
-    try {
+    startTransition(async () => {
       const result = await loginWithPassword(email, password, callbackUrl);
       if (result?.error) {
         toastError("Sign in failed", result.error);
         setLoading(false);
       }
-      // On success the server action redirects — this code won't run
-    } catch {
-      // NEXT_REDIRECT throws — this is expected for successful login
-    }
+    });
   };
 
   const handleSendOTP = async () => {
@@ -71,12 +69,13 @@ function LoginContent() {
       });
       if (!verifyRes.ok) throw new Error((await verifyRes.json()).error);
       const { userId } = await verifyRes.json();
-      const result = await loginWithOTP(userId, callbackUrl);
-      if (result?.error) {
-        toastError("Invalid code", result.error);
-        setLoading(false);
-        return;
-      }
+      startTransition(async () => {
+        const result = await loginWithOTP(userId, callbackUrl);
+        if (result?.error) {
+          toastError("Invalid code", result.error);
+          setLoading(false);
+        }
+      });
     } catch (e) {
       toastError("Invalid code", (e as Error).message);
     } finally {

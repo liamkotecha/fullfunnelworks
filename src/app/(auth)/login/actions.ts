@@ -2,6 +2,7 @@
 
 import { signIn } from "@/lib/auth";
 import { AuthError } from "next-auth";
+import { isRedirectError } from "next/dist/client/components/redirect";
 
 export async function loginWithPassword(email: string, password: string, redirectTo: string) {
   try {
@@ -11,11 +12,13 @@ export async function loginWithPassword(email: string, password: string, redirec
       redirectTo,
     });
   } catch (error) {
-    // NextAuth v5 throws NEXT_REDIRECT on success — let it propagate
-    if (error instanceof AuthError) {
-      return { error: error.message || "Invalid email or password" };
+    if (isRedirectError(error)) {
+      throw error;
     }
-    throw error; // re-throw redirects and unexpected errors
+    if (error instanceof AuthError) {
+      return { error: "Invalid email or password" };
+    }
+    return { error: "Something went wrong" };
   }
 }
 
@@ -26,9 +29,12 @@ export async function loginWithOTP(userId: string, redirectTo: string) {
       redirectTo,
     });
   } catch (error) {
-    if (error instanceof AuthError) {
-      return { error: error.message || "OTP verification failed" };
+    if (isRedirectError(error)) {
+      throw error;
     }
-    throw error;
+    if (error instanceof AuthError) {
+      return { error: "OTP verification failed" };
+    }
+    return { error: "Something went wrong" };
   }
 }
