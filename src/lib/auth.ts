@@ -22,6 +22,7 @@ function toAuthUser(doc: Record<string, unknown>): {
 }
 
 export const { auth, signIn, signOut, handlers } = NextAuth({
+  trustHost: true,
   session: { strategy: "jwt" },
   secret: process.env.NEXTAUTH_SECRET,
   pages: {
