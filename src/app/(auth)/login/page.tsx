@@ -4,7 +4,6 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Lock, Mail, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/components/notifications/ToastContext";
-import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -28,13 +27,14 @@ function LoginContent() {
     if (!email || !password) return;
     setLoading(true);
     try {
-      const result = await signIn("password", {
-        email,
-        password,
-        redirect: false,
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
-      if (result?.error) {
-        toastError("Sign in failed", "Invalid email or password");
+      const data = await res.json();
+      if (!res.ok) {
+        toastError("Sign in failed", data.error || "Invalid email or password");
         setLoading(false);
       } else {
         // Hard navigation so the browser picks up the new cookie
@@ -77,12 +77,14 @@ function LoginContent() {
       });
       if (!verifyRes.ok) throw new Error((await verifyRes.json()).error);
       const { userId } = await verifyRes.json();
-      const result = await signIn("otp", {
-        userId,
-        redirect: false,
+      const loginRes = await fetch("/api/auth/login-by-id", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
       });
-      if (result?.error) {
-        toastError("Invalid code", result.error);
+      const loginData = await loginRes.json();
+      if (!loginRes.ok) {
+        toastError("Invalid code", loginData.error);
       } else {
         window.location.href = callbackUrl;
       }
