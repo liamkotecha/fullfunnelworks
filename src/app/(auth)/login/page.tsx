@@ -1,11 +1,11 @@
 "use client";
-import { useState, useTransition, Suspense, ClipboardEvent } from "react";
+import { useState, Suspense, ClipboardEvent } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Lock, Mail, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/components/notifications/ToastContext";
-import { loginWithPassword, loginWithOTP } from "./actions";
-import { useRouter, useSearchParams } from "next/navigation";
+import { signIn } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { cn } from "@/lib/utils";
@@ -20,22 +20,30 @@ function LoginContent() {
   const [otpStep, setOtpStep] = useState<"email" | "code">("email");
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
-  const [isPending, startTransition] = useTransition();
   const { success, error: toastError } = useToast();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/portal/overview";
 
   const handlePasswordLogin = async () => {
     if (!email || !password) return;
     setLoading(true);
-    startTransition(async () => {
-      const result = await loginWithPassword(email, password, callbackUrl);
+    try {
+      const result = await signIn("password", {
+        email,
+        password,
+        redirect: false,
+      });
       if (result?.error) {
-        toastError("Sign in failed", result.error);
+        toastError("Sign in failed", "Invalid email or password");
         setLoading(false);
+      } else {
+        // Hard navigation so the browser picks up the new cookie
+        window.location.href = callbackUrl;
       }
-    });
+    } catch {
+      toastError("Sign in failed", "Something went wrong");
+      setLoading(false);
+    }
   };
 
   const handleSendOTP = async () => {
@@ -69,13 +77,15 @@ function LoginContent() {
       });
       if (!verifyRes.ok) throw new Error((await verifyRes.json()).error);
       const { userId } = await verifyRes.json();
-      startTransition(async () => {
-        const result = await loginWithOTP(userId, callbackUrl);
-        if (result?.error) {
-          toastError("Invalid code", result.error);
-          setLoading(false);
-        }
+      const result = await signIn("otp", {
+        userId,
+        redirect: false,
       });
+      if (result?.error) {
+        toastError("Invalid code", result.error);
+      } else {
+        window.location.href = callbackUrl;
+      }
     } catch (e) {
       toastError("Invalid code", (e as Error).message);
     } finally {

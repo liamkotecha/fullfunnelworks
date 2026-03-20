@@ -55,5 +55,12 @@ export async function GET() {
     checks.COUNT_ERROR = (e as Error).message;
   }
 
+  // Check secrets match
+  const secret1 = process.env.AUTH_SECRET;
+  const secret2 = process.env.NEXTAUTH_SECRET;
+  checks.SECRETS_MATCH = secret1 === secret2;
+  checks.AUTH_SECRET_LENGTH = secret1?.length ?? 0;
+  checks.NEXTAUTH_SECRET_LENGTH = secret2?.length ?? 0;
+
   return NextResponse.json(checks);
 }
