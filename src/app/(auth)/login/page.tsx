@@ -19,28 +19,55 @@ function LoginContent() {
   const [otpStep, setOtpStep] = useState<"email" | "code">("email");
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
+  const [debugLog, setDebugLog] = useState<string[]>([]);
   const { success, error: toastError } = useToast();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/portal/overview";
 
+  const log = (msg: string) => setDebugLog(prev => [...prev, `${new Date().toISOString().slice(11,19)} ${msg}`]);
+
   const handlePasswordLogin = async () => {
     if (!email || !password) return;
     setLoading(true);
+    setDebugLog([]);
     try {
+      log("Step 1: Calling /api/auth/login...");
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
+      log(`Step 2: Response status=${res.status}`);
+
+      // Check Set-Cookie header
+      const setCookie = res.headers.get("set-cookie");
+      log(`Step 3: Set-Cookie header=${setCookie ? "present (" + setCookie.length + " chars)" : "MISSING"}`);
+
       const data = await res.json();
+      log(`Step 4: Body=${JSON.stringify(data)}`);
+
       if (!res.ok) {
         toastError("Sign in failed", data.error || "Invalid email or password");
         setLoading(false);
-      } else {
-        // Hard navigation so the browser picks up the new cookie
-        window.location.href = callbackUrl;
+        return;
       }
-    } catch {
+
+      log("Step 5: Login OK, checking session cookie...");
+      const checkRes = await fetch("/api/auth/check", { credentials: "include" });
+      const checkData = await checkRes.json();
+      log(`Step 6: Session check=${JSON.stringify(checkData)}`);
+
+      if (checkData.authenticated) {
+        log(`Step 7: Authenticated! Redirecting to ${callbackUrl}`);
+        window.location.href = callbackUrl;
+      } else {
+        log("Step 7: NOT authenticated after login - cookie not set!");
+        toastError("Sign in failed", "Session cookie was not set. Check debug log below.");
+        setLoading(false);
+      }
+    } catch (e) {
+      log(`ERROR: ${(e as Error).message}`);
       toastError("Sign in failed", "Something went wrong");
       setLoading(false);
     }
@@ -304,6 +331,14 @@ function LoginContent() {
         <p className="text-center text-xs text-slate-400 mt-6">
           Private portal — authorised access only
         </p>
+
+        {debugLog.length > 0 && (
+          <div className="mt-4 p-3 bg-gray-900 text-green-400 text-xs font-mono rounded-lg max-h-48 overflow-y-auto">
+            {debugLog.map((line, i) => (
+              <div key={i}>{line}</div>
+            ))}
+          </div>
+        )}
       </motion.div>
     </div>
   );
