@@ -29,21 +29,15 @@ function LoginContent() {
     if (!email || !password) return;
     setLoading(true);
     try {
-      const result = await signIn("password", {
+      await signIn("password", {
         email,
         password,
-        redirect: false,
-        callbackUrl,
+        redirectTo: callbackUrl,
       });
-      if (result?.ok) {
-        success("Welcome back!", "Signed in successfully.");
-        window.location.href = callbackUrl;
-      } else {
-        throw new Error(result?.error ?? "Invalid email or password");
-      }
     } catch (e) {
-      toastError("Sign in failed", (e as Error).message);
-    } finally {
+      // NextAuth v5 throws NEXT_REDIRECT on success — only real errors land here
+      if ((e as Error).message?.includes("NEXT_REDIRECT")) return;
+      toastError("Sign in failed", (e as Error).message ?? "Invalid email or password");
       setLoading(false);
     }
   };
@@ -79,13 +73,7 @@ function LoginContent() {
       });
       if (!verifyRes.ok) throw new Error((await verifyRes.json()).error);
       const { userId } = await verifyRes.json();
-      const result = await signIn("otp", { userId, redirect: false, callbackUrl });
-      if (result?.ok) {
-        success("Welcome back!", "You have been signed in successfully.");
-        window.location.href = callbackUrl;
-      } else {
-        throw new Error(result?.error ?? "Sign in failed");
-      }
+      await signIn("otp", { userId, redirectTo: callbackUrl });
     } catch (e) {
       toastError("Invalid code", (e as Error).message);
     } finally {
