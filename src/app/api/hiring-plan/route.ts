@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 /**
  * GET /api/hiring-plan   — fetch plan for current client
  * PUT /api/hiring-plan   — save/replace entire plan (autosave)

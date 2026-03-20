@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 /**
  * GET /api/clients/search?q=term
  * Lightweight search-only endpoint — returns the bare minimum fields

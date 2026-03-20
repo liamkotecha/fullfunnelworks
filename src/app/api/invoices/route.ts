@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 /**
  * GET  /api/invoices?clientId=  — list invoices for a client
  * GET  /api/invoices?projectId= — list invoices for a project

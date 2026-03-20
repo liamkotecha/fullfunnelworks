@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 /**
  * GET /api/reports/[clientId]?includeNotes=true&projectId=[id]
  *

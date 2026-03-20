@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 /**
  * PATCH /api/clients/[id]/session
  * Update the client's last active sub-section.

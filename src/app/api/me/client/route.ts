@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 /**
  * GET /api/me/client
  * Returns the Client record associated with the logged-in user.

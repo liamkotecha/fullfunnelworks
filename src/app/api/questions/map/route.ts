@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 /**
  * GET /api/questions/map
  * Returns a flat { fieldId: questionText } map of all active questions.

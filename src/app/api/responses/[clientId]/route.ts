@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 /**
  * GET /api/responses/[clientId]
  * Load all responses and progress for a client.

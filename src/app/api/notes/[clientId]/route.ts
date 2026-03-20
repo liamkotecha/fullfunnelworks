@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 /**
  * GET /api/notes/[clientId]
  * Returns all consultant notes for a client.

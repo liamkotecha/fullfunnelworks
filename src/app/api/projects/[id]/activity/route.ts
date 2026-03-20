@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 /**
  * POST /api/projects/[id]/activity
  * Update lastActivityAt to now. Resets staleness to "active" if currently

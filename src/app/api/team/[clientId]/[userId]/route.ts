@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 /**
  * DELETE /api/team/[clientId]/[userId] — remove a team member
  */

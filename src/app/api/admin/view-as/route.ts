@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 /**
  * POST   /api/admin/view-as — set view-as mode cookie
  * DELETE /api/admin/view-as — clear view-as mode cookie

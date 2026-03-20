@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 /**
  * PATCH /api/responses/[clientId]/[section]/[sub]
  * Save a single field response and recalculate sub-section progress.

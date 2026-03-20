@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 /**
  * GET    /api/admin/questions/[id]  — get single question
  * PATCH  /api/admin/questions/[id]  — update question fields

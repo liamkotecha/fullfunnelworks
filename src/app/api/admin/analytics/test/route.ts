@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 /**
  * POST /api/admin/analytics/test — Send a test GA4 event via Measurement Protocol
  *

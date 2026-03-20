@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 /**
  * GET  /api/admin/questions           — list all questions (with optional filters)
  * POST /api/admin/questions           — create a new question

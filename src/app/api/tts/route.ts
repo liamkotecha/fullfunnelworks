@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 /**
  * Edge TTS API route — converts text to speech using Microsoft Edge's TTS service.
  * POST { text: string } → audio/mpeg stream

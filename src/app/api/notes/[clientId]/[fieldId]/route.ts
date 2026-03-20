@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 /**
  * PUT    /api/notes/[clientId]/[fieldId] — upsert a consultant note
  * DELETE /api/notes/[clientId]/[fieldId] — delete a consultant note

@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 /**
  * GET  /api/modeller/scenarios       — list all scenarios for current client
  * POST /api/modeller/scenarios       — create new scenario (clones current base)

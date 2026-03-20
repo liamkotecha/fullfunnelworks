@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 /**
  * POST /api/responses/[clientId]/submit
  * Marks the current user's assessment as submitted.

@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 /**
  * GET    /api/invoices/[id] — get single invoice
  * PATCH  /api/invoices/[id] — update (send, void, mark paid)

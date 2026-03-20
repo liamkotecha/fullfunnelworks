@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 /**
  * GET /api/questions?section=&subSection=
  * Public (authenticated) endpoint — returns active questions for portal pages.

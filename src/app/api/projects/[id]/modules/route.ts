@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 /**
  * GET  /api/projects/[id]/modules   — return activeModules for a project
  * PUT  /api/projects/[id]/modules   — replace activeModules array (admin/consultant only)

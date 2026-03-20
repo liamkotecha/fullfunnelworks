@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 /**
  * POST /api/team/invite
  * Invite a team member to collaborate on the assessment.

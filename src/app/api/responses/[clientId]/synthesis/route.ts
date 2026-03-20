@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 /**
  * GET  /api/responses/[clientId]/synthesis — all individual responses side by side (admin only)
  * POST /api/responses/[clientId]/synthesis — save synthesis answers (admin only)

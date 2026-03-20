@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 /**
  * PUT    /api/modeller/scenarios/[id]  — update scenario
  * DELETE /api/modeller/scenarios/[id]  — delete scenario

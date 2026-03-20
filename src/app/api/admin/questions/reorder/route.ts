@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 /**
  * POST /api/admin/questions/reorder
  * Bulk update question order within a section/subSection.

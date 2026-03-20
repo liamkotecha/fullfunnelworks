@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 /**
  * GET /api/modeller/base   — fetch base model for current client
  * PUT /api/modeller/base   — save/replace entire base model
