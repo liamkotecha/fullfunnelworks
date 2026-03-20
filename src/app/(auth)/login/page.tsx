@@ -37,7 +37,7 @@ function LoginContent() {
       });
       if (result?.ok) {
         success("Welcome back!", "Signed in successfully.");
-        router.push(callbackUrl);
+        window.location.href = callbackUrl;
       } else {
         throw new Error(result?.error ?? "Invalid email or password");
       }
@@ -82,7 +82,7 @@ function LoginContent() {
       const result = await signIn("otp", { userId, redirect: false, callbackUrl });
       if (result?.ok) {
         success("Welcome back!", "You have been signed in successfully.");
-        router.push(callbackUrl);
+        window.location.href = callbackUrl;
       } else {
         throw new Error(result?.error ?? "Sign in failed");
       }
