@@ -22,7 +22,7 @@ const VALID_MODULES = [
 ] as const;
 
 const putSchema = z.object({
-  modules: z
+  activeModules: z
     .array(z.enum(VALID_MODULES))
     .min(1, "At least one module must be active"),
 });
@@ -84,7 +84,7 @@ export async function PUT(
 
     const project = await Project.findByIdAndUpdate(
       id,
-      { $set: { activeModules: parsed.data.modules } },
+      { $set: { activeModules: parsed.data.activeModules } },
       { new: true }
     )
       .select("activeModules")
