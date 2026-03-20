@@ -4,7 +4,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Lock, Mail, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/components/notifications/ToastContext";
-import { signIn } from "next-auth/react";
+import { loginWithPassword, loginWithOTP } from "./actions";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -29,15 +29,14 @@ function LoginContent() {
     if (!email || !password) return;
     setLoading(true);
     try {
-      await signIn("password", {
-        email,
-        password,
-        callbackUrl,
-      });
-      // NextAuth redirects on success — this line only runs on failure
-    } catch (e) {
-      toastError("Sign in failed", (e as Error).message ?? "Invalid email or password");
-      setLoading(false);
+      const result = await loginWithPassword(email, password, callbackUrl);
+      if (result?.error) {
+        toastError("Sign in failed", result.error);
+        setLoading(false);
+      }
+      // On success the server action redirects — this code won't run
+    } catch {
+      // NEXT_REDIRECT throws — this is expected for successful login
     }
   };
 
@@ -72,7 +71,12 @@ function LoginContent() {
       });
       if (!verifyRes.ok) throw new Error((await verifyRes.json()).error);
       const { userId } = await verifyRes.json();
-      await signIn("otp", { userId, callbackUrl });
+      const result = await loginWithOTP(userId, callbackUrl);
+      if (result?.error) {
+        toastError("Invalid code", result.error);
+        setLoading(false);
+        return;
+      }
     } catch (e) {
       toastError("Invalid code", (e as Error).message);
     } finally {

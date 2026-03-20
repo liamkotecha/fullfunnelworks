@@ -14,7 +14,7 @@ export async function middleware(req: NextRequest) {
   // Edge-compatible JWT check (no mongoose)
   const token = await getToken({
     req,
-    secret: process.env.NEXTAUTH_SECRET,
+    secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
   });
 
   // DEV BYPASS — remove before production
