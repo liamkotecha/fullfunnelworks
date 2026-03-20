@@ -43,7 +43,6 @@ export async function GET() {
     await connectDB();
 
     // Find client record for this user
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const client = await Client.findOne({ userId: user.id }).lean() as any;
     if (!client) {
       return NextResponse.json({ data: [] });
