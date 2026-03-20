@@ -12,9 +12,13 @@ export async function middleware(req: NextRequest) {
   }
 
   // Edge-compatible JWT check (no mongoose)
+  const isSecure = req.url.startsWith("https");
+  const cookieName = isSecure ? "__Secure-authjs.session-token" : "authjs.session-token";
   const token = await getToken({
     req,
     secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+    cookieName,
+    salt: cookieName,
   });
 
   // DEV BYPASS — remove before production
