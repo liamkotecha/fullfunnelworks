@@ -4,6 +4,8 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { cookies } from "next/headers";
+import { decode } from "next-auth/jwt";
 import type { ClientDTO } from "@/types";
 
 // ── Auth ─────────────────────────────────────────────────────
@@ -23,11 +25,41 @@ export interface AuthenticatedUser {
  *   const user = userOrRes;
  */
 export async function requireAuth(): Promise<AuthenticatedUser | NextResponse> {
+  // Try NextAuth's built-in auth() first
   const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (session?.user) {
+    return session.user as AuthenticatedUser;
   }
-  return session.user as AuthenticatedUser;
+
+  // Fallback: manually decode the session cookie (handles custom login endpoint)
+  const cookieStore = await cookies();
+  const raw =
+    cookieStore.get("__Secure-authjs.session-token")?.value ??
+    cookieStore.get("authjs.session-token")?.value;
+  if (raw) {
+    const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+    if (secret) {
+      const cookieName =
+        cookieStore.get("__Secure-authjs.session-token")
+          ? "__Secure-authjs.session-token"
+          : "authjs.session-token";
+      try {
+        const token = await decode({ token: raw, secret, salt: cookieName });
+        if (token?.id) {
+          return {
+            id: token.id as string,
+            email: token.email as string | null,
+            name: token.name as string | null,
+            role: token.role as string,
+          };
+        }
+      } catch {
+        // decode failed — fall through to 401
+      }
+    }
+  }
+
+  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 }
 
 // ── Client DTO mapping ───────────────────────────────────────
