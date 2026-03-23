@@ -1,6 +1,6 @@
 "use client";
 import { useSession } from "next-auth/react";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
@@ -11,24 +11,25 @@ import {
   Users,
   Users2,
   TrendingUp,
-  BarChart3,
-  ArrowUpRight,
-  ArrowDownRight,
   Search,
-  SlidersHorizontal,
-  MoreHorizontal,
   ExternalLink,
   ChevronLeft,
   AlertTriangle,
   Clock,
-  XCircle,
-  Mail,
-  CalendarDays,
+  Receipt,
+  CircleDollarSign,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow, format } from "date-fns";
-import { ClientDTO, ProjectDTO, ProspectDTO, PROSPECT_STAGE_META } from "@/types";
+import {
+  ClientDTO,
+  ProjectDTO,
+  ProspectDTO,
+  InvoiceDTO,
+  PROSPECT_STAGE_META,
+} from "@/types";
+import type { ProspectStage } from "@/types";
 import { formatPence } from "@/lib/format";
 
 /* ── animation variants ─────────────────────────────────────── */
@@ -39,6 +40,17 @@ const stagger = {
 const fadeUp = {
   hidden: { opacity: 0, y: 12 },
   show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } },
+};
+
+/* ── pipeline stage styling (static for Tailwind purge) ────── */
+const STAGE_CARD_STYLES: Record<string, { bg: string; border: string; dot: string; text: string }> = {
+  blue:   { bg: "bg-blue-50",    border: "border-blue-200",    dot: "bg-blue-500",    text: "text-blue-700" },
+  indigo: { bg: "bg-indigo-50",  border: "border-indigo-200",  dot: "bg-indigo-500",  text: "text-indigo-700" },
+  purple: { bg: "bg-purple-50",  border: "border-purple-200",  dot: "bg-purple-500",  text: "text-purple-700" },
+  amber:  { bg: "bg-amber-50",   border: "border-amber-200",   dot: "bg-amber-500",   text: "text-amber-700" },
+  orange: { bg: "bg-orange-50",  border: "border-orange-200",  dot: "bg-orange-500",  text: "text-orange-700" },
+  green:  { bg: "bg-emerald-50", border: "border-emerald-200", dot: "bg-emerald-500", text: "text-emerald-700" },
+  gray:   { bg: "bg-slate-50",   border: "border-slate-200",   dot: "bg-slate-400",   text: "text-slate-600" },
 };
 
 /* ── status config ──────────────────────────────────────────── */
@@ -94,7 +106,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 /* ── initials avatar ─────────────────────────────────────────── */
-function Avatar({ name, size = 7 }: { name: string; size?: number }) {
+function Avatar({ name, size = "w-7 h-7" }: { name: string; size?: string }) {
   const initials = name
     .split(" ")
     .slice(0, 2)
@@ -103,7 +115,8 @@ function Avatar({ name, size = 7 }: { name: string; size?: number }) {
   return (
     <div
       className={cn(
-        `w-${size} h-${size} rounded-full bg-[#1C1C1E] flex items-center justify-center flex-shrink-0`
+        "rounded-full bg-[#1C1C1E] flex items-center justify-center flex-shrink-0",
+        size
       )}
     >
       <span className="font-sans text-[10px] font-semibold text-white leading-none">
@@ -119,26 +132,30 @@ export default function DashboardPage() {
   const [clients, setClients] = useState<ClientDTO[]>([]);
   const [projects, setProjects] = useState<ProjectDTO[]>([]);
   const [prospects, setProspects] = useState<ProspectDTO[]>([]);
+  const [invoices, setInvoices] = useState<InvoiceDTO[]>([]);
   const [loading, setLoading] = useState(true);
+
+  /* Client table state */
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(1);
-  const PAGE_SIZE = 10;
+  const PAGE_SIZE = 8;
 
   useEffect(() => {
     Promise.all([
       fetch("/api/clients").then((r) => r.json()),
       fetch("/api/projects").then((r) => r.json()),
       fetch("/api/prospects").then((r) => r.json()),
-    ]).then(([c, p, pr]) => {
+      fetch("/api/invoices").then((r) => r.json()),
+    ]).then(([c, p, pr, inv]) => {
       setClients(c.data ?? []);
       setProjects(p.data ?? []);
       setProspects(pr.data ?? []);
+      setInvoices(inv.data ?? []);
       setLoading(false);
     });
 
-    // Run staleness sync on mount (fire and forget, then re-fetch projects)
+    // Fire-and-forget staleness sync
     fetch("/api/admin/staleness/sync", { method: "POST" })
       .then(() => fetch("/api/projects").then((r) => r.json()))
       .then((p) => {
@@ -147,27 +164,97 @@ export default function DashboardPage() {
       .catch(() => {});
   }, []);
 
-  /* derived  */
+  /* ── derived metrics ─────────────────────────────────────── */
   const blocked = projects.filter((p) => p.status === "blocked");
-  const activeClients = clients.filter((c) => c.status === "active" || c.status === "onboarding");
-
-  // Stale projects
+  const activeClients = clients.filter(
+    (c) => c.status === "active" || c.status === "onboarding"
+  );
   const staleProjects = projects.filter(
     (p) => p.staleness === "at_risk" || p.staleness === "stalled"
   );
   const atRiskProjects = staleProjects
     .filter((p) => p.staleness === "at_risk")
-    .sort((a, b) => new Date(a.lastActivityAt).getTime() - new Date(b.lastActivityAt).getTime());
+    .sort(
+      (a, b) =>
+        new Date(a.lastActivityAt).getTime() -
+        new Date(b.lastActivityAt).getTime()
+    );
   const stalledProjects = staleProjects
     .filter((p) => p.staleness === "stalled")
-    .sort((a, b) => new Date(a.lastActivityAt).getTime() - new Date(b.lastActivityAt).getTime());
+    .sort(
+      (a, b) =>
+        new Date(a.lastActivityAt).getTime() -
+        new Date(b.lastActivityAt).getTime()
+    );
 
-  // Terminate modal state
-  const [terminateTarget, setTerminateTarget] = useState<ProjectDTO | null>(null);
+  const avgPortfolioProgress =
+    clients.length > 0
+      ? Math.round(
+          clients.reduce((s, c) => s + (c.overallProgress ?? 0), 0) /
+            clients.length
+        )
+      : 0;
+
+  /* Pipeline metrics */
+  const activeStages: ProspectStage[] = [
+    "mql",
+    "sql",
+    "discovery",
+    "proposal",
+    "negotiating",
+  ];
+  const closedStages: ProspectStage[] = ["won", "lost"];
+  const pipelineValue = prospects
+    .filter((p) => activeStages.includes(p.stage))
+    .reduce((s, p) => s + (p.dealValue ?? 0), 0);
+  const leadsThisMonth = prospects.filter((p) => {
+    const d = new Date(p.createdAt);
+    const now = new Date();
+    return (
+      d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+    );
+  }).length;
+  const wonThisMonth = prospects.filter((p) => {
+    if (p.stage !== "won" || !p.wonAt) return false;
+    const d = new Date(p.wonAt);
+    const now = new Date();
+    return (
+      d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+    );
+  });
+  const wonValue = wonThisMonth.reduce((s, p) => s + (p.dealValue ?? 0), 0);
+
+  /* Invoice metrics */
+  const paidInvoices = invoices.filter((i) => i.status === "paid");
+  const outstandingInvoices = invoices.filter(
+    (i) => i.status === "sent" || i.status === "overdue"
+  );
+  const overdueInvoices = invoices.filter((i) => i.status === "overdue");
+  const totalRevenue = paidInvoices.reduce(
+    (s, i) => s + i.amountPence,
+    0
+  );
+  const totalOutstanding = outstandingInvoices.reduce(
+    (s, i) => s + i.amountPence,
+    0
+  );
+  const totalOverdue = overdueInvoices.reduce(
+    (s, i) => s + i.amountPence,
+    0
+  );
+
+  /* Project metrics */
+  const inProgressProjects = projects.filter(
+    (p) => p.status === "in_progress"
+  );
+  const completedProjects = projects.filter((p) => p.status === "completed");
+
+  /* ── Terminate / Extend modal state ──────────────────────── */
+  const [terminateTarget, setTerminateTarget] = useState<ProjectDTO | null>(
+    null
+  );
   const [terminateReason, setTerminateReason] = useState("");
   const [terminating, setTerminating] = useState(false);
-
-  // Extend deadline state
   const [extendTarget, setExtendTarget] = useState<ProjectDTO | null>(null);
   const [extendDate, setExtendDate] = useState("");
   const [extending, setExtending] = useState(false);
@@ -184,7 +271,12 @@ export default function DashboardPage() {
       setProjects((prev) =>
         prev.map((p) =>
           p.id === terminateTarget.id
-            ? { ...p, staleness: "terminated" as const, terminatedAt: new Date().toISOString(), terminatedReason: terminateReason }
+            ? {
+                ...p,
+                staleness: "terminated" as const,
+                terminatedAt: new Date().toISOString(),
+                terminatedReason: terminateReason,
+              }
             : p
         )
       );
@@ -220,30 +312,90 @@ export default function DashboardPage() {
     }
   }, [extendTarget, extendDate]);
 
-  const avgPortfolioProgress =
-    clients.length > 0
-      ? Math.round(
-          clients.reduce((s, c) => s + (c.overallProgress ?? 0), 0) /
-            clients.length
-        )
-      : 0;
+  /* ── Needs attention items ───────────────────────────────── */
+  const attentionItems = useMemo(() => {
+    const items: {
+      id: string;
+      label: string;
+      sublabel: string;
+      severity: "red" | "amber" | "yellow";
+      icon: React.ElementType;
+      href: string;
+      meta?: string;
+    }[] = [];
 
-  /* Map blocked projects → attention items */
-  const attentionItems = blocked.map((p) => ({
-    id: p.id,
-    clientName:
-      (p.clientId as unknown as { businessName?: string })?.businessName ??
-      String(p.clientId),
-    projectName: p.title,
-    blockReason: p.blocks?.[p.blocks.length - 1]?.reason ?? "No reason given",
-    status: "blocked" as const,
-    href: `/admin/projects/${p.id}`,
-  }));
+    // Blocked projects
+    blocked.forEach((p) => {
+      const name =
+        (p.clientId as unknown as { businessName?: string })?.businessName ??
+        String(p.clientId);
+      items.push({
+        id: `block-${p.id}`,
+        label: name,
+        sublabel: p.blocks?.[p.blocks.length - 1]?.reason ?? "Blocked",
+        severity: "red",
+        icon: Ban,
+        href: `/admin/projects/${p.id}`,
+      });
+    });
 
-  const mostUrgent = attentionItems[0] ?? null;
-  const secondaryItems = attentionItems.slice(1);
+    // Overdue invoices
+    overdueInvoices.forEach((inv) => {
+      items.push({
+        id: `inv-${inv.id}`,
+        label: inv.clientName ?? inv.title,
+        sublabel: `${inv.amountFormatted} overdue`,
+        severity: "red",
+        icon: Receipt,
+        href: `/admin/invoices/${inv.id}`,
+        meta: inv.dueDate
+          ? formatDistanceToNow(new Date(inv.dueDate), { addSuffix: true })
+          : undefined,
+      });
+    });
 
-  /* filtered + paginated clients */
+    // At-risk projects
+    atRiskProjects.forEach((p) => {
+      const name =
+        (p.clientId as unknown as { businessName?: string })?.businessName ??
+        String(p.clientId);
+      const days = Math.round(
+        (Date.now() - new Date(p.lastActivityAt).getTime()) /
+          (1000 * 60 * 60 * 24)
+      );
+      items.push({
+        id: `risk-${p.id}`,
+        label: name,
+        sublabel: `At risk — ${days}d idle`,
+        severity: "amber",
+        icon: AlertTriangle,
+        href: `/admin/projects/${p.id}`,
+      });
+    });
+
+    // Stalled
+    stalledProjects.forEach((p) => {
+      const name =
+        (p.clientId as unknown as { businessName?: string })?.businessName ??
+        String(p.clientId);
+      const days = Math.round(
+        (Date.now() - new Date(p.lastActivityAt).getTime()) /
+          (1000 * 60 * 60 * 24)
+      );
+      items.push({
+        id: `stall-${p.id}`,
+        label: name,
+        sublabel: `Stalled — ${days}d idle`,
+        severity: "yellow",
+        icon: Clock,
+        href: `/admin/projects/${p.id}`,
+      });
+    });
+
+    return items;
+  }, [blocked, overdueInvoices, atRiskProjects, stalledProjects]);
+
+  /* ── Client table filter + pagination ────────────────────── */
   const filtered = clients.filter((c) => {
     const matchSearch =
       search.trim() === "" ||
@@ -253,39 +405,37 @@ export default function DashboardPage() {
     return matchSearch && matchStatus;
   });
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
-  const allSelected =
-    paginated.length > 0 && paginated.every((c) => selected.has(c.id));
-  const toggleAll = () => {
-    const next = new Set(selected);
-    if (allSelected) paginated.forEach((c) => next.delete(c.id));
-    else paginated.forEach((c) => next.add(c.id));
-    setSelected(next);
-  };
-  const toggleOne = (id: string) => {
-    const next = new Set(selected);
-    next.has(id) ? next.delete(id) : next.add(id);
-    setSelected(next);
-  };
+  const paginated = filtered.slice(
+    (page - 1) * PAGE_SIZE,
+    page * PAGE_SIZE
+  );
 
   /* Greeting */
   const hour = new Date().getHours();
   const greeting =
-    hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+    hour < 12
+      ? "Good morning"
+      : hour < 18
+        ? "Good afternoon"
+        : "Good evening";
   const firstName = session?.user?.name?.split(" ")[0] ?? "";
 
   /* ── loading skeleton ──────────────────────────────────────── */
   if (loading) {
     return (
-      <div className="px-10 pt-10 pb-10 space-y-6">
+      <div className="px-8 pt-8 pb-10 space-y-6">
         <div className="h-8 w-56 bg-slate-200/60 rounded-lg animate-pulse" />
-        <div className="h-4 w-72 bg-slate-100 rounded animate-pulse" />
-        <div className="h-24 rounded-lg bg-slate-200/40 animate-pulse" />
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-48 rounded-lg bg-slate-200/40 animate-pulse" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div
+              key={i}
+              className="h-28 rounded-xl bg-slate-200/40 animate-pulse"
+            />
           ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 h-64 rounded-xl bg-slate-200/40 animate-pulse" />
+          <div className="h-64 rounded-xl bg-slate-200/40 animate-pulse" />
         </div>
       </div>
     );
@@ -298,7 +448,9 @@ export default function DashboardPage() {
         <div className="w-14 h-14 rounded-lg bg-[#1C1C1E] flex items-center justify-center mb-5">
           <Users className="w-6 h-6 text-slate-400" />
         </div>
-        <h3 className="font-bold text-2xl text-slate-900 mb-2">No clients yet</h3>
+        <h3 className="font-bold text-2xl text-slate-900 mb-2">
+          No clients yet
+        </h3>
         <p className="font-sans text-sm text-slate-400 mb-7 max-w-xs leading-relaxed">
           Add your first client to start tracking their framework progress.
         </p>
@@ -317,210 +469,767 @@ export default function DashboardPage() {
     );
   }
 
+  /* ═══════════════════════════════════════════════════════════ */
+  /* ═══ RENDER ═══════════════════════════════════════════════ */
+  /* ═══════════════════════════════════════════════════════════ */
+
   return (
     <motion.div variants={stagger} initial="hidden" animate="show">
-      {/* ── ZONE 1 — Header ───────────────────────────────────── */}
-      <motion.div variants={fadeUp} className="px-10 pt-10 pb-6">
-        {/* Greeting row */}
-        <div className="mb-5">
-          <h1 className="font-bold text-3xl text-slate-900">
+      {/* ── HEADER ─────────────────────────────────────────── */}
+      <motion.div
+        variants={fadeUp}
+        className="px-8 pt-8 pb-2 flex items-end justify-between"
+      >
+        <div>
+          <h1 className="font-bold text-2xl text-slate-900">
             {greeting}, {firstName}.
           </h1>
+          <p className="text-sm text-slate-400 mt-0.5">
+            {format(new Date(), "EEEE, d MMMM yyyy")}
+          </p>
         </div>
+        <Link href="/admin/clients">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg font-sans text-sm font-medium"
+            style={{ background: "#141414", color: "#fff" }}
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Add client
+          </motion.button>
+        </Link>
+      </motion.div>
 
-        {/* Flowbite-style stat cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {/* ── KPI STAT CARDS ─────────────────────────────────── */}
+      <motion.div variants={fadeUp} className="px-8 pt-4 pb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             {
-              Icon: Users2,
-              iconColor: "text-sky-400",
-              label: "Total Clients",
-              value: clients.length,
-              trend: projects.length,
-              trendLabel: `project${projects.length !== 1 ? "s" : ""} total`,
-              up: true,
-              accent: false,
-            },
-            {
-              Icon: TrendingUp,
-              iconColor: "text-emerald-400",
-              label: "Active",
+              icon: Users2,
+              iconBg: "bg-sky-500/10",
+              iconColor: "text-sky-500",
+              label: "Active Clients",
               value: activeClients.length,
-              trend: clients.length > 0 ? Math.round((activeClients.length / clients.length) * 100) : 0,
-              trendLabel: "% of portfolio",
-              up: true,
-              accent: false,
+              sub: `${clients.length} total · ${avgPortfolioProgress}% avg progress`,
             },
             {
-              Icon: Ban,
-              iconColor: "text-red-400",
-              label: "Blocked",
-              value: blocked.length,
-              trend: blocked.length,
-              trendLabel: blocked.length > 0 ? "need attention" : "all clear",
-              up: blocked.length === 0,
-              accent: blocked.length > 0,
+              icon: TrendingUp,
+              iconBg: "bg-violet-500/10",
+              iconColor: "text-violet-500",
+              label: "Pipeline Value",
+              value: formatPence(pipelineValue),
+              sub: `${leadsThisMonth} new lead${leadsThisMonth !== 1 ? "s" : ""} this month`,
             },
             {
-              Icon: BarChart3,
-              iconColor: "text-violet-400",
-              label: "Avg Progress",
-              value: `${avgPortfolioProgress}%`,
-              trend: avgPortfolioProgress,
-              trendLabel: "% completion",
-              up: avgPortfolioProgress >= 50,
-              accent: false,
+              icon: CircleDollarSign,
+              iconBg: "bg-emerald-500/10",
+              iconColor: "text-emerald-500",
+              label: "Revenue Collected",
+              value: formatPence(totalRevenue),
+              sub: `${paidInvoices.length} paid invoice${paidInvoices.length !== 1 ? "s" : ""}`,
             },
-          ].map(({ Icon, iconColor, label, value, trend, trendLabel, up, accent }) => (
+            {
+              icon: Receipt,
+              iconBg: totalOverdue > 0 ? "bg-red-500/10" : "bg-amber-500/10",
+              iconColor: totalOverdue > 0 ? "text-red-500" : "text-amber-500",
+              label: "Outstanding",
+              value: formatPence(totalOutstanding),
+              sub: totalOverdue > 0
+                ? `${overdueInvoices.length} overdue (${formatPence(totalOverdue)})`
+                : `${outstandingInvoices.length} pending`,
+            },
+          ].map(({ icon: Icon, iconBg, iconColor, label, value, sub }) => (
             <div
               key={label}
-              className="bg-white rounded-lg shadow p-5 flex flex-col gap-3"
+              className="bg-white rounded-xl ring-1 ring-black/[0.06] p-5 flex flex-col gap-3"
             >
-              {/* Icon */}
-              <div className="w-9 h-9 rounded-lg bg-[#1C1C1E] flex items-center justify-center flex-shrink-0">
+              <div
+                className={cn(
+                  "w-9 h-9 rounded-lg flex items-center justify-center",
+                  iconBg
+                )}
+              >
                 <Icon className={cn("w-[18px] h-[18px]", iconColor)} />
               </div>
-
-              {/* Label + value */}
               <div>
-                <p className="font-sans text-sm text-slate-500 mb-0.5">{label}</p>
-                <p className="font-sans text-[1.6rem] font-bold leading-none text-slate-900">
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  {label}
+                </p>
+                <p className="text-2xl font-bold text-slate-900 tabular-nums mt-0.5">
                   {value}
                 </p>
               </div>
-
-              {/* Trend badge */}
-              <div
-                className={cn(
-                  "flex items-center gap-1 text-xs font-semibold",
-                  accent
-                    ? "text-red-500"
-                    : up
-                    ? "text-emerald-600"
-                    : "text-amber-500"
-                )}
-              >
-                {accent || !up ? (
-                  <ArrowDownRight className="w-3.5 h-3.5" />
-                ) : (
-                  <ArrowUpRight className="w-3.5 h-3.5" />
-                )}
-                <span>
-                  {trend} {trendLabel}
-                </span>
-              </div>
+              <p className="text-xs text-slate-400">{sub}</p>
             </div>
           ))}
         </div>
       </motion.div>
 
-      {/* ── STALE PROJECTS WIDGET ─────────────────────────────── */}
-      {(atRiskProjects.length > 0 || stalledProjects.length > 0) && (
-        <motion.div variants={fadeUp} className="px-10 pb-6">
-          <h2 className="font-sans text-base font-semibold text-slate-900 mb-3">Needs attention</h2>
-          <div className="space-y-3">
-            {/* At-risk projects (red) */}
-            {atRiskProjects.map((p) => {
-              const clientName = (p.clientId as unknown as { businessName?: string })?.businessName ?? String(p.clientId);
-              const clientEmail = (p as unknown as { clientId?: { contactEmail?: string } }).clientId?.contactEmail ?? "";
-              const days = Math.round((Date.now() - new Date(p.lastActivityAt).getTime()) / (1000 * 60 * 60 * 24));
-              return (
-                <div key={p.id} className="bg-red-500/10 border-l-4 border-red-500 rounded-lg p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-3 flex-1 min-w-0">
-                      <span className="w-2.5 h-2.5 rounded-full bg-red-500 flex-shrink-0 mt-1.5" />
-                      <div className="min-w-0">
-                        <p className="font-sans text-sm font-semibold text-slate-900 truncate">
-                          {clientName} — {p.title}
-                        </p>
-                        <p className="font-sans text-xs text-slate-500 mt-0.5">
-                          Status: At risk · Last active {formatDistanceToNow(new Date(p.lastActivityAt), { addSuffix: true })}
-                        </p>
-                      </div>
-                    </div>
-                    <span className="font-sans text-sm font-bold text-red-500 flex-shrink-0 tabular-nums">
-                      {days} days idle
+      {/* ── TWO-COLUMN GRID ────────────────────────────────── */}
+      <div className="px-8 pb-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* ── LEFT COLUMN (2/3) ────────────────────────────── */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* ── SALES PIPELINE ─────────────────────────────── */}
+          <motion.div variants={fadeUp}>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold text-slate-900">
+                Sales Pipeline
+              </h2>
+              <Link
+                href="/admin/crm/pipeline"
+                className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1 transition-colors"
+              >
+                View full pipeline <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
+
+            {prospects.length === 0 ? (
+              <div className="bg-white rounded-xl ring-1 ring-black/[0.06] p-8 text-center">
+                <p className="text-sm text-slate-400">
+                  No prospects yet.{" "}
+                  <Link
+                    href="/admin/crm/pipeline"
+                    className="text-slate-600 underline underline-offset-2"
+                  >
+                    Add your first lead
+                  </Link>
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Stage cards */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3">
+                  {(activeStages as ProspectStage[]).map((stage) => {
+                    const meta = PROSPECT_STAGE_META[stage];
+                    const style =
+                      STAGE_CARD_STYLES[meta.colour] ??
+                      STAGE_CARD_STYLES.gray;
+                    const stageProspects = prospects.filter(
+                      (p) => p.stage === stage
+                    );
+                    const count = stageProspects.length;
+                    const value = stageProspects.reduce(
+                      (s, p) => s + (p.dealValue ?? 0),
+                      0
+                    );
+                    return (
+                      <Link key={stage} href="/admin/crm/pipeline">
+                        <div
+                          className={cn(
+                            "rounded-xl border p-4 transition-shadow hover:shadow-md cursor-pointer",
+                            style.bg,
+                            style.border
+                          )}
+                        >
+                          <div className="flex items-center gap-2 mb-2">
+                            <span
+                              className={cn(
+                                "w-2 h-2 rounded-full",
+                                style.dot
+                              )}
+                            />
+                            <span
+                              className={cn(
+                                "text-xs font-semibold uppercase tracking-wider",
+                                style.text
+                              )}
+                            >
+                              {meta.label}
+                            </span>
+                          </div>
+                          <p
+                            className={cn(
+                              "text-2xl font-bold tabular-nums",
+                              style.text
+                            )}
+                          >
+                            {count}
+                          </p>
+                          {value > 0 && (
+                            <p className="text-xs text-slate-500 mt-1 tabular-nums">
+                              {formatPence(value)}
+                            </p>
+                          )}
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+
+                {/* Won / Lost row */}
+                <div className="flex items-center gap-4 mt-3 px-1">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <span className="text-xs font-medium text-slate-600">
+                      Won:{" "}
+                      <span className="font-bold text-emerald-600 tabular-nums">
+                        {
+                          prospects.filter((p) => p.stage === "won")
+                            .length
+                        }
+                      </span>
+                      {wonValue > 0 && (
+                        <span className="text-slate-400 ml-1 tabular-nums">
+                          ({formatPence(wonValue)} this month)
+                        </span>
+                      )}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 mt-3 ml-5">
-                    <a
-                      href={`mailto:${clientEmail}?subject=Re:%20${encodeURIComponent(p.title)}&body=Hi%20${encodeURIComponent((p.clientId as unknown as { contactName?: string })?.contactName ?? clientName)},%20I%20wanted%20to%20check%20in%20on%20your%20progress...`}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors"
-                    >
-                      <Mail className="w-3 h-3" />
-                      Send message
-                    </a>
-                    <button
-                      onClick={() => { setExtendTarget(p); setExtendDate(p.dueDate ?? ""); }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors"
-                    >
-                      <CalendarDays className="w-3 h-3" />
-                      Extend deadline
-                    </button>
-                    <button
-                      onClick={() => setTerminateTarget(p)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 transition-colors"
-                    >
-                      <XCircle className="w-3 h-3" />
-                      Terminate engagement
-                    </button>
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-slate-400" />
+                    <span className="text-xs font-medium text-slate-600">
+                      Lost:{" "}
+                      <span className="font-bold text-slate-500 tabular-nums">
+                        {
+                          prospects.filter((p) => p.stage === "lost")
+                            .length
+                        }
+                      </span>
+                    </span>
+                  </div>
+                  <div className="ml-auto text-xs text-slate-400">
+                    {leadsThisMonth} new this month
                   </div>
                 </div>
-              );
-            })}
+              </>
+            )}
+          </motion.div>
 
-            {/* Stalled projects (amber) */}
-            {stalledProjects.map((p) => {
-              const clientName = (p.clientId as unknown as { businessName?: string })?.businessName ?? String(p.clientId);
-              const clientEmail = (p as unknown as { clientId?: { contactEmail?: string } }).clientId?.contactEmail ?? "";
-              const days = Math.round((Date.now() - new Date(p.lastActivityAt).getTime()) / (1000 * 60 * 60 * 24));
-              return (
-                <div key={p.id} className="bg-amber-500/10 border-l-4 border-amber-500 rounded-lg p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-3 flex-1 min-w-0">
-                      <span className="w-2.5 h-2.5 rounded-full bg-amber-500 flex-shrink-0 mt-1.5" />
-                      <div className="min-w-0">
-                        <p className="font-sans text-sm font-semibold text-slate-900 truncate">
-                          {clientName} — {p.title}
-                        </p>
-                        <p className="font-sans text-xs text-slate-500 mt-0.5">
-                          Status: Stalled · Last active {formatDistanceToNow(new Date(p.lastActivityAt), { addSuffix: true })}
-                        </p>
-                      </div>
-                    </div>
-                    <span className="font-sans text-sm font-bold text-amber-500 flex-shrink-0 tabular-nums">
-                      {days} days idle
-                    </span>
+          {/* ── PROJECTS OVERVIEW ──────────────────────────── */}
+          <motion.div variants={fadeUp}>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold text-slate-900">
+                Projects
+              </h2>
+              <Link
+                href="/admin/projects"
+                className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1 transition-colors"
+              >
+                All projects <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
+
+            <div className="bg-white rounded-xl ring-1 ring-black/[0.06] overflow-hidden">
+              {/* Project stats row */}
+              <div className="grid grid-cols-4 divide-x divide-slate-100 border-b border-slate-100">
+                {[
+                  {
+                    label: "In Progress",
+                    count: inProgressProjects.length,
+                    color: "text-blue-600",
+                  },
+                  {
+                    label: "Completed",
+                    count: completedProjects.length,
+                    color: "text-emerald-600",
+                  },
+                  {
+                    label: "Blocked",
+                    count: blocked.length,
+                    color: blocked.length > 0 ? "text-red-600" : "text-slate-400",
+                  },
+                  {
+                    label: "Total",
+                    count: projects.length,
+                    color: "text-slate-900",
+                  },
+                ].map(({ label, count, color }) => (
+                  <div key={label} className="px-4 py-3.5 text-center">
+                    <p
+                      className={cn(
+                        "text-xl font-bold tabular-nums",
+                        color
+                      )}
+                    >
+                      {count}
+                    </p>
+                    <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider mt-0.5">
+                      {label}
+                    </p>
                   </div>
-                  <div className="flex items-center gap-2 mt-3 ml-5">
+                ))}
+              </div>
+
+              {/* Recent active projects list */}
+              <div className="divide-y divide-slate-50">
+                {inProgressProjects.slice(0, 5).map((p) => {
+                  const clientName =
+                    (
+                      p.clientId as unknown as {
+                        businessName?: string;
+                      }
+                    )?.businessName ?? p.clientName ?? String(p.clientId);
+                  return (
                     <Link
+                      key={p.id}
                       href={`/admin/projects/${p.id}`}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors"
                     >
-                      View project
+                      <div className="flex items-center gap-4 px-4 py-3 hover:bg-slate-50/60 transition-colors cursor-pointer">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-900 truncate">
+                            {clientName}
+                          </p>
+                          <p className="text-xs text-slate-400 truncate">
+                            {p.title}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3 flex-shrink-0">
+                          <span className="text-xs text-slate-400 tabular-nums">
+                            {p.activeModules?.length ?? 0} modules
+                          </span>
+                          <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+                        </div>
+                      </div>
                     </Link>
-                    <a
-                      href={`mailto:${clientEmail}?subject=Re:%20${encodeURIComponent(p.title)}&body=Hi%20${encodeURIComponent((p.clientId as unknown as { contactName?: string })?.contactName ?? clientName)},%20I%20wanted%20to%20check%20in%20on%20your%20progress...`}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors"
-                    >
-                      <Mail className="w-3 h-3" />
-                      Message
-                    </a>
+                  );
+                })}
+                {inProgressProjects.length === 0 && (
+                  <div className="px-4 py-6 text-center text-sm text-slate-400">
+                    No active projects
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        </motion.div>
-      )}
+                )}
+              </div>
+            </div>
+          </motion.div>
+        </div>
 
-      {/* ── Terminate Modal ───────────────────────────────────── */}
+        {/* ── RIGHT COLUMN (1/3) ───────────────────────────── */}
+        <div className="space-y-6">
+          {/* ── NEEDS ATTENTION ─────────────────────────────── */}
+          <motion.div variants={fadeUp}>
+            <h2 className="text-sm font-semibold text-slate-900 mb-3">
+              Needs Attention
+            </h2>
+
+            {attentionItems.length === 0 ? (
+              <div className="bg-white rounded-xl ring-1 ring-black/[0.06] p-5 flex items-center gap-3">
+                <div
+                  className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{
+                    background: "rgba(112, 255, 162, 0.1)",
+                  }}
+                >
+                  <CheckCircle2
+                    className="w-[18px] h-[18px]"
+                    style={{ color: "rgb(112, 255, 162)" }}
+                  />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-slate-900">
+                    All clear
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    No items needing attention
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-xl ring-1 ring-black/[0.06] divide-y divide-slate-100 overflow-hidden">
+                {attentionItems.slice(0, 6).map((item) => {
+                  const Icon = item.icon;
+                  const severityStyles = {
+                    red: "bg-red-50 text-red-500",
+                    amber: "bg-amber-50 text-amber-500",
+                    yellow: "bg-yellow-50 text-yellow-600",
+                  };
+                  return (
+                    <Link key={item.id} href={item.href}>
+                      <div className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50/60 transition-colors cursor-pointer">
+                        <div
+                          className={cn(
+                            "w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0",
+                            severityStyles[item.severity]
+                          )}
+                        >
+                          <Icon className="w-3.5 h-3.5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-900 truncate">
+                            {item.label}
+                          </p>
+                          <p className="text-xs text-slate-400 truncate">
+                            {item.sublabel}
+                          </p>
+                        </div>
+                        <ChevronRight className="w-3.5 h-3.5 text-slate-300 flex-shrink-0" />
+                      </div>
+                    </Link>
+                  );
+                })}
+                {attentionItems.length > 6 && (
+                  <div className="px-4 py-2.5 text-center">
+                    <span className="text-xs text-slate-400">
+                      +{attentionItems.length - 6} more
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+          </motion.div>
+
+          {/* ── INVOICING ──────────────────────────────────── */}
+          <motion.div variants={fadeUp}>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold text-slate-900">
+                Invoicing
+              </h2>
+              <Link
+                href="/admin/invoices"
+                className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1 transition-colors"
+              >
+                All invoices <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
+
+            <div className="bg-white rounded-xl ring-1 ring-black/[0.06] overflow-hidden">
+              {/* Mini stat grid */}
+              <div className="grid grid-cols-3 divide-x divide-slate-100 border-b border-slate-100">
+                {[
+                  {
+                    label: "Draft",
+                    count: invoices.filter((i) => i.status === "draft")
+                      .length,
+                    color: "text-slate-500",
+                  },
+                  {
+                    label: "Sent",
+                    count: invoices.filter((i) => i.status === "sent")
+                      .length,
+                    color: "text-amber-600",
+                  },
+                  {
+                    label: "Paid",
+                    count: paidInvoices.length,
+                    color: "text-emerald-600",
+                  },
+                ].map(({ label, count, color }) => (
+                  <div key={label} className="px-3 py-3 text-center">
+                    <p
+                      className={cn(
+                        "text-lg font-bold tabular-nums",
+                        color
+                      )}
+                    >
+                      {count}
+                    </p>
+                    <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+                      {label}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Recent invoices */}
+              <div className="divide-y divide-slate-50">
+                {invoices.slice(0, 4).map((inv) => {
+                  const statusStyles: Record<
+                    string,
+                    { dot: string; text: string }
+                  > = {
+                    draft: { dot: "bg-slate-300", text: "text-slate-500" },
+                    sent: { dot: "bg-amber-400", text: "text-amber-600" },
+                    paid: {
+                      dot: "bg-emerald-500",
+                      text: "text-emerald-600",
+                    },
+                    overdue: { dot: "bg-red-500", text: "text-red-600" },
+                    void: { dot: "bg-slate-300", text: "text-slate-400" },
+                  };
+                  const s = statusStyles[inv.status] ?? statusStyles.draft;
+                  return (
+                    <Link key={inv.id} href={`/admin/invoices/${inv.id}`}>
+                      <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50/60 transition-colors cursor-pointer">
+                        <span
+                          className={cn(
+                            "w-1.5 h-1.5 rounded-full flex-shrink-0",
+                            s.dot
+                          )}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-slate-700 truncate">
+                            {inv.clientName ?? inv.title}
+                          </p>
+                        </div>
+                        <span
+                          className={cn(
+                            "text-sm font-semibold tabular-nums flex-shrink-0",
+                            s.text
+                          )}
+                        >
+                          {inv.amountFormatted}
+                        </span>
+                      </div>
+                    </Link>
+                  );
+                })}
+                {invoices.length === 0 && (
+                  <div className="px-4 py-6 text-center text-sm text-slate-400">
+                    No invoices yet
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* ── CLIENT TABLE ───────────────────────────────────── */}
+      <motion.div variants={fadeUp} className="px-8 pb-10">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <h2 className="text-sm font-semibold text-slate-900">
+            Clients
+            <span className="ml-2 text-xs font-normal text-slate-400">
+              {filtered.length}
+            </span>
+          </h2>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+              <input
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                placeholder="Search clients…"
+                className="pl-8 pr-3 py-2 text-sm font-sans rounded-lg bg-white ring-1 ring-black/[0.08] outline-none focus:ring-2 focus:ring-[#1C1C1E]/20 w-48 placeholder:text-slate-400"
+              />
+            </div>
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setPage(1);
+              }}
+              className="py-2 px-3 text-sm rounded-lg bg-white ring-1 ring-black/[0.08] text-slate-600 outline-none focus:ring-2 focus:ring-[#1C1C1E]/20"
+            >
+              <option value="all">All</option>
+              <option value="active">Active</option>
+              <option value="onboarding">Onboarding</option>
+              <option value="invited">Invited</option>
+              <option value="paused">Paused</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl ring-1 ring-black/[0.06] overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-100">
+                  {[
+                    "Client",
+                    "Status",
+                    "Consultant",
+                    "Progress",
+                    "Last active",
+                    "",
+                  ].map((h) => (
+                    <th
+                      key={h}
+                      className="px-4 py-3 text-left font-sans text-[10px] font-semibold uppercase tracking-wider text-slate-400"
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {paginated.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="py-12 text-center font-sans text-sm text-slate-400"
+                    >
+                      No clients match your filters.
+                    </td>
+                  </tr>
+                ) : (
+                  paginated.map((client, i) => {
+                    const pct = Math.round(
+                      client.overallProgress ?? 0
+                    );
+                    return (
+                      <motion.tr
+                        key={client.id}
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{
+                          delay: i * 0.03,
+                          duration: 0.25,
+                        }}
+                        className="group hover:bg-slate-50/60 transition-colors"
+                      >
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            <Avatar
+                              name={client.businessName}
+                              size="w-8 h-8"
+                            />
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-slate-900 truncate">
+                                {client.businessName}
+                              </p>
+                              {client.email && (
+                                <p className="text-xs text-slate-400 truncate">
+                                  {client.email}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <StatusBadge status={client.status} />
+                        </td>
+                        <td className="px-4 py-3">
+                          {client.assignedConsultant ? (
+                            <span className="text-sm text-slate-600 truncate">
+                              {client.assignedConsultant.name}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-slate-300">
+                              —
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 min-w-[140px]">
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                              <motion.div
+                                className="h-full rounded-full"
+                                initial={{ width: 0 }}
+                                animate={{ width: `${pct}%` }}
+                                transition={{
+                                  duration: 0.7,
+                                  delay: i * 0.04,
+                                  ease: "easeOut",
+                                }}
+                                style={{
+                                  background:
+                                    pct === 100
+                                      ? "#22c55e"
+                                      : pct > 0
+                                        ? "#3b82f6"
+                                        : "transparent",
+                                }}
+                              />
+                            </div>
+                            <span className="text-xs font-medium text-slate-500 w-8 text-right tabular-nums">
+                              {pct}%
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-xs text-slate-400">
+                            {client.updatedAt
+                              ? formatDistanceToNow(
+                                  new Date(client.updatedAt),
+                                  { addSuffix: true }
+                                )
+                              : "—"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <Link
+                            href={`/admin/clients/${client.id}`}
+                          >
+                            <span className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 opacity-0 group-hover:opacity-100 transition-all inline-flex">
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </span>
+                          </Link>
+                        </td>
+                      </motion.tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100">
+              <p className="text-xs text-slate-400 tabular-nums">
+                {(page - 1) * PAGE_SIZE + 1}–
+                {Math.min(page * PAGE_SIZE, filtered.length)} of{" "}
+                {filtered.length}
+              </p>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="p-1.5 rounded-lg hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed text-slate-500"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                {Array.from(
+                  { length: totalPages },
+                  (_, i) => i + 1
+                )
+                  .filter(
+                    (n) =>
+                      n === 1 ||
+                      n === totalPages ||
+                      Math.abs(n - page) <= 1
+                  )
+                  .reduce<(number | "...")[]>((acc, n, idx, arr) => {
+                    if (
+                      idx > 0 &&
+                      (arr[idx - 1] as number) !== n - 1
+                    )
+                      acc.push("...");
+                    acc.push(n);
+                    return acc;
+                  }, [])
+                  .map((item, idx) =>
+                    item === "..." ? (
+                      <span
+                        key={`ellipsis-${idx}`}
+                        className="px-1 text-slate-300 text-sm"
+                      >
+                        …
+                      </span>
+                    ) : (
+                      <button
+                        key={item}
+                        onClick={() => setPage(item as number)}
+                        className={cn(
+                          "w-7 h-7 rounded-lg text-xs font-medium transition-colors",
+                          page === item
+                            ? "bg-[#1C1C1E] text-white"
+                            : "text-slate-500 hover:bg-slate-100"
+                        )}
+                      >
+                        {item}
+                      </button>
+                    )
+                  )}
+                <button
+                  onClick={() =>
+                    setPage((p) => Math.min(totalPages, p + 1))
+                  }
+                  disabled={page === totalPages}
+                  className="p-1.5 rounded-lg hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed text-slate-500"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </motion.div>
+
+      {/* ── TERMINATE MODAL ────────────────────────────────── */}
       {terminateTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
-            <h3 className="text-lg font-bold text-slate-900 mb-2">Terminate engagement</h3>
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+            <h3 className="text-lg font-bold text-slate-900 mb-2">
+              Terminate engagement
+            </h3>
             <p className="text-sm text-slate-500 mb-4">
-              This will mark the project as terminated and notify the client. All data is preserved read-only. This cannot be undone.
+              This will mark the project as terminated. All data is preserved
+              read-only. This cannot be undone.
             </p>
             <textarea
               value={terminateReason}
@@ -531,7 +1240,10 @@ export default function DashboardPage() {
             />
             <div className="flex items-center gap-2 justify-end">
               <button
-                onClick={() => { setTerminateTarget(null); setTerminateReason(""); }}
+                onClick={() => {
+                  setTerminateTarget(null);
+                  setTerminateReason("");
+                }}
                 className="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors"
               >
                 Cancel
@@ -548,13 +1260,16 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* ── Extend Deadline Modal ─────────────────────────────── */}
+      {/* ── EXTEND DEADLINE MODAL ──────────────────────────── */}
       {extendTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-lg shadow-xl max-w-sm w-full mx-4 p-6">
-            <h3 className="text-lg font-bold text-slate-900 mb-2">Extend deadline</h3>
+          <div className="bg-white rounded-xl shadow-xl max-w-sm w-full mx-4 p-6">
+            <h3 className="text-lg font-bold text-slate-900 mb-2">
+              Extend deadline
+            </h3>
             <p className="text-sm text-slate-500 mb-4">
-              Set a new due date for <strong>{extendTarget.title}</strong>.
+              Set a new due date for{" "}
+              <strong>{extendTarget.title}</strong>.
             </p>
             <input
               type="date"
@@ -564,7 +1279,10 @@ export default function DashboardPage() {
             />
             <div className="flex items-center gap-2 justify-end">
               <button
-                onClick={() => { setExtendTarget(null); setExtendDate(""); }}
+                onClick={() => {
+                  setExtendTarget(null);
+                  setExtendDate("");
+                }}
                 className="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors"
               >
                 Cancel
@@ -580,472 +1298,6 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
-
-      {/* ── Pipeline snapshot ──────────────────────────────────── */}
-      {prospects.length > 0 && (
-        <motion.div variants={fadeUp} className="px-10 pb-6">
-          <div className="rounded-lg bg-[#1C1C1E] p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-white/90">Pipeline</h3>
-              <Link
-                href="/admin/crm/pipeline"
-                className="text-xs text-white/50 hover:text-white/80 flex items-center gap-1 transition-colors"
-              >
-                View full pipeline <ArrowRight className="h-3 w-3" />
-              </Link>
-            </div>
-
-            {/* Stage pills */}
-            <div className="flex items-center gap-2 flex-wrap mb-4">
-              {(["mql","sql","discovery","proposal","negotiating","won","lost"] as const).map((stage) => {
-                const count = prospects.filter((p) => p.stage === stage).length;
-                if (count === 0) return null;
-                const meta = PROSPECT_STAGE_META[stage];
-                const pillStyles: Record<string, string> = {
-                  blue:   "bg-blue-500/15 text-blue-400",
-                  indigo: "bg-indigo-500/15 text-indigo-400",
-                  purple: "bg-purple-500/15 text-purple-400",
-                  amber:  "bg-amber-500/15 text-amber-400",
-                  orange: "bg-orange-500/15 text-orange-400",
-                  green:  "bg-emerald-500/15 text-emerald-400",
-                  gray:   "bg-gray-500/15 text-gray-400",
-                };
-                const dotStyles: Record<string, string> = {
-                  blue:   "bg-blue-400",
-                  indigo: "bg-indigo-400",
-                  purple: "bg-purple-400",
-                  amber:  "bg-amber-400",
-                  orange: "bg-orange-400",
-                  green:  "bg-emerald-400",
-                  gray:   "bg-gray-400",
-                };
-                return (
-                  <span
-                    key={stage}
-                    className={cn(
-                      "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
-                      pillStyles[meta.colour] ?? "bg-gray-500/15 text-gray-400"
-                    )}
-                  >
-                    <span className={cn("h-1.5 w-1.5 rounded-full", dotStyles[meta.colour] ?? "bg-gray-400")} />
-                    {meta.label} · {count}
-                  </span>
-                );
-              })}
-            </div>
-
-            {/* Summary row */}
-            <div className="flex items-center gap-6 text-xs text-white/50">
-              <span>
-                Pipeline value:{" "}
-                <span className="text-white/80 font-medium">
-                  {formatPence(
-                    prospects
-                      .filter((p) => !["won", "lost"].includes(p.stage))
-                      .reduce((s, p) => s + (p.dealValue ?? 0), 0)
-                  )}
-                </span>
-              </span>
-              <span>
-                Leads this month:{" "}
-                <span className="text-white/80 font-medium">
-                  {prospects.filter((p) => {
-                    const d = new Date(p.createdAt);
-                    const now = new Date();
-                    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-                  }).length}
-                </span>
-              </span>
-            </div>
-          </div>
-        </motion.div>
-      )}
-
-      {/* ── ZONE 2 — Primary attention card ───────────────────── */}
-      {mostUrgent ? (
-        <motion.div variants={fadeUp} className="px-10 pb-6">
-          <Link href={mostUrgent.href}>
-            <motion.div
-              whileHover={{ scale: 1.005 }}
-              transition={{ type: "spring", stiffness: 400, damping: 30 }}
-              className="relative overflow-hidden rounded-lg bg-[#1C1C1E] p-6 cursor-pointer"
-            >
-              <div className="flex items-center gap-5">
-                {/* Left icon ring */}
-                <div className="relative flex-shrink-0">
-                  <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ boxShadow: "inset 0 0 0 2px rgba(255,85,85,0.5)", background: "rgba(255,85,85,0.12)" }}>
-                    <Ban className="w-6 h-6" style={{ color: "rgb(255, 85, 85)" }} />
-                  </div>
-                </div>
-
-                {/* Middle content */}
-                <div className="flex-1 min-w-0">
-                  <p className="font-sans text-xs uppercase tracking-widest mb-1" style={{ color: "rgb(255, 85, 85)" }}>
-                    Needs immediate attention
-                  </p>
-                  <h2 className="font-bold text-xl text-white">
-                    {mostUrgent.clientName}
-                  </h2>
-                </div>
-
-                {/* Right arrow */}
-                <motion.div
-                  whileHover={{ x: 2 }}
-                  className="flex-shrink-0 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center"
-                >
-                  <ArrowRight className="w-4 h-4 text-white" />
-                </motion.div>
-              </div>
-
-              {/* Ambient glow */}
-              <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full blur-2xl pointer-events-none" style={{ background: "rgba(255,85,85,0.08)" }} />
-            </motion.div>
-          </Link>
-        </motion.div>
-      ) : (
-        <motion.div variants={fadeUp} className="px-10 pb-6">
-          <div className="rounded-lg bg-[#1C1C1E] shadow p-5 flex items-center gap-4">
-            <div
-              className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-              style={{
-                background: "rgba(112, 255, 162, 0.1)",
-                boxShadow: "inset 0 0 0 1px rgba(112, 255, 162, 0.2)",
-              }}
-            >
-              <CheckCircle2
-                className="w-5 h-5"
-                style={{ color: "rgb(112, 255, 162)" }}
-              />
-            </div>
-            <div>
-              <p className="font-sans text-sm font-medium text-white">
-                All clear
-              </p>
-              <p className="font-sans text-xs text-slate-400 mt-0.5">
-                No blocked projects or items needing attention
-              </p>
-            </div>
-          </div>
-        </motion.div>
-      )}
-
-      {/* ── Secondary attention items ─────────────────────────── */}
-      {secondaryItems.length > 0 && (
-        <motion.div variants={fadeUp} className="px-10 pb-6">
-          <div className="bg-white rounded-lg shadow divide-y divide-slate-50 overflow-hidden">
-            {secondaryItems.map((item) => (
-              <Link key={item.id} href={item.href}>
-                <motion.div
-                  whileHover={{ backgroundColor: "#FAFAF8" }}
-                  className="flex items-center gap-4 px-5 py-4 cursor-pointer"
-                >
-                  <div
-                    className={cn(
-                      "w-1.5 h-1.5 rounded-full flex-shrink-0",
-                      item.status === "blocked"
-                        ? "bg-red-400"
-                        : "bg-amber-400"
-                    )}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <span className="font-sans text-sm font-medium text-slate-900">
-                      {item.clientName}
-                    </span>
-                    <span className="font-sans text-sm text-slate-400 ml-2">
-                      {item.projectName}
-                    </span>
-                  </div>
-                  <span className="font-sans text-xs text-slate-400 flex-shrink-0">
-                    {item.blockReason}
-                  </span>
-                  <ChevronRight className="w-3.5 h-3.5 text-slate-300 flex-shrink-0" />
-                </motion.div>
-              </Link>
-            ))}
-          </div>
-        </motion.div>
-      )}
-
-      {/* ── ZONE 3 — Client table ─────────────────────────────── */}
-      <motion.div variants={fadeUp} className="px-10 pb-10">
-        {/* Table header toolbar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-          <h2 className="font-sans text-base font-semibold text-slate-900">
-            All clients
-            <span className="ml-2 text-xs font-normal text-slate-400">
-              {filtered.length} total
-            </span>
-          </h2>
-
-          <div className="flex items-center gap-2">
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
-              <input
-                value={search}
-                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                placeholder="Search clients…"
-                className="pl-8 pr-3 py-2 text-sm font-sans rounded-lg bg-white ring-1 ring-black/[0.08] outline-none focus:ring-2 focus:ring-[#1C1C1E]/20 w-48 placeholder:text-slate-400"
-              />
-            </div>
-
-            {/* Status filter */}
-            <div className="relative">
-              <SlidersHorizontal className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
-              <select
-                value={statusFilter}
-                onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-                className="pl-8 py-2.5 text-sm rounded-lg bg-white border border-slate-200 text-slate-700 focus:border-slate-400 focus:ring-1 focus:ring-slate-200 focus:outline-none transition-all"
-              >
-                <option value="all">All statuses</option>
-                <option value="active">Active</option>
-                <option value="onboarding">Onboarding</option>
-                <option value="invited">Invited</option>
-                <option value="paused">Paused</option>
-              </select>
-            </div>
-
-            {/* Add client */}
-            <Link href="/admin/clients">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.97 }}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg font-sans text-sm font-medium"
-                style={{ background: "rgb(108, 194, 255)", color: "#141414" }}
-              >
-                <Plus className="w-3.5 h-3.5" />
-                Add client
-              </motion.button>
-            </Link>
-          </div>
-        </div>
-
-        {/* Bulk action bar */}
-        {selected.size > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-3 px-4 py-2.5 bg-[#1C1C1E] rounded-lg flex items-center gap-3"
-          >
-            <span className="font-sans text-xs text-slate-300">
-              {selected.size} selected
-            </span>
-            <button
-              onClick={() => setSelected(new Set())}
-              className="font-sans text-xs text-slate-400 hover:text-white"
-            >
-              Clear
-            </button>
-          </motion.div>
-        )}
-
-        {/* Table */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-slate-100">
-                  <th className="w-10 px-4 py-3">
-                    <input
-                      type="checkbox"
-                      checked={allSelected}
-                      onChange={toggleAll}
-                      className="rounded border-slate-300 accent-[#1C1C1E] cursor-pointer"
-                    />
-                  </th>
-                  {["Client", "Status", "Consultant", "Progress", "Last active", ""].map((h) => (
-                    <th
-                      key={h}
-                      className="px-4 py-3 text-left font-sans text-[11px] font-semibold uppercase tracking-wider text-slate-400"
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {paginated.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="py-16 text-center font-sans text-sm text-slate-400">
-                      No clients match your filters.
-                    </td>
-                  </tr>
-                ) : (
-                  paginated.map((client, i) => {
-                    const pct = Math.round(client.overallProgress ?? 0);
-                    const isSelected = selected.has(client.id);
-                    return (
-                      <motion.tr
-                        key={client.id}
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.03, duration: 0.25 }}
-                        className={cn(
-                          "group transition-colors",
-                          isSelected ? "bg-slate-50" : "hover:bg-slate-50/60"
-                        )}
-                      >
-                        {/* Checkbox */}
-                        <td className="px-4 py-3.5">
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => toggleOne(client.id)}
-                            className="rounded border-slate-300 accent-[#1C1C1E] cursor-pointer"
-                          />
-                        </td>
-
-                        {/* Client name + email */}
-                        <td className="px-4 py-3.5">
-                          <div className="flex items-center gap-3">
-                            <Avatar name={client.businessName} size={8} />
-                            <div className="min-w-0">
-                              <p className="font-sans text-sm font-semibold text-slate-900 truncate">
-                                {client.businessName}
-                              </p>
-                              {client.email && (
-                                <p className="font-sans text-xs text-slate-400 truncate">
-                                  {client.email}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* Status */}
-                        <td className="px-4 py-3.5">
-                          <StatusBadge status={client.status} />
-                        </td>
-
-                        {/* Consultant */}
-                        <td className="px-4 py-3.5">
-                          {client.assignedConsultant ? (
-                            <div className="flex items-center gap-2">
-                              <Avatar name={client.assignedConsultant.name} size={6} />
-                              <span className="font-sans text-sm text-slate-600 truncate max-w-[120px]">
-                                {client.assignedConsultant.name}
-                              </span>
-                            </div>
-                          ) : (
-                            <span className="font-sans text-xs text-slate-300">Unassigned</span>
-                          )}
-                        </td>
-
-                        {/* Progress */}
-                        <td className="px-4 py-3.5 min-w-[160px]">
-                          <div className="flex items-center gap-2">
-                            <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                              <motion.div
-                                className="h-full rounded-full"
-                                initial={{ width: 0 }}
-                                animate={{ width: `${pct}%` }}
-                                transition={{ duration: 0.7, delay: i * 0.04, ease: "easeOut" }}
-                                style={{
-                                  background:
-                                    pct === 100
-                                      ? "#22c55e"
-                                      : pct > 0
-                                      ? "#3b82f6"
-                                      : "transparent",
-                                }}
-                              />
-                            </div>
-                            <span className="font-sans text-xs font-medium text-slate-500 w-8 text-right">
-                              {pct}%
-                            </span>
-                          </div>
-                        </td>
-
-                        {/* Last active */}
-                        <td className="px-4 py-3.5">
-                          <span className="font-sans text-sm text-slate-400">
-                            {client.updatedAt
-                              ? formatDistanceToNow(new Date(client.updatedAt), { addSuffix: true })
-                              : "—"}
-                          </span>
-                        </td>
-
-                        {/* Actions */}
-                        <td className="px-4 py-3.5">
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Link href={`/admin/clients/${client.id}`}>
-                              <motion.button
-                                whileHover={{ scale: 1.08 }}
-                                className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700"
-                                title="Open client"
-                              >
-                                <ExternalLink className="w-3.5 h-3.5" />
-                              </motion.button>
-                            </Link>
-                            <motion.button
-                              whileHover={{ scale: 1.08 }}
-                              className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700"
-                              title="More options"
-                            >
-                              <MoreHorizontal className="w-3.5 h-3.5" />
-                            </motion.button>
-                          </div>
-                        </td>
-                      </motion.tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination footer */}
-          <div className="flex items-center justify-between px-5 py-3 border-t border-slate-100">
-            <p className="font-sans text-xs text-slate-400">
-              Showing {filtered.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}–
-              {Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
-            </p>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="p-1.5 rounded-lg hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed text-slate-500"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1)
-                .filter((n) => n === 1 || n === totalPages || Math.abs(n - page) <= 1)
-                .reduce<(number | "...")[]>((acc, n, idx, arr) => {
-                  if (idx > 0 && (arr[idx - 1] as number) !== n - 1) acc.push("...");
-                  acc.push(n);
-                  return acc;
-                }, [])
-                .map((item, idx) =>
-                  item === "..." ? (
-                    <span key={`ellipsis-${idx}`} className="px-1 text-slate-300 text-sm">
-                      …
-                    </span>
-                  ) : (
-                    <button
-                      key={item}
-                      onClick={() => setPage(item as number)}
-                      className={cn(
-                        "w-7 h-7 rounded-lg font-sans text-xs font-medium transition-colors",
-                        page === item
-                          ? "bg-[#1C1C1E] text-white"
-                          : "text-slate-500 hover:bg-slate-100"
-                      )}
-                    >
-                      {item}
-                    </button>
-                  )
-                )}
-              <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                className="p-1.5 rounded-lg hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed text-slate-500"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </motion.div>
     </motion.div>
   );
 }
