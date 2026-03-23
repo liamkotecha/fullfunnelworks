@@ -98,7 +98,7 @@ function RowActions({ inv, onView }: { inv: InvoiceDTO; onView: () => void }) {
               onClick={(e) => { e.stopPropagation(); onView(); setOpen(false); }}
               className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
             >
-              <Eye className="w-4 h-4" /> View client invoices
+              <Eye className="w-4 h-4" /> View invoice
             </button>
             {inv.stripePaymentUrl && (
               <button
@@ -425,7 +425,7 @@ export default function InvoicesPage() {
                     initial={{ opacity: 0, y: 4 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.15, delay: idx * 0.02 }}
-                    onClick={() => router.push(`/admin/clients/${inv.clientId}/invoices`)}
+                    onClick={() => router.push(`/admin/invoices/${inv.id}`)}
                     className="border-b border-slate-50 last:border-0 hover:bg-slate-50/60 cursor-pointer transition-colors group"
                   >
                     <td className="px-4 py-3.5">
@@ -468,7 +468,7 @@ export default function InvoicesPage() {
                     <td className="px-4 py-3.5">
                       <RowActions
                         inv={inv}
-                        onView={() => router.push(`/admin/clients/${inv.clientId}/invoices`)}
+                        onView={() => router.push(`/admin/invoices/${inv.id}`)}
                       />
                     </td>
                   </motion.tr>

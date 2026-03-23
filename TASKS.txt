@@ -1,0 +1,273 @@
+FULL FUNNEL — PROJECT TASK LIST
+================================
+Created: 23 March 2026
+Status key: [ ] todo  [~] in progress  [x] done  [-] deferred (waiting on call)
+
+
+═══════════════════════════════════════════════════════════
+A. JONATHAN'S FEEDBACK — BUILD NOW (no ambiguity)
+═══════════════════════════════════════════════════════════
+
+[ ] A1. RAG badges on portal overview section cards
+       Red (<33%) / Amber (33-66%) / Green (>66%) completion indicators
+       File: src/app/(portal)/portal/overview/page.tsx
+       Scope: UI-only, uses existing progress data
+
+[ ] A2. Add sponsorId field to Project model
+       New optional ref to User (the project sponsor / chairperson)
+       File: src/models/Project.ts
+       Scope: Schema addition only, no UI yet
+
+[ ] A3. Extend staleness engine to flag sponsor notifications
+       Add shouldNotifySponsor to StalenessResult (stalled + at_risk)
+       File: src/lib/staleness.ts
+
+[ ] A4. Module dependency map — static config
+       Define which modules depend on which (e.g. GTM needs Product + Process)
+       File: new utility in src/lib/module-dependencies.ts
+       Include: misalignment detection function that takes module completion
+       percentages and returns warnings
+
+[ ] A5. Wire dependency warnings into admin project detail view
+       Show "GTM 80% but Product only 15% — misalignment risk" style alerts
+       Scope: consultant/admin dashboard, not portal (yet)
+
+
+═══════════════════════════════════════════════════════════
+B. JONATHAN'S FEEDBACK — DEFERRED (discuss on call)
+═══════════════════════════════════════════════════════════
+
+[-] B1. Industry benchmark scoring
+       Need: benchmark data source, scoring methodology, display format
+       Existing hook: ragSections in concept-map.ts, divergence.ts
+       Discuss: what does "good" look like per section? Consultant knowledge?
+
+[-] B2. Speedometer / gauge component for overall company maturity
+       Need: definition of what the metric represents beyond completion %
+       Discuss: is it just completion? Weighted by importance? Vs industry?
+
+[-] B3. Extend team mode beyond assessment section
+       Current: individualResponses only for section === "assessment"
+       Need: per-user module assignment (who answers what?)
+       File: src/app/api/responses/[clientId]/[section]/[sub]/route.ts line 55
+       Discuss: does consultant assign sections? Does client self-organise?
+
+[-] B4. Per-respondent progress dashboards
+       Each team member sees their assigned modules + their own completion
+       Depends on B3 decisions
+
+[-] B5. Sponsor notification emails
+       Template + trigger logic for when projects go stalled/at_risk
+       Depends on A2 (sponsorId) being populated via UI
+       Existing template pattern: src/lib/email-templates/project-stalled.ts
+
+
+═══════════════════════════════════════════════════════════
+C. EXISTING GAPS — INCOMPLETE FEATURES
+═══════════════════════════════════════════════════════════
+
+[ ] C1. Sales Process Builder page — placeholder only
+       File: src/app/(portal)/portal/people/process-builder/page.tsx
+       Currently shows "This section is being built out. Check back soon."
+
+[ ] C2. Deprecated sidebar stubs — cleanup
+       File: src/components/layout/Sidebar.tsx
+       SidebarSection + SidebarNavItem return null, kept for TS compilation
+       Low priority but messy
+
+[ ] C3. .env.local.example is incomplete
+       Missing: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PUBLIC_KEY
+       These are required for invoice/payment features to work
+
+
+═══════════════════════════════════════════════════════════
+D. UX — CRITICAL (blocks work or causes data issues)
+═══════════════════════════════════════════════════════════
+
+[x] D0. Invoice row click navigates to client record, not invoice detail
+       DONE — built standalone /admin/invoices/[id]/ detail page
+       Shows: title, description, amount, status, client link, payment model,
+       module, grace period, dates, Stripe link
+       Actions: Send, Mark Paid, Void (conditional on status)
+       Updated list row click + action menu to use new route
+
+[ ] D1. Add global error boundaries (error.tsx)
+       No error.tsx exists in (portal) or (admin) route groups
+       Component crashes = full white screen with no recovery
+       Files needed: src/app/(portal)/error.tsx, src/app/(admin)/error.tsx
+
+[ ] D2. Silent error handling — portal API calls
+       Overview team fetch: .catch(() => {}) — no user feedback
+       AutosaveField: save failure shows only HTTP status code ("Save failed: 422")
+       Many pages swallow errors silently
+       Key files: overview/page.tsx L185, AutosaveField.tsx L104
+
+[ ] D3. Silent error handling — admin API calls (12+ instances)
+       Dashboard: terminate project, extend deadline — silent fail
+       Questions: fetch, save edit, toggle active, reorder — all silent
+       Settings: all 6 save actions — silent fail  
+       CRM Pipeline: drag-drop stage change — silent fail
+       CRM Prospects: fetch, CSV export — silent fail
+       Key files: dashboard/page.tsx, questions/page.tsx, settings/page.tsx,
+       crm/pipeline/page.tsx, crm/prospects/page.tsx
+
+[ ] D4. Missing confirmation dialogs for destructive actions
+       Questions page: delete question — no confirmation
+       Prospects: bulk delete uses window.confirm() instead of styled modal
+       Key files: questions/page.tsx, crm/prospects/page.tsx
+
+[ ] D5. Client form validation — no error messages shown
+       New client: checks businessName/email but shows no message on failure
+       Client detail: has validateForm() + formErrors state but errors not displayed
+       QuickAddProspectModal: error in footer only, not on failing fields
+       No email format validation on either form
+       Key files: clients/page.tsx L50, clients/[id]/page.tsx
+
+
+═══════════════════════════════════════════════════════════
+E. UX — HIGH (confusing or frustrating)
+═══════════════════════════════════════════════════════════
+
+[ ] E1. No breadcrumbs anywhere in the portal
+       User has no context of where they are (Assessment > Checklist)
+       Must rely on sidebar which is collapsed on mobile
+       Affects ALL content pages
+
+[ ] E2. Form field validation gaps
+       Gap analysis: "Impact on Growth (1-10)" — no min/max enforcement
+       Team page: email input — no visual error state
+       Textarea: char limit only visible near max, not from first keystroke
+       No required vs optional field indicators anywhere
+       SWOT weights: unclear these are optional
+
+[ ] E3. Autosave feedback too subtle / too brief
+       "Saved" indicator disappears after 2s — too fast
+       FieldCard saved badge in top-right corner — easy to miss
+       No visual indication while typing that changes are detected
+       Unmount flush is completely silent — user doesn't know data saved
+       Key file: AutosaveField.tsx L97, FieldCard.tsx L41
+
+[ ] E4. Missing success feedback — admin actions
+       Dashboard: terminate project — no success toast
+       Questions: save question — no success toast
+       Settings: most tabs — inconsistent (some show ✓, most don't)
+       KPIs: drag-drop reorder — no confirmation
+       Key files: dashboard/page.tsx, questions/page.tsx, settings/page.tsx
+
+[ ] E5. Empty states missing or unhelpful
+       Team page: blank table when no members, no contextual guidance
+       Outcome mapper: empty table, no guidance
+       KPIs: empty kanban columns, no "get started" help
+       Admin questions: filter returns 0 — blank, no "clear filters?" message
+       Admin invoices: API failure indistinguishable from "no invoices"
+
+[ ] E6. Navigation dead ends in portal
+       Leadership page: no "back to assessment home" button
+       All checklist pages: after completion, review mode has no back button
+       Paginated questions: can't jump directly to question N
+       WhatsNext: nextHref is hardcoded per page, not dynamic
+
+[ ] E7. Session expiry is silent
+       30-day JWT, no idle timeout, no warning before expiration
+       User gets hard redirect to /login with no explanation
+       No "session expired" message shown
+       Key file: middleware.ts, auth.ts
+
+
+═══════════════════════════════════════════════════════════
+F. UX — MEDIUM (suboptimal experience)
+═══════════════════════════════════════════════════════════
+
+[ ] F1. Mobile responsiveness issues — portal
+       Org structure: hardcoded 3-col × 230px = 690px, overflows mobile
+       Roadmap Gantt: 48 weeks × 52px = 2,496px, needs horizontal scroll
+       Team table: 5 columns won't fit on mobile
+       KPIs: drag-drop cards hard on touch devices
+       Modeller: tab bar might wrap on small screens
+       Key files: people/structure/page.tsx L40, roadmap/page.tsx L48
+
+[ ] F2. Mobile responsiveness issues — admin
+       Invoices table: hidden columns on mobile but no list-view fallback
+       Questions page: long text doesn't wrap in edit mode
+       CRM Pipeline: kanban 280px fixed cards, horizontal scroll only
+       No mobile-friendly single-column view for kanban
+
+[ ] F3. Admin search & filter gaps
+       GlobalSearch: only searches clients, not projects or prospects
+       Projects board view: no name search, no consultant filter
+       Questions: no "search by field ID", no "show inactive only" filter
+       Invoices: bulk checkboxes exist but no bulk actions menu
+
+[ ] F4. Pagination dot targets too small on mobile
+       PaginatedQuestions dots are 12px (w-3 h-3) — below 44px touch target
+       No "Question X of Y" text alternative on mobile
+       Key file: PaginatedQuestions.tsx L52
+
+[ ] F5. Missing loading skeletons
+       Overview page: team data fetch has no skeleton
+       Dashboard: stats cards from API have no spinner
+       Voice preview: no animated spinner during audio fetch
+       Brief.txt flagged skeleton loaders as outstanding
+
+[ ] F6. Accessibility gap — password toggle missing aria-label
+       Login page: Eye/EyeOff button has no aria-label
+       Placeholder text (slate-400/500) may have borderline contrast
+       Confirmation modals: likely no focus trap or screen reader announcement
+       Key file: login/page.tsx L212
+
+
+═══════════════════════════════════════════════════════════
+G. POLISH & HARDENING
+═══════════════════════════════════════════════════════════
+
+[ ] G1. No test suite exists
+       No jest, vitest, cypress, or playwright config
+       Priority candidates for first tests:
+       - staleness.ts (pure function, easy to unit test)
+       - divergence.ts (pure function, complex logic)
+       - lead-scoring.ts (pure function, business-critical)
+       - assignment-engine.ts (business logic)
+
+[ ] G2. Page transitions (Framer Motion)
+       Brief.txt mentions this. Low priority but improves perceived quality.
+       Already using framer-motion extensively — just need route transitions.
+
+
+═══════════════════════════════════════════════════════════
+H. DEPLOYMENT & OPS
+═══════════════════════════════════════════════════════════
+
+[ ] H1. Verify Stripe keys are configured in production env
+       Code is written and functional, just need env vars set
+
+[ ] H2. GA4 Measurement Protocol — verify server-side events fire
+       analytics.ts has the implementation, needs production GA4 ID
+
+[ ] H3. SendGrid domain authentication
+       Email templates are complete but delivery depends on sender verification
+
+
+═══════════════════════════════════════════════════════════
+PRIORITY ORDER (suggested)
+═══════════════════════════════════════════════════════════
+
+Phase 1 — Before the call with Jonathan:
+  A1, A2, A3, A4
+
+Phase 2 — After the call (based on decisions):
+  A5, B1-B5 (scoped by call outcomes)
+
+Phase 3 — UX critical fixes:
+  D1 (error boundaries), D2+D3 (silent errors), D4 (confirm dialogs), D5 (validation)
+
+Phase 4 — UX high-impact:
+  E1 (breadcrumbs), E3 (autosave feedback), E5 (empty states), E7 (session expiry)
+
+Phase 5 — Technical debt & existing gaps:
+  C1, C3, G1
+
+Phase 6 — UX medium + polish:
+  E2, E4, E6, F1-F6, G2
+
+Phase 7 — Ops & launch prep:
+  H1, H2, H3, C2
