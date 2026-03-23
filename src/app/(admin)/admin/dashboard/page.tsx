@@ -572,34 +572,35 @@ export default function DashboardPage() {
         <div className="lg:col-span-2 space-y-6">
           {/* ── SALES PIPELINE ─────────────────────────────── */}
           <motion.div variants={fadeUp}>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-slate-900">
-                Sales Pipeline
-              </h2>
-              <Link
-                href="/admin/crm/pipeline"
-                className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1 transition-colors"
-              >
-                View full pipeline <ArrowRight className="h-3 w-3" />
-              </Link>
-            </div>
-
-            {prospects.length === 0 ? (
-              <div className="bg-white rounded-xl ring-1 ring-black/[0.06] p-8 text-center">
-                <p className="text-sm text-slate-400">
-                  No prospects yet.{" "}
-                  <Link
-                    href="/admin/crm/pipeline"
-                    className="text-slate-600 underline underline-offset-2"
-                  >
-                    Add your first lead
-                  </Link>
-                </p>
+            <div className="bg-white rounded-xl ring-1 ring-black/[0.06] p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-sm font-semibold text-slate-900">
+                  Sales Pipeline
+                </h2>
+                <Link
+                  href="/admin/crm/pipeline"
+                  className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1 transition-colors"
+                >
+                  View full pipeline <ArrowRight className="h-3 w-3" />
+                </Link>
               </div>
-            ) : (
-              <>
-                {/* Stage cards */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3">
+
+              {prospects.length === 0 ? (
+                <div className="py-4 text-center">
+                  <p className="text-sm text-slate-400">
+                    No prospects yet.{" "}
+                    <Link
+                      href="/admin/crm/pipeline"
+                      className="text-slate-600 underline underline-offset-2"
+                    >
+                      Add your first lead
+                    </Link>
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {/* Stage cards */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3">
                   {(activeStages as ProspectStage[]).map((stage) => {
                     const meta = PROSPECT_STAGE_META[stage];
                     const style =
@@ -658,59 +659,59 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Won / Lost row */}
-                <div className="flex items-center gap-4 mt-3 px-1">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                    <span className="text-xs font-medium text-slate-600">
-                      Won:{" "}
-                      <span className="font-bold text-emerald-600 tabular-nums">
-                        {
-                          prospects.filter((p) => p.stage === "won")
-                            .length
-                        }
-                      </span>
-                      {wonValue > 0 && (
-                        <span className="text-slate-400 ml-1 tabular-nums">
-                          ({formatPence(wonValue)} this month)
+                  <div className="flex items-center gap-4 mt-3">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                      <span className="text-xs font-medium text-slate-600">
+                        Won:{" "}
+                        <span className="font-bold text-emerald-600 tabular-nums">
+                          {
+                            prospects.filter((p) => p.stage === "won")
+                              .length
+                          }
                         </span>
-                      )}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-slate-400" />
-                    <span className="text-xs font-medium text-slate-600">
-                      Lost:{" "}
-                      <span className="font-bold text-slate-500 tabular-nums">
-                        {
-                          prospects.filter((p) => p.stage === "lost")
-                            .length
-                        }
+                        {wonValue > 0 && (
+                          <span className="text-slate-400 ml-1 tabular-nums">
+                            ({formatPence(wonValue)} this month)
+                          </span>
+                        )}
                       </span>
-                    </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-slate-400" />
+                      <span className="text-xs font-medium text-slate-600">
+                        Lost:{" "}
+                        <span className="font-bold text-slate-500 tabular-nums">
+                          {
+                            prospects.filter((p) => p.stage === "lost")
+                              .length
+                          }
+                        </span>
+                      </span>
+                    </div>
+                    <div className="ml-auto text-xs text-slate-400">
+                      {leadsThisMonth} new this month
+                    </div>
                   </div>
-                  <div className="ml-auto text-xs text-slate-400">
-                    {leadsThisMonth} new this month
-                  </div>
-                </div>
-              </>
-            )}
+                </>
+              )}
+            </div>
           </motion.div>
 
           {/* ── PROJECTS OVERVIEW ──────────────────────────── */}
           <motion.div variants={fadeUp}>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-slate-900">
-                Projects
-              </h2>
-              <Link
-                href="/admin/projects"
-                className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1 transition-colors"
-              >
-                All projects <ArrowRight className="h-3 w-3" />
-              </Link>
-            </div>
-
             <div className="bg-white rounded-xl ring-1 ring-black/[0.06] overflow-hidden">
+              <div className="flex items-center justify-between px-5 pt-5 pb-4">
+                <h2 className="text-sm font-semibold text-slate-900">
+                  Projects
+                </h2>
+                <Link
+                  href="/admin/projects"
+                  className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1 transition-colors"
+                >
+                  All projects <ArrowRight className="h-3 w-3" />
+                </Link>
+              </div>
               {/* Project stats row */}
               <div className="grid grid-cols-4 divide-x divide-slate-100 border-b border-slate-100">
                 {[
@@ -798,12 +799,12 @@ export default function DashboardPage() {
         <div className="space-y-6">
           {/* ── NEEDS ATTENTION ─────────────────────────────── */}
           <motion.div variants={fadeUp}>
-            <h2 className="text-sm font-semibold text-slate-900 mb-3">
-              Needs Attention
-            </h2>
-
             {attentionItems.length === 0 ? (
-              <div className="bg-white rounded-xl ring-1 ring-black/[0.06] p-5 flex items-center gap-3">
+              <div className="bg-white rounded-xl ring-1 ring-black/[0.06] p-5">
+                <h2 className="text-sm font-semibold text-slate-900 mb-4">
+                  Needs Attention
+                </h2>
+                <div className="flex items-center gap-3">
                 <div
                   className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
                   style={{
@@ -815,17 +816,24 @@ export default function DashboardPage() {
                     style={{ color: "rgb(112, 255, 162)" }}
                   />
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-900">
-                    All clear
-                  </p>
-                  <p className="text-xs text-slate-400">
-                    No items needing attention
-                  </p>
+                  <div>
+                    <p className="text-sm font-medium text-slate-900">
+                      All clear
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      No items needing attention
+                    </p>
+                  </div>
                 </div>
               </div>
             ) : (
-              <div className="bg-white rounded-xl ring-1 ring-black/[0.06] divide-y divide-slate-100 overflow-hidden">
+              <div className="bg-white rounded-xl ring-1 ring-black/[0.06] overflow-hidden">
+                <div className="px-4 pt-4 pb-3">
+                  <h2 className="text-sm font-semibold text-slate-900">
+                    Needs Attention
+                  </h2>
+                </div>
+                <div className="divide-y divide-slate-100">
                 {attentionItems.slice(0, 6).map((item) => {
                   const Icon = item.icon;
                   const severityStyles = {
@@ -857,32 +865,32 @@ export default function DashboardPage() {
                     </Link>
                   );
                 })}
-                {attentionItems.length > 6 && (
-                  <div className="px-4 py-2.5 text-center">
-                    <span className="text-xs text-slate-400">
-                      +{attentionItems.length - 6} more
-                    </span>
-                  </div>
-                )}
+                  {attentionItems.length > 6 && (
+                    <div className="px-4 py-2.5 text-center">
+                      <span className="text-xs text-slate-400">
+                        +{attentionItems.length - 6} more
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </motion.div>
 
           {/* ── INVOICING ──────────────────────────────────── */}
           <motion.div variants={fadeUp}>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-slate-900">
-                Invoicing
-              </h2>
-              <Link
-                href="/admin/invoices"
-                className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1 transition-colors"
-              >
-                All invoices <ArrowRight className="h-3 w-3" />
-              </Link>
-            </div>
-
             <div className="bg-white rounded-xl ring-1 ring-black/[0.06] overflow-hidden">
+              <div className="flex items-center justify-between px-4 pt-4 pb-3">
+                <h2 className="text-sm font-semibold text-slate-900">
+                  Invoicing
+                </h2>
+                <Link
+                  href="/admin/invoices"
+                  className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1 transition-colors"
+                >
+                  All invoices <ArrowRight className="h-3 w-3" />
+                </Link>
+              </div>
               {/* Mini stat grid */}
               <div className="grid grid-cols-3 divide-x divide-slate-100 border-b border-slate-100">
                 {[
@@ -976,44 +984,43 @@ export default function DashboardPage() {
 
       {/* ── CLIENT TABLE ───────────────────────────────────── */}
       <motion.div variants={fadeUp} className="px-8 pb-10">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-          <h2 className="text-sm font-semibold text-slate-900">
-            Clients
-            <span className="ml-2 text-xs font-normal text-slate-400">
-              {filtered.length}
-            </span>
-          </h2>
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
-              <input
-                value={search}
+        <div className="bg-white rounded-xl ring-1 ring-black/[0.06] overflow-hidden">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 pt-5 pb-4">
+            <h2 className="text-sm font-semibold text-slate-900">
+              Clients
+              <span className="ml-2 text-xs font-normal text-slate-400">
+                {filtered.length}
+              </span>
+            </h2>
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                <input
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPage(1);
+                  }}
+                  placeholder="Search clients…"
+                  className="pl-8 pr-3 py-2 text-sm font-sans rounded-lg bg-slate-50 ring-1 ring-black/[0.06] outline-none focus:ring-2 focus:ring-[#1C1C1E]/20 w-48 placeholder:text-slate-400"
+                />
+              </div>
+              <select
+                value={statusFilter}
                 onChange={(e) => {
-                  setSearch(e.target.value);
+                  setStatusFilter(e.target.value);
                   setPage(1);
                 }}
-                placeholder="Search clients…"
-                className="pl-8 pr-3 py-2 text-sm font-sans rounded-lg bg-white ring-1 ring-black/[0.08] outline-none focus:ring-2 focus:ring-[#1C1C1E]/20 w-48 placeholder:text-slate-400"
-              />
+                className="py-2 px-3 text-sm rounded-lg bg-slate-50 ring-1 ring-black/[0.06] text-slate-600 outline-none focus:ring-2 focus:ring-[#1C1C1E]/20"
+              >
+                <option value="all">All</option>
+                <option value="active">Active</option>
+                <option value="onboarding">Onboarding</option>
+                <option value="invited">Invited</option>
+                <option value="paused">Paused</option>
+              </select>
             </div>
-            <select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setPage(1);
-              }}
-              className="py-2 px-3 text-sm rounded-lg bg-white ring-1 ring-black/[0.08] text-slate-600 outline-none focus:ring-2 focus:ring-[#1C1C1E]/20"
-            >
-              <option value="all">All</option>
-              <option value="active">Active</option>
-              <option value="onboarding">Onboarding</option>
-              <option value="invited">Invited</option>
-              <option value="paused">Paused</option>
-            </select>
           </div>
-        </div>
-
-        <div className="bg-white rounded-xl ring-1 ring-black/[0.06] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
