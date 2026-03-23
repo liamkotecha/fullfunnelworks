@@ -14,7 +14,7 @@ import { formatPence } from "@/lib/format";
 import { sendEmail } from "@/lib/sendgrid";
 import { invoiceSentEmail } from "@/lib/email-templates/invoice-sent";
 
-function toDTO(doc: Record<string, unknown>) {
+function toDTO(doc: Record<string, unknown>, clientDoc?: Record<string, unknown> | null) {
   const d = typeof doc.toObject === "function" ? doc.toObject() : doc;
   return {
     id: String(d._id),
@@ -37,6 +37,25 @@ function toDTO(doc: Record<string, unknown>) {
     dueDate: d.dueDate ? new Date(d.dueDate as string).toISOString() : null,
     createdAt: new Date(d.createdAt as string).toISOString(),
     updatedAt: new Date(d.updatedAt as string).toISOString(),
+    ...(clientDoc
+      ? {
+          clientName:
+            (clientDoc.businessName as string) ||
+            (clientDoc.contactName as string) ||
+            undefined,
+          client: {
+            businessName: clientDoc.businessName as string | undefined,
+            contactName: clientDoc.contactName as string | undefined,
+            contactEmail: clientDoc.contactEmail as string | undefined,
+            invoicingEmail: clientDoc.invoicingEmail as string | undefined,
+            addressLine1: clientDoc.addressLine1 as string | undefined,
+            addressLine2: clientDoc.addressLine2 as string | undefined,
+            city: clientDoc.city as string | undefined,
+            postcode: clientDoc.postcode as string | undefined,
+            country: clientDoc.country as string | undefined,
+          },
+        }
+      : {}),
   };
 }
 
@@ -61,7 +80,9 @@ export async function GET(
       return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ data: toDTO(invoice) });
+    const client = await Client.findById(invoice.clientId).lean<Record<string, unknown>>();
+
+    return NextResponse.json({ data: toDTO(invoice, client) });
   } catch (err) {
     return apiError("get invoice", err);
   }

@@ -63,10 +63,23 @@ export type StalenessStatus = "active" | "nudge" | "stalled" | "at_risk" | "term
 export type PaymentModel = "upfront" | "on_completion" | "milestone";
 export type InvoiceStatus = "draft" | "sent" | "paid" | "overdue" | "void";
 
+export interface InvoiceClientInfo {
+  businessName?: string;
+  contactName?: string;
+  contactEmail?: string;
+  invoicingEmail?: string;
+  addressLine1?: string;
+  addressLine2?: string;
+  city?: string;
+  postcode?: string;
+  country?: string;
+}
+
 export interface InvoiceDTO {
   id: string;
   clientId: string;
   clientName?: string;
+  client?: InvoiceClientInfo;
   projectId: string;
   moduleId?: string;
   title: string;
