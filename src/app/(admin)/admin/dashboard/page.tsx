@@ -601,15 +601,33 @@ export default function DashboardPage() {
                 const count = prospects.filter((p) => p.stage === stage).length;
                 if (count === 0) return null;
                 const meta = PROSPECT_STAGE_META[stage];
+                const pillStyles: Record<string, string> = {
+                  blue:   "bg-blue-500/15 text-blue-400",
+                  indigo: "bg-indigo-500/15 text-indigo-400",
+                  purple: "bg-purple-500/15 text-purple-400",
+                  amber:  "bg-amber-500/15 text-amber-400",
+                  orange: "bg-orange-500/15 text-orange-400",
+                  green:  "bg-emerald-500/15 text-emerald-400",
+                  gray:   "bg-gray-500/15 text-gray-400",
+                };
+                const dotStyles: Record<string, string> = {
+                  blue:   "bg-blue-400",
+                  indigo: "bg-indigo-400",
+                  purple: "bg-purple-400",
+                  amber:  "bg-amber-400",
+                  orange: "bg-orange-400",
+                  green:  "bg-emerald-400",
+                  gray:   "bg-gray-400",
+                };
                 return (
                   <span
                     key={stage}
                     className={cn(
                       "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
-                      `bg-${meta.colour}-500/15 text-${meta.colour}-400`
+                      pillStyles[meta.colour] ?? "bg-gray-500/15 text-gray-400"
                     )}
                   >
-                    <span className={cn("h-1.5 w-1.5 rounded-full", `bg-${meta.colour}-400`)} />
+                    <span className={cn("h-1.5 w-1.5 rounded-full", dotStyles[meta.colour] ?? "bg-gray-400")} />
                     {meta.label} · {count}
                   </span>
                 );
