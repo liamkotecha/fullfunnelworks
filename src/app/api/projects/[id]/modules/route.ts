@@ -19,6 +19,8 @@ const VALID_MODULES = [
   "gtm",
   "modeller",
   "hiring",
+  "revenue_execution",
+  "execution_planning",
 ] as const;
 
 const putSchema = z.object({

@@ -16,6 +16,8 @@ import {
   Map,
   Calculator,
   UserPlus,
+  TrendingUp,
+  ClipboardCheck,
   Loader2,
   Lock,
   Unlock,
@@ -35,6 +37,8 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   Map:        <Map className="w-3.5 h-3.5" />,
   Calculator: <Calculator className="w-3.5 h-3.5" />,
   UserPlus:   <UserPlus className="w-3.5 h-3.5" />,
+  TrendingUp: <TrendingUp className="w-3.5 h-3.5" />,
+  ClipboardCheck: <ClipboardCheck className="w-3.5 h-3.5" />,
 };
 
 const ALL_MODULES = Object.keys(MODULE_META) as ModuleId[];

@@ -20,3 +20,13 @@ export { SectionHolding } from "./SectionHolding";
 export { WhatsNext } from "./WhatsNext";
 export { TtsButton } from "./TtsButton";
 export { TeamAssessmentBanner, useTeamReadOnly } from "./TeamAssessmentBanner";
+
+// Section 2 & 3 table components
+export { MeasureTable } from "./MeasureTable";
+export { ActionTable, type ActionRow } from "./ActionTable";
+export { OwnershipMatrix, type OwnershipRow } from "./OwnershipMatrix";
+export { RiskRegister, type RiskRow } from "./RiskRegister";
+export { GovernanceCalendar, type GovernanceRow } from "./GovernanceCalendar";
+export { InterventionRules, type InterventionRow } from "./InterventionRules";
+export { WorkstreamTabs, type WorkstreamTab } from "./WorkstreamTabs";
+export { ModulePageShell } from "./ModulePageShell";

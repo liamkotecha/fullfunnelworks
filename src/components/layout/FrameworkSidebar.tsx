@@ -22,6 +22,8 @@ import {
   Check,
   ChevronRight,
   UserPlus,
+  TrendingUp,
+  ClipboardCheck,
   Lock,
   Receipt,
 } from "lucide-react";
@@ -116,6 +118,35 @@ const FRAMEWORK_NAV: NavSection[] = [
     children: [
       { id: "market", label: "Market Intelligence", href: "/portal/gtm/market" },
       { id: "competition", label: "Competition", href: "/portal/gtm/competition" },
+    ],
+  },
+  {
+    id: "revenue_execution",
+    label: "Revenue Execution",
+    icon: <TrendingUp className="w-[18px] h-[18px]" />,
+    children: [
+      { id: "methodology", label: "2.1 Sales Methodology", href: "/portal/revenue-execution/methodology" },
+      { id: "adoption", label: "2.2 Adoption Programme", href: "/portal/revenue-execution/adoption" },
+      { id: "ownership", label: "2.3 Leadership Ownership", href: "/portal/revenue-execution/ownership" },
+      { id: "crm", label: "2.4 CRM Integration", href: "/portal/revenue-execution/crm" },
+      { id: "campaigns", label: "2.5 Campaign Performance", href: "/portal/revenue-execution/campaigns" },
+      { id: "scorecard", label: "2.6 Balanced Scorecard", href: "/portal/revenue-execution/scorecard" },
+      { id: "qbr", label: "2.7 Quarterly Review", href: "/portal/revenue-execution/qbr" },
+      { id: "people-cap", label: "2.8 People & Capability", href: "/portal/revenue-execution/people-cap" },
+    ],
+  },
+  {
+    id: "execution_planning",
+    label: "Execution Planning",
+    icon: <ClipboardCheck className="w-[18px] h-[18px]" />,
+    children: [
+      { id: "priorities", label: "3.1 Priority Setting", href: "/portal/execution-planning/priorities" },
+      { id: "ninety-day", label: "3.2 90-Day Action Plans", href: "/portal/execution-planning/ninety-day" },
+      { id: "accountability", label: "3.3 Accountability", href: "/portal/execution-planning/accountability" },
+      { id: "risk", label: "3.4 Risk & Dependencies", href: "/portal/execution-planning/risk" },
+      { id: "governance", label: "3.5 Governance", href: "/portal/execution-planning/governance" },
+      { id: "kpi-dashboard", label: "3.6 KPI Dashboard", href: "/portal/execution-planning/kpi-dashboard" },
+      { id: "reset", label: "3.7 Quarterly Reset", href: "/portal/execution-planning/reset" },
     ],
   },
   {

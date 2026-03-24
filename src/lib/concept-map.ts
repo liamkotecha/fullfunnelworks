@@ -11,14 +11,16 @@
 // ============================================================
 
 export const NAV_SECTIONS = [
-  { id: "overview",    label: "📊 Overview" },
-  { id: "assessment",  label: "🔍 Assessment" },
-  { id: "people",      label: "👥 People" },
-  { id: "product",     label: "🎯 Product" },
-  { id: "process",     label: "⚙️ Process" },
-  { id: "roadmap",     label: "🗺️ Roadmap" },
-  { id: "kpis",        label: "📈 KPIs" },
-  { id: "gtm",         label: "🗺️ GTM Playbook" },
+  { id: "overview",             label: "📊 Overview" },
+  { id: "assessment",           label: "🔍 Assessment" },
+  { id: "people",               label: "👥 People" },
+  { id: "product",              label: "🎯 Product" },
+  { id: "process",              label: "⚙️ Process" },
+  { id: "roadmap",              label: "🗺️ Roadmap" },
+  { id: "kpis",                 label: "📈 KPIs" },
+  { id: "gtm",                  label: "🗺️ GTM Playbook" },
+  { id: "revenue_execution",    label: "📊 Revenue Execution" },
+  { id: "execution_planning",   label: "🗺️ Execution Planning" },
 ] as const;
 
 export type SectionId = typeof NAV_SECTIONS[number]["id"];
@@ -879,3 +881,399 @@ export const INTAKE_SECTIONS_ORDERED = [
   { id: "roadmap",     label: "Roadmap",            section: ROADMAP_SECTION },
   { id: "kpis",        label: "KPIs",               section: KPIS_SECTION },
 ] as const;
+
+// ============================================================
+// SECTION 2: REVENUE EXECUTION, ADOPTION & PERFORMANCE
+// Source: FF_Framework_Sections2and3_v64 + Section 2 Consultant Guide
+// ============================================================
+
+export const REVENUE_EXECUTION_SECTION = {
+  id: "revenue_execution",
+  heading: "Revenue Execution, Adoption & Performance Management",
+  intro: "This section translates the initial review into a repeatable commercial operating model. It focuses on sales methodology adoption, CRM-led performance management, campaign measurement, leadership ownership, and a balanced scorecard linking revenue, pipeline, process discipline and people capability.",
+  modules: {
+    // ── 2.1 Sales Methodology Selection, Fit & Design ──
+    methodology: {
+      id: "s2-methodology",
+      number: "2.1",
+      title: "Sales Methodology Selection, Fit & Design",
+      purpose: "Confirm the chosen methodology matches the customer journey, buying process, sales cycle and commercial objectives.",
+      guidance: "Customer journey map; stage design; qualification criteria; evidence required at each stage; playbooks and templates.",
+      fields: [
+        { id: "s2-methodology-current", type: "select", question: "Current Sales Methodology", options: ["MEDDIC", "SPIN Selling", "Challenger Sale", "Solution Selling", "Value Selling", "Sandler System", "No formal methodology", "Custom/Hybrid"] },
+        { id: "s2-methodology-fit", type: "select", question: "Methodology Fit Assessment", options: ["Strong fit", "Good fit", "Partial fit", "Poor fit"] },
+        { id: "s2-methodology-journey", type: "textarea", question: "Customer Journey — Describe how your customer moves from awareness to purchase and how the methodology maps to each stage." },
+        { id: "s2-methodology-qual", type: "textarea", question: "Qualification Criteria — What evidence is required to qualify an opportunity at each pipeline stage?" },
+      ],
+      measures: [
+        { id: "s2-methodology-m1", label: "Stage conversion rate (%)" },
+        { id: "s2-methodology-m2", label: "Win rate (%)" },
+        { id: "s2-methodology-m3", label: "Average sales cycle (days)" },
+        { id: "s2-methodology-m4", label: "Average contract value (£)" },
+        { id: "s2-methodology-m5", label: "% opportunities with full stage evidence" },
+      ],
+    },
+
+    // ── 2.2 Adoption & Embedding Programme ──
+    adoption: {
+      id: "s2-adoption",
+      number: "2.2",
+      title: "Adoption & Embedding Programme",
+      purpose: "Turn the methodology into everyday selling and management behaviour over a sustained period.",
+      guidance: "6-12 month adoption plan; leadership modelling; weekly deal reviews; coaching rhythm; reinforcement activities; internal communications.",
+      fields: [
+        { id: "s2-adoption-duration", type: "select", question: "Adoption Programme Duration", options: ["6 months", "9 months", "12 months", "12+ months"] },
+        { id: "s2-adoption-coaching", type: "select", question: "Coaching Cadence Agreed", options: ["Weekly", "Bi-weekly", "Monthly", "Not established"] },
+        { id: "s2-adoption-leadership", type: "textarea", question: "Leadership Modelling Commitment — How will managers and senior leaders model the agreed methodology in deal reviews, forecasting and coaching?" },
+        { id: "s2-adoption-reinforce", type: "textarea", question: "Reinforcement Activities Planned — What activities will sustain adoption beyond initial training (deal reviews, competitions, internal comms)?" },
+      ],
+      measures: [
+        { id: "s2-adoption-m1", label: "% team trained on methodology" },
+        { id: "s2-adoption-m2", label: "% managers coaching monthly" },
+        { id: "s2-adoption-m3", label: "% pipeline reviewed using agreed criteria" },
+        { id: "s2-adoption-m4", label: "Adoption score (1–10)" },
+        { id: "s2-adoption-m5", label: "Time-to-competence for new starters" },
+      ],
+    },
+
+    // ── 2.3 Commercial Leadership & Named Ownership ──
+    ownership: {
+      id: "s2-ownership",
+      number: "2.3",
+      title: "Commercial Leadership & Named Ownership",
+      purpose: "Assign clear accountability so methodology adoption, reporting and campaign control do not sit in a grey area.",
+      guidance: "Executive sponsor; methodology owner; CRM owner; campaign owner; sales manager responsibilities; escalation route.",
+      ownershipRoles: [
+        { role: "Executive Sponsor", responsibility: "Leads quarterly review, removes blockers, reinforces leadership discipline." },
+        { role: "Methodology Owner", responsibility: "Maintains methodology, stage definitions, tools and reinforcement plan." },
+        { role: "CRM Owner / RevOps", responsibility: "Maintains data quality, dashboards, workflow rules and reporting accuracy." },
+        { role: "Marketing Lead", responsibility: "Owns campaign plans, predicted outcomes, attribution and review of actual results." },
+        { role: "Sales Leaders / Managers", responsibility: "Run coaching, deal inspections, pipeline reviews and performance interventions." },
+        { role: "People Lead", responsibility: "Integrates adoption into recruitment, induction, skills development and performance review." },
+      ],
+      fields: [
+        { id: "s2-ownership-escalation", type: "textarea", question: "Escalation Route — Define the escalation path when adoption, reporting or campaign issues are not resolved at team level." },
+      ],
+      measures: [
+        { id: "s2-ownership-m1", label: "Ownership matrix completed (%)" },
+        { id: "s2-ownership-m2", label: "% actions closed on time" },
+        { id: "s2-ownership-m3", label: "Review attendance rate (%)" },
+      ],
+    },
+
+    // ── 2.4 CRM Integration & Revenue Process Control ──
+    crm: {
+      id: "s2-crm",
+      number: "2.4",
+      title: "CRM Integration & Revenue Process Control",
+      purpose: "Embed the methodology into the CRM so it becomes the operating system for pipeline control and forecasting.",
+      guidance: "Stage architecture; mandatory fields; opportunity scoring; next-step discipline; lost-reason tracking; dashboard pack; data governance.",
+      fields: [
+        { id: "s2-crm-platform", type: "select", question: "CRM Platform in Use", options: ["Salesforce", "HubSpot", "Dynamics 365", "Pipedrive", "Zoho", "Monday CRM", "Other", "No CRM"] },
+        { id: "s2-crm-quality", type: "select", question: "CRM Data Quality Assessment", options: ["Excellent", "Good", "Poor", "Very poor"] },
+        { id: "s2-crm-fields", type: "textarea", question: "Mandatory Fields — List the fields that must be completed at each pipeline stage to maintain data integrity." },
+        { id: "s2-crm-dashboards", type: "textarea", question: "Dashboard Pack / Reports Required — What dashboards and reports does leadership need to manage pipeline, forecasting and performance?" },
+      ],
+      measures: [
+        { id: "s2-crm-m1", label: "CRM completeness (%)" },
+        { id: "s2-crm-m2", label: "Forecast accuracy (%)" },
+        { id: "s2-crm-m3", label: "Pipeline coverage ratio" },
+        { id: "s2-crm-m4", label: "% opps with next step & close date" },
+      ],
+    },
+
+    // ── 2.5 Marketing Campaign Performance & Predicted Outcomes ──
+    campaigns: {
+      id: "s2-campaigns",
+      number: "2.5",
+      title: "Marketing Campaign Performance & Predicted Outcomes",
+      purpose: "Link campaigns to strategic objectives and track predicted versus actual commercial outcomes.",
+      guidance: "Campaign hypotheses; channel plan; source attribution; MQL/SQL definitions; campaign review process; forecast versus actual reporting.",
+      fields: [
+        { id: "s2-campaigns-calendar", type: "textarea", question: "Current Campaign Calendar Summary — Outline the active and planned campaigns for the current quarter." },
+        { id: "s2-campaigns-mql", type: "select", question: "MQL Definition Agreed", options: ["Yes — clearly defined", "Informally agreed", "No — not defined"] },
+        { id: "s2-campaigns-sql", type: "select", question: "SQL Definition Agreed", options: ["Yes — clearly defined", "Informally agreed", "No — not defined"] },
+        { id: "s2-campaigns-objective", type: "textarea", question: "Campaign Objective — What commercial issue or growth priority is being addressed?" },
+        { id: "s2-campaigns-audience", type: "textarea", question: "Target Audience — Which sector, persona, account tier or buyer group is being targeted?" },
+        { id: "s2-campaigns-predicted", type: "textarea", question: "Predicted Outcome — Expected leads, MQLs, SQLs, meetings, pipeline value and revenue influence." },
+        { id: "s2-campaigns-actual", type: "textarea", question: "Actual Result — Measured output by source, quality and conversion." },
+        { id: "s2-campaigns-review", type: "textarea", question: "Commercial Review — What worked, what did not, and what should change next?" },
+      ],
+      measures: [
+        { id: "s2-campaigns-m1", label: "Lead volume (monthly)" },
+        { id: "s2-campaigns-m2", label: "MQL to SQL conversion (%)" },
+        { id: "s2-campaigns-m3", label: "Cost per SQL (£)" },
+        { id: "s2-campaigns-m4", label: "Pipeline generated by marketing (£)" },
+        { id: "s2-campaigns-m5", label: "Campaign ROI" },
+      ],
+    },
+
+    // ── 2.6 Sales Performance Management & Balanced Scorecard ──
+    scorecard: {
+      id: "s2-scorecard",
+      number: "2.6",
+      title: "Sales Performance Management & Balanced Scorecard",
+      purpose: "Measure revenue, customer outcomes, process discipline and people capability in one joined-up view.",
+      guidance: "Monthly scorecard; team and individual dashboards; RAG status by objective; action tracker.",
+      scorecardAreas: [
+        {
+          area: "Financial",
+          measures: [
+            { id: "s2-scorecard-fin1", label: "Revenue vs target (%)" },
+            { id: "s2-scorecard-fin2", label: "New business revenue (£)" },
+            { id: "s2-scorecard-fin3", label: "Average deal value (£)" },
+          ],
+        },
+        {
+          area: "Customer & Market",
+          measures: [
+            { id: "s2-scorecard-cust1", label: "Win rate (%)" },
+            { id: "s2-scorecard-cust2", label: "Customer renewal & retention (%)" },
+            { id: "s2-scorecard-cust3", label: "Referenceable customers (count)" },
+          ],
+        },
+        {
+          area: "Internal Process",
+          measures: [
+            { id: "s2-scorecard-proc1", label: "Pipeline coverage ratio" },
+            { id: "s2-scorecard-proc2", label: "CRM compliance (%)" },
+          ],
+        },
+        {
+          area: "People & Capability",
+          measures: [
+            { id: "s2-scorecard-ppl1", label: "Methodology adoption score (1–10)" },
+            { id: "s2-scorecard-ppl2", label: "Retention of key staff (%)" },
+          ],
+        },
+      ],
+      fields: [
+        { id: "s2-scorecard-narrative", type: "textarea", question: "Scorecard Narrative — Summarise the current quarter performance and any areas requiring intervention." },
+      ],
+    },
+
+    // ── 2.7 Quarterly Business Review & Annual Growth Reset ──
+    qbr: {
+      id: "s2-qbr",
+      number: "2.7",
+      title: "Quarterly Business Review & Annual Growth Reset",
+      purpose: "Formalise review cycles to maintain focus, respond to change and reset priorities.",
+      guidance: "Quarterly business reviews; annual commercial review; issue log; corrective action plan; next-year priorities.",
+      fields: [
+        { id: "s2-qbr-date", type: "text", question: "Next QBR Date" },
+        { id: "s2-qbr-agenda", type: "textarea", question: "QBR Format / Agenda — Outline the planned agenda for the next quarterly business review." },
+      ],
+    },
+
+    // ── 2.8 People, Capability & Performance Development ──
+    peopleCap: {
+      id: "s2-people-cap",
+      number: "2.8",
+      title: "People, Capability & Performance Development",
+      purpose: "Make methodology adoption part of hiring, onboarding, development and performance review.",
+      guidance: "Competency framework; onboarding pathway; manager coaching standards; reward and recognition; succession coverage.",
+      fields: [
+        { id: "s2-people-cap-framework", type: "select", question: "Competency Framework Status", options: ["In place", "Partially defined", "Not in place"] },
+        { id: "s2-people-cap-succession", type: "select", question: "Succession Coverage", options: ["Full coverage", "Partial coverage", "No succession planning"] },
+        { id: "s2-people-cap-gaps", type: "textarea", question: "Identified Capability Gaps — List the key capability gaps in the commercial team and the plan to address them." },
+      ],
+      measures: [
+        { id: "s2-people-cap-m1", label: "Skills gap closure (%)" },
+        { id: "s2-people-cap-m2", label: "Attrition of key staff (%)" },
+        { id: "s2-people-cap-m3", label: "Succession readiness (1–5)" },
+      ],
+    },
+  },
+  challengeQuestions: [
+    "Which sales methodology best fits our customer journey and where is it currently not being followed?",
+    "Who owns adoption across leadership, sales, marketing, CRM and people development, and how will they be measured?",
+    "How will the CRM be configured so stage discipline, forecast confidence and individual accountability can be managed properly?",
+    "What campaign outcomes are being predicted in advance and how often are forecast versus actual results reviewed together?",
+    "What balanced scorecard will leadership use monthly, quarterly and annually to judge progress against objectives, revenue and people capability?",
+  ],
+} as const;
+
+// ============================================================
+// SECTION 3: EXECUTION PLANNING, ACCOUNTABILITY & GROWTH DELIVERY
+// Source: FF_Framework_Sections2and3_v64 + Section 3 Consultant Guide
+// ============================================================
+
+export const EXECUTION_PLANNING_SECTION = {
+  id: "execution_planning",
+  heading: "Execution Planning, Accountability & Growth Delivery",
+  intro: "This section converts the commercial operating model into an execution programme. It defines 90-day priorities, ownership by function, board and leadership review cadence, delivery controls, and the measures needed to keep growth initiatives on track.",
+  modules: {
+    // ── 3.1 Growth Execution Planning & Priority Setting ──
+    priorities: {
+      id: "s3-priorities",
+      number: "3.1",
+      title: "Growth Execution Planning & Priority Setting",
+      purpose: "Translate the agreed commercial goals into an execution plan with priorities, sequencing, owners and milestones.",
+      guidance: "Strategic priorities agreed; Delivery roadmap by quarter; Dependencies and decision points identified.",
+      fields: [
+        { id: "s3-priorities-top5", type: "textarea", question: "Top 3–5 Strategic Priorities — List the priorities that will make the biggest difference in the next 90 days." },
+        { id: "s3-priorities-qstart", type: "text", question: "Quarter Start Date" },
+        { id: "s3-priorities-qend", type: "text", question: "Quarter End Date" },
+        { id: "s3-priorities-deps", type: "textarea", question: "Key Dependencies & Decision Points — What must be resolved or decided before key actions can proceed?" },
+      ],
+      measures: [
+        { id: "s3-priorities-m1", label: "Priorities confirmed against plan (%)" },
+        { id: "s3-priorities-m2", label: "Milestones achieved on time (%)" },
+        { id: "s3-priorities-m3", label: "Blocked actions unresolved (count)" },
+      ],
+    },
+
+    // ── 3.2 90-Day Action Plans & Milestone Control ──
+    ninetyDay: {
+      id: "s3-90day",
+      number: "3.2",
+      title: "90-Day Action Plans & Milestone Control",
+      purpose: "Create a rolling 90-day plan for each quarter with actions, expected outcomes, due dates and ownership.",
+      guidance: "Quarterly action plan; Milestone tracker; Action status by owner.",
+      workstreams: [
+        {
+          id: "revenue",
+          label: "Revenue Growth",
+          icon: "💰",
+          purpose: "Target accounts agreed, pipeline actions prioritised, stalled deals reviewed, pricing or proposal controls improved.",
+          successEvidence: "Pipeline quality improves, win plans are visible, forecast confidence strengthens.",
+        },
+        {
+          id: "marketing",
+          label: "Marketing",
+          icon: "📣",
+          purpose: "Campaign calendar agreed, target messages refined, forecast outcomes approved, review dates set.",
+          successEvidence: "Campaigns launch on time, lead quality improves, contribution to pipeline is measurable.",
+        },
+        {
+          id: "crm",
+          label: "CRM & Reporting",
+          icon: "📋",
+          purpose: "Mandatory fields enforced, dashboards live, stage ageing visible, reasons for loss standardised.",
+          successEvidence: "Data hygiene improves, managers rely on live reporting, board reporting is consistent.",
+        },
+        {
+          id: "people",
+          label: "People",
+          icon: "👥",
+          purpose: "Coaching schedule active, role expectations clear, capability gaps identified, induction content updated.",
+          successEvidence: "Coaching completion rises, consistency improves, performance variation reduces.",
+        },
+        {
+          id: "proposition",
+          label: "Value Proposition",
+          icon: "🎯",
+          purpose: "Value messages tightened, product gaps prioritised, commercial feedback loop established.",
+          successEvidence: "Sales conversations become clearer, objections reduce, roadmap decisions are evidence-based.",
+        },
+      ],
+      measures: [
+        { id: "s3-90day-m1", label: "90-day actions completed (%)" },
+        { id: "s3-90day-m2", label: "On-time delivery (%)" },
+        { id: "s3-90day-m3", label: "Actions slipped >14 days (count)" },
+      ],
+    },
+
+    // ── 3.3 Functional Accountability & Operating Model ──
+    accountability: {
+      id: "s3-accountability",
+      number: "3.3",
+      title: "Functional Accountability & Operating Model",
+      purpose: "Define what each function must deliver to support revenue growth and organisational readiness.",
+      guidance: "RACI-style accountability matrix; Role expectations; Cross-functional operating model.",
+      accountabilityRoles: [
+        { function: "Board / Investors", accountabilities: "Set growth expectations, approve major investments, challenge performance, support decisions on risk and resource.", evidence: "Quarterly review, action challenge, approval records." },
+        { function: "CEO / MD", accountabilities: "Own delivery of the growth plan, align functions, remove blockers, hold leaders accountable.", evidence: "Weekly operating review, action closure, prioritisation decisions." },
+        { function: "Sales Leadership", accountabilities: "Drive pipeline performance, deal inspection, coaching and forecasting discipline.", evidence: "Forecast accuracy, coaching logs, stage compliance." },
+        { function: "Marketing", accountabilities: "Run target campaigns, forecast contribution, review outcomes and adapt investment choices.", evidence: "Campaign forecast vs actual, source quality, ROI reporting." },
+        { function: "Customer Success", accountabilities: "Protect renewals, identify expansion opportunities, improve customer value delivery.", evidence: "Renewal rate, upsell pipeline, customer risk actions." },
+        { function: "Product / Solution", accountabilities: "Prioritise market-led improvements, support proposition clarity, remove product barriers to sale.", evidence: "Roadmap decisions linked to commercial evidence." },
+        { function: "Finance / RevOps", accountabilities: "Maintain reporting discipline, data quality, KPI dashboards and commercial analysis.", evidence: "Dashboards live, variance analysis, data control." },
+        { function: "People / HR", accountabilities: "Support role clarity, hiring, onboarding, capability reviews and succession planning.", evidence: "Skills plans, hiring progress, retention and readiness metrics." },
+      ],
+      measures: [
+        { id: "s3-accountability-m1", label: "Ownership accepted (%)" },
+        { id: "s3-accountability-m2", label: "Cross-functional actions completed (%)" },
+        { id: "s3-accountability-m3", label: "Escalations due to unclear ownership (count)" },
+      ],
+    },
+
+    // ── 3.4 Resource, Risk & Dependency Management ──
+    risk: {
+      id: "s3-risk",
+      number: "3.4",
+      title: "Resource, Risk & Dependency Management",
+      purpose: "Track the people, technology, budget and process constraints that could slow delivery or reduce impact.",
+      guidance: "Risk register; Dependency map; Resource requirement log.",
+      fields: [
+        { id: "s3-risk-resources", type: "textarea", question: "Resource Gaps — Describe any resource gaps (people, technology, budget) that could constrain delivery." },
+      ],
+      measures: [
+        { id: "s3-risk-m1", label: "Critical risks open (count)" },
+        { id: "s3-risk-m2", label: "Resource gaps against plan" },
+      ],
+    },
+
+    // ── 3.5 Board, Leadership & Decision Governance ──
+    governance: {
+      id: "s3-governance",
+      number: "3.5",
+      title: "Board, Leadership & Decision Governance",
+      purpose: "Set decision rights and review standards so issues are surfaced early and corrected quickly.",
+      guidance: "Governance calendar; Decision rights framework; Board reporting format.",
+      governanceCalendar: [
+        { reviewType: "Weekly Revenue Review", frequency: "Weekly" },
+        { reviewType: "Monthly Business Review", frequency: "Monthly" },
+        { reviewType: "Quarterly Growth Review", frequency: "Quarterly" },
+        { reviewType: "Annual Value Creation Review", frequency: "Annual" },
+      ],
+      fields: [
+        { id: "s3-governance-rights", type: "textarea", question: "Decision Rights Framework — Who has authority to approve investments, change priorities, escalate issues and halt delivery?" },
+        { id: "s3-governance-agenda", type: "textarea", question: "Weekly Operating Agenda — Outline the standard weekly revenue review agenda." },
+      ],
+    },
+
+    // ── 3.6 KPI Dashboard, Action Thresholds & Intervention Rules ──
+    kpiDashboard: {
+      id: "s3-kpi-dashboard",
+      number: "3.6",
+      title: "KPI Dashboard, Action Thresholds & Intervention Rules",
+      purpose: "Turn scorecard data into action by defining thresholds and intervention triggers before targets are missed.",
+      guidance: "Dashboard with tolerances; RAG thresholds; Intervention rules.",
+      interventionAreas: [
+        { area: "Revenue", amberTrigger: "Below plan but recoverable within current quarter.", typicalIntervention: "Reprioritise activity, increase deal inspection, refine campaign focus." },
+        { area: "Pipeline Quality", amberTrigger: "Coverage or stage quality starts to weaken.", typicalIntervention: "Clean pipeline, requalify deals, strengthen manager reviews." },
+        { area: "Marketing Contribution", amberTrigger: "Campaign results below predicted range.", typicalIntervention: "Change message, segment, channel mix or budget allocation." },
+        { area: "Forecast Accuracy", amberTrigger: "Forecast confidence falls or movement is unexplained.", typicalIntervention: "Increase forecast challenge, review stage discipline, check CRM hygiene." },
+        { area: "People / Capability", amberTrigger: "Performance gap persists or coaching is not happening.", typicalIntervention: "Targeted support plan, manager intervention, role reset if needed." },
+        { area: "Delivery Milestones", amberTrigger: "Critical actions miss dates or dependencies remain unresolved.", typicalIntervention: "Escalate decision, reallocate resources, adjust scope or sequence." },
+      ],
+    },
+
+    // ── 3.7 Quarterly Reset & Annual Value Creation Review ──
+    reset: {
+      id: "s3-reset",
+      number: "3.7",
+      title: "Quarterly Reset & Annual Value Creation Review",
+      purpose: "Refresh priorities, resourcing and targets based on delivery evidence, market change and board objectives.",
+      guidance: "Quarterly reset summary; Annual value creation plan; Lessons learned log.",
+      fields: [
+        { id: "s3-reset-summary", type: "textarea", question: "Quarterly Reset Summary — Summarise the key outcomes from the quarter and what needs to change." },
+        { id: "s3-reset-lessons", type: "textarea", question: "Lessons Learned — What worked well and what will be done differently next quarter?" },
+        { id: "s3-reset-annual", type: "textarea", question: "Annual Value Creation Plan — What must the business achieve this year to create strategic value beyond revenue?" },
+      ],
+      measures: [
+        { id: "s3-reset-m1", label: "Quarter-on-quarter improvement (%)" },
+        { id: "s3-reset-m2", label: "Annual goal attainment (%)" },
+        { id: "s3-reset-m3", label: "Value creation actions completed (%)" },
+      ],
+    },
+  },
+  challengeQuestions: [
+    "Which three to five priorities will make the biggest difference in the next 90 days, and what evidence will prove progress?",
+    "Does every workstream have one accountable owner, and are support roles and decision rights fully clear?",
+    "Which metrics tell us early that delivery is slipping, and what intervention will be triggered when thresholds are crossed?",
+    "How well are sales, marketing, product, customer success and finance working from one shared growth plan rather than separate agendas?",
+    "What should the board expect to see each month and quarter to have confidence that the plan is being delivered?",
+  ],
+} as const;

@@ -54,7 +54,9 @@ export type ModuleId =
   | "kpis"
   | "gtm"
   | "modeller"
-  | "hiring";
+  | "hiring"
+  | "revenue_execution"
+  | "execution_planning";
 
 export type StalenessStatus = "active" | "nudge" | "stalled" | "at_risk" | "terminated";
 
@@ -113,15 +115,17 @@ export const PAYMENT_MODEL_META: Record<PaymentModel, { label: string; descripti
 };
 
 export const MODULE_META: Record<ModuleId, { label: string; description: string; icon: string }> = {
-  assessment: { label: "Assessment",         description: "SWOT, MOST, Gap Analysis and Leadership review", icon: "Search" },
-  people:     { label: "People",             description: "Team structure, challenges and capability mapping", icon: "Users" },
-  product:    { label: "Product",            description: "Product challenges and outcome mapping", icon: "Target" },
-  process:    { label: "Process",            description: "Sales process, methodology and checklist", icon: "Settings" },
-  roadmap:    { label: "Roadmap",            description: "Strategic milestones and 90-day planning", icon: "MapPin" },
-  kpis:       { label: "KPIs",               description: "Key performance indicators and tracking", icon: "BarChart3" },
-  gtm:        { label: "GTM Playbook",       description: "Market intelligence and competitive analysis", icon: "Map" },
-  modeller:   { label: "Financial Modeller", description: "P&L scenario modelling and forecasting", icon: "Calculator" },
-  hiring:     { label: "Hiring Plan",        description: "12-month hiring plan with financial impact", icon: "UserPlus" },
+  assessment:          { label: "Assessment",            description: "SWOT, MOST, Gap Analysis and Leadership review", icon: "Search" },
+  people:              { label: "People",                description: "Team structure, challenges and capability mapping", icon: "Users" },
+  product:             { label: "Product",               description: "Product challenges and outcome mapping", icon: "Target" },
+  process:             { label: "Process",               description: "Sales process, methodology and checklist", icon: "Settings" },
+  roadmap:             { label: "Roadmap",               description: "Strategic milestones and 90-day planning", icon: "MapPin" },
+  kpis:                { label: "KPIs",                  description: "Key performance indicators and tracking", icon: "BarChart3" },
+  gtm:                 { label: "GTM Playbook",          description: "Market intelligence and competitive analysis", icon: "Map" },
+  modeller:            { label: "Financial Modeller",    description: "P&L scenario modelling and forecasting", icon: "Calculator" },
+  hiring:              { label: "Hiring Plan",           description: "12-month hiring plan with financial impact", icon: "UserPlus" },
+  revenue_execution:   { label: "Revenue Execution",     description: "Sales methodology adoption, CRM discipline and balanced scorecard", icon: "TrendingUp" },
+  execution_planning:  { label: "Execution Planning",    description: "90-day action plans, accountability and governance", icon: "ClipboardCheck" },
 };
 
 // ── Project ───────────────────────────────────────────────────

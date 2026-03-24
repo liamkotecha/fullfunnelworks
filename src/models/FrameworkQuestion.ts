@@ -12,7 +12,7 @@ export interface IFrameworkQuestion extends Document {
   question: string;         // The main question / label text
   subPrompt?: string;       // Optional secondary prompt (Leadership, GTM Market)
   label?: string;           // Short label for compact views
-  type: "textarea" | "text" | "checkbox" | "slider" | "select";
+  type: "textarea" | "text" | "checkbox" | "slider" | "select" | "measure-table" | "action-table" | "ownership-matrix" | "risk-register" | "governance-calendar" | "intervention-rules";
   placeholder?: string;
   weightFieldId?: string;   // For SWOT questions with an importance weight
   order: number;            // Sort order within section + subSection + group
@@ -33,7 +33,7 @@ const FrameworkQuestionSchema = new Schema<IFrameworkQuestion>(
     label: { type: String, default: null },
     type: {
       type: String,
-      enum: ["textarea", "text", "checkbox", "slider", "select"],
+      enum: ["textarea", "text", "checkbox", "slider", "select", "measure-table", "action-table", "ownership-matrix", "risk-register", "governance-calendar", "intervention-rules"],
       default: "textarea",
     },
     placeholder: { type: String, default: null },

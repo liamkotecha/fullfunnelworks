@@ -19,6 +19,8 @@ import {
   ROADMAP_SECTION,
   KPIS_SECTION,
   GTM_SECTION,
+  REVENUE_EXECUTION_SECTION,
+  EXECUTION_PLANNING_SECTION,
 } from "../src/lib/concept-map";
 
 const force = process.argv.includes("--force");
@@ -31,7 +33,7 @@ interface QSeed {
   question: string;
   subPrompt?: string;
   label?: string;
-  type: "textarea" | "text" | "checkbox" | "slider" | "select";
+  type: "textarea" | "text" | "checkbox" | "slider" | "select" | "measure-table" | "action-table" | "ownership-matrix" | "risk-register" | "governance-calendar" | "intervention-rules";
   placeholder?: string;
   weightFieldId?: string;
   order: number;
@@ -357,6 +359,321 @@ GTM_SECTION.marketplace.subsections.forEach((sub) => {
     });
   });
 });
+
+// ── Run ──────────────────────────────────────────────────────
+
+// ── S2: Revenue Execution ────────────────────────────────────
+
+const S2 = REVENUE_EXECUTION_SECTION.modules;
+
+function seedS2Module(
+  mod: { id: string; title: string; fields?: readonly { id: string; type: string; question: string; options?: readonly string[] }[]; measures?: readonly { id: string; label: string }[] },
+  subSection: string,
+) {
+  let order = 0;
+  // Regular fields
+  if (mod.fields) {
+    for (const f of mod.fields) {
+      questions.push({
+        fieldId: f.id,
+        section: "revenue_execution",
+        subSection,
+        question: f.question,
+        type: f.type as QSeed["type"],
+        order: order++,
+        metadata: f.options ? { options: [...f.options] } : undefined,
+      });
+    }
+  }
+  // Measure table (single composite field)
+  if (mod.measures) {
+    questions.push({
+      fieldId: `${mod.id}-measures`,
+      section: "revenue_execution",
+      subSection,
+      question: `${mod.title} — Core Measures`,
+      type: "measure-table",
+      order: order++,
+      metadata: { measures: mod.measures.map((m) => ({ id: m.id, label: m.label })) },
+    });
+  }
+  // Action table
+  questions.push({
+    fieldId: `${mod.id}-actions`,
+    section: "revenue_execution",
+    subSection,
+    question: `${mod.title} — Actions Required`,
+    type: "action-table",
+    order: order++,
+  });
+}
+
+// 2.1 Methodology
+seedS2Module(S2.methodology, "methodology");
+
+// 2.2 Adoption
+seedS2Module(S2.adoption, "adoption");
+
+// 2.3 Ownership — has ownership matrix
+questions.push({
+  fieldId: "s2-ownership-matrix",
+  section: "revenue_execution",
+  subSection: "ownership",
+  question: "Commercial Leadership — Ownership Matrix",
+  type: "ownership-matrix",
+  order: 0,
+  metadata: {
+    roles: S2.ownership.ownershipRoles.map((r) => ({
+      role: r.role,
+      responsibility: r.responsibility,
+    })),
+  },
+});
+for (const f of S2.ownership.fields) {
+  questions.push({
+    fieldId: f.id,
+    section: "revenue_execution",
+    subSection: "ownership",
+    question: f.question,
+    type: f.type as QSeed["type"],
+    order: 1,
+  });
+}
+if (S2.ownership.measures) {
+  questions.push({
+    fieldId: "s2-ownership-measures",
+    section: "revenue_execution",
+    subSection: "ownership",
+    question: "Commercial Ownership — Core Measures",
+    type: "measure-table",
+    order: 2,
+    metadata: { measures: S2.ownership.measures.map((m) => ({ id: m.id, label: m.label })) },
+  });
+}
+
+// 2.4 CRM
+seedS2Module(S2.crm, "crm");
+
+// 2.5 Campaigns
+seedS2Module(S2.campaigns, "campaigns");
+
+// 2.6 Scorecard — has balanced scorecard
+questions.push({
+  fieldId: "s2-scorecard-table",
+  section: "revenue_execution",
+  subSection: "scorecard",
+  question: "Balanced Scorecard",
+  type: "measure-table",
+  order: 0,
+  metadata: {
+    scorecardAreas: S2.scorecard.scorecardAreas.map((area) => ({
+      area: area.area,
+      measures: area.measures.map((m) => ({ id: m.id, label: m.label })),
+    })),
+  },
+});
+for (const f of S2.scorecard.fields) {
+  questions.push({
+    fieldId: f.id,
+    section: "revenue_execution",
+    subSection: "scorecard",
+    question: f.question,
+    type: f.type as QSeed["type"],
+    order: 1,
+  });
+}
+
+// 2.7 QBR
+for (const f of S2.qbr.fields) {
+  questions.push({
+    fieldId: f.id,
+    section: "revenue_execution",
+    subSection: "qbr",
+    question: f.question,
+    type: f.type as QSeed["type"],
+    order: S2.qbr.fields.indexOf(f),
+  });
+}
+questions.push({
+  fieldId: "s2-qbr-corrective-actions",
+  section: "revenue_execution",
+  subSection: "qbr",
+  question: "Corrective Actions",
+  type: "action-table",
+  order: S2.qbr.fields.length,
+  metadata: { columns: ["Issue/Gap", "Corrective Action", "Owner", "Due Date"] },
+});
+
+// 2.8 People & Capability
+seedS2Module(S2.peopleCap, "people-cap");
+
+// ── S3: Execution Planning ───────────────────────────────────
+
+const S3 = EXECUTION_PLANNING_SECTION.modules;
+
+function seedS3Module(
+  mod: { id: string; title: string; fields?: readonly { id: string; type: string; question: string }[]; measures?: readonly { id: string; label: string }[] },
+  subSection: string,
+) {
+  let order = 0;
+  if (mod.fields) {
+    for (const f of mod.fields) {
+      questions.push({
+        fieldId: f.id,
+        section: "execution_planning",
+        subSection,
+        question: f.question,
+        type: f.type as QSeed["type"],
+        order: order++,
+      });
+    }
+  }
+  if (mod.measures) {
+    questions.push({
+      fieldId: `${mod.id}-measures`,
+      section: "execution_planning",
+      subSection,
+      question: `${mod.title} — Core Measures`,
+      type: "measure-table",
+      order: order++,
+      metadata: { measures: mod.measures.map((m) => ({ id: m.id, label: m.label })) },
+    });
+  }
+}
+
+// 3.1 Priorities
+seedS3Module(S3.priorities, "priorities");
+
+// 3.2 90-Day — has workstream action tables
+for (const ws of S3.ninetyDay.workstreams) {
+  questions.push({
+    fieldId: `s3-90day-${ws.id}-actions`,
+    section: "execution_planning",
+    subSection: "90day",
+    group: ws.id,
+    question: `${ws.label} — 90-Day Actions`,
+    label: ws.label,
+    type: "action-table",
+    order: S3.ninetyDay.workstreams.indexOf(ws),
+    metadata: { icon: ws.icon, purpose: ws.purpose, successEvidence: ws.successEvidence },
+  });
+}
+if (S3.ninetyDay.measures) {
+  questions.push({
+    fieldId: "s3-90day-measures",
+    section: "execution_planning",
+    subSection: "90day",
+    question: "90-Day Milestone Measures",
+    type: "measure-table",
+    order: S3.ninetyDay.workstreams.length,
+    metadata: { measures: S3.ninetyDay.measures.map((m) => ({ id: m.id, label: m.label })) },
+  });
+}
+
+// 3.3 Accountability — has accountability matrix
+questions.push({
+  fieldId: "s3-accountability-matrix",
+  section: "execution_planning",
+  subSection: "accountability",
+  question: "Functional Accountability Matrix",
+  type: "ownership-matrix",
+  order: 0,
+  metadata: {
+    roles: S3.accountability.accountabilityRoles.map((r) => ({
+      role: r.function,
+      responsibility: r.accountabilities,
+      evidence: r.evidence,
+    })),
+  },
+});
+if (S3.accountability.measures) {
+  questions.push({
+    fieldId: "s3-accountability-measures",
+    section: "execution_planning",
+    subSection: "accountability",
+    question: "Accountability Measures",
+    type: "measure-table",
+    order: 1,
+    metadata: { measures: S3.accountability.measures.map((m) => ({ id: m.id, label: m.label })) },
+  });
+}
+
+// 3.4 Risk — has risk register
+questions.push({
+  fieldId: "s3-risk-register",
+  section: "execution_planning",
+  subSection: "risk",
+  question: "Risk Register",
+  type: "risk-register",
+  order: 0,
+});
+for (const f of S3.risk.fields) {
+  questions.push({
+    fieldId: f.id,
+    section: "execution_planning",
+    subSection: "risk",
+    question: f.question,
+    type: f.type as QSeed["type"],
+    order: 1,
+  });
+}
+if (S3.risk.measures) {
+  questions.push({
+    fieldId: "s3-risk-measures",
+    section: "execution_planning",
+    subSection: "risk",
+    question: "Risk & Resource Measures",
+    type: "measure-table",
+    order: 2,
+    metadata: { measures: S3.risk.measures.map((m) => ({ id: m.id, label: m.label })) },
+  });
+}
+
+// 3.5 Governance — has governance calendar
+questions.push({
+  fieldId: "s3-governance-calendar",
+  section: "execution_planning",
+  subSection: "governance",
+  question: "Governance Calendar",
+  type: "governance-calendar",
+  order: 0,
+  metadata: {
+    reviews: S3.governance.governanceCalendar.map((r) => ({
+      reviewType: r.reviewType,
+      frequency: r.frequency,
+    })),
+  },
+});
+for (const f of S3.governance.fields) {
+  questions.push({
+    fieldId: f.id,
+    section: "execution_planning",
+    subSection: "governance",
+    question: f.question,
+    type: f.type as QSeed["type"],
+    order: S3.governance.fields.indexOf(f) + 1,
+  });
+}
+
+// 3.6 KPI Dashboard — has intervention rules
+questions.push({
+  fieldId: "s3-kpi-dashboard-interventions",
+  section: "execution_planning",
+  subSection: "kpi-dashboard",
+  question: "KPI Action Thresholds & Intervention Rules",
+  type: "intervention-rules",
+  order: 0,
+  metadata: {
+    areas: S3.kpiDashboard.interventionAreas.map((a) => ({
+      area: a.area,
+      amberTrigger: a.amberTrigger,
+      typicalIntervention: a.typicalIntervention,
+    })),
+  },
+});
+
+// 3.7 Reset
+seedS3Module(S3.reset, "reset");
 
 // ── Run ──────────────────────────────────────────────────────
 

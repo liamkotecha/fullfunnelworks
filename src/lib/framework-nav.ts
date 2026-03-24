@@ -137,6 +137,104 @@ const OVERVIEW_FIELDS = [
   "overview_revenue", "overview_target", "overview_topPriority",
 ];
 
+// ── S2: Revenue Execution fields ─────────────────────────────
+
+const S2_METHODOLOGY = [
+  "s2-methodology-current", "s2-methodology-fit", "s2-methodology-journey", "s2-methodology-qual",
+  ...["s2-methodology-m1", "s2-methodology-m2", "s2-methodology-m3", "s2-methodology-m4", "s2-methodology-m5"]
+    .flatMap((id) => [`${id}-current`, `${id}-target`, `${id}-rag`, `${id}-owner`]),
+  "s2-methodology-actions",
+];
+
+const S2_ADOPTION = [
+  "s2-adoption-duration", "s2-adoption-coaching", "s2-adoption-leadership", "s2-adoption-reinforce",
+  ...["s2-adoption-m1", "s2-adoption-m2", "s2-adoption-m3", "s2-adoption-m4", "s2-adoption-m5"]
+    .flatMap((id) => [`${id}-current`, `${id}-target`, `${id}-rag`, `${id}-owner`]),
+  "s2-adoption-actions",
+];
+
+const S2_OWNERSHIP = [
+  "s2-ownership-matrix", "s2-ownership-escalation",
+  ...["s2-ownership-m1", "s2-ownership-m2", "s2-ownership-m3"]
+    .flatMap((id) => [`${id}-current`, `${id}-target`, `${id}-rag`, `${id}-owner`]),
+];
+
+const S2_CRM = [
+  "s2-crm-platform", "s2-crm-quality", "s2-crm-fields", "s2-crm-dashboards",
+  ...["s2-crm-m1", "s2-crm-m2", "s2-crm-m3", "s2-crm-m4"]
+    .flatMap((id) => [`${id}-current`, `${id}-target`, `${id}-rag`, `${id}-owner`]),
+  "s2-crm-actions",
+];
+
+const S2_CAMPAIGNS = [
+  "s2-campaigns-calendar", "s2-campaigns-mql", "s2-campaigns-sql",
+  "s2-campaigns-objective", "s2-campaigns-audience", "s2-campaigns-predicted",
+  "s2-campaigns-actual", "s2-campaigns-review",
+  ...["s2-campaigns-m1", "s2-campaigns-m2", "s2-campaigns-m3", "s2-campaigns-m4", "s2-campaigns-m5"]
+    .flatMap((id) => [`${id}-current`, `${id}-target`, `${id}-rag`, `${id}-owner`]),
+];
+
+const S2_SCORECARD = [
+  ...["s2-scorecard-fin1", "s2-scorecard-fin2", "s2-scorecard-fin3",
+    "s2-scorecard-cust1", "s2-scorecard-cust2", "s2-scorecard-cust3",
+    "s2-scorecard-proc1", "s2-scorecard-proc2",
+    "s2-scorecard-ppl1", "s2-scorecard-ppl2"]
+    .flatMap((id) => [`${id}-current`, `${id}-target`, `${id}-rag`]),
+  "s2-scorecard-narrative",
+];
+
+const S2_QBR = [
+  "s2-qbr-date", "s2-qbr-agenda", "s2-qbr-corrective-actions",
+];
+
+const S2_PEOPLE_CAP = [
+  "s2-people-cap-framework", "s2-people-cap-succession", "s2-people-cap-gaps",
+  ...["s2-people-cap-m1", "s2-people-cap-m2", "s2-people-cap-m3"]
+    .flatMap((id) => [`${id}-current`, `${id}-target`, `${id}-rag`, `${id}-owner`]),
+  "s2-people-cap-actions",
+];
+
+// ── S3: Execution Planning fields ────────────────────────────
+
+const S3_PRIORITIES = [
+  "s3-priorities-top5", "s3-priorities-qstart", "s3-priorities-qend", "s3-priorities-deps",
+  ...["s3-priorities-m1", "s3-priorities-m2", "s3-priorities-m3"]
+    .flatMap((id) => [`${id}-current`, `${id}-target`, `${id}-rag`, `${id}-owner`]),
+];
+
+const S3_90DAY = [
+  "s3-90day-revenue-actions", "s3-90day-marketing-actions", "s3-90day-crm-actions",
+  "s3-90day-people-actions", "s3-90day-proposition-actions",
+  ...["s3-90day-m1", "s3-90day-m2", "s3-90day-m3"]
+    .flatMap((id) => [`${id}-current`, `${id}-target`, `${id}-rag`, `${id}-owner`]),
+];
+
+const S3_ACCOUNTABILITY = [
+  "s3-accountability-matrix",
+  ...["s3-accountability-m1", "s3-accountability-m2", "s3-accountability-m3"]
+    .flatMap((id) => [`${id}-current`, `${id}-target`, `${id}-rag`, `${id}-owner`]),
+];
+
+const S3_RISK = [
+  "s3-risk-register", "s3-risk-resources",
+  ...["s3-risk-m1", "s3-risk-m2"]
+    .flatMap((id) => [`${id}-current`, `${id}-target`, `${id}-rag`, `${id}-owner`]),
+];
+
+const S3_GOVERNANCE = [
+  "s3-governance-calendar", "s3-governance-rights", "s3-governance-agenda",
+];
+
+const S3_KPI_DASHBOARD = [
+  "s3-kpi-dashboard-interventions",
+];
+
+const S3_RESET = [
+  "s3-reset-summary", "s3-reset-lessons", "s3-reset-annual",
+  ...["s3-reset-m1", "s3-reset-m2", "s3-reset-m3"]
+    .flatMap((id) => [`${id}-current`, `${id}-target`, `${id}-rag`, `${id}-owner`]),
+];
+
 // ── Nav tree ─────────────────────────────────────────────────
 
 export const FRAMEWORK_NAV: NavSection[] = [
@@ -295,6 +393,110 @@ export const FRAMEWORK_NAV: NavSection[] = [
       },
     ],
   },
+  {
+    id: "revenue_execution",
+    label: "Revenue Execution",
+    icon: "TrendingUp",
+    children: [
+      {
+        id: "revenue_execution-methodology",
+        label: "Sales Methodology",
+        fieldIds: S2_METHODOLOGY,
+        href: "/portal/revenue-execution/methodology",
+      },
+      {
+        id: "revenue_execution-adoption",
+        label: "Adoption & Embedding",
+        fieldIds: S2_ADOPTION,
+        href: "/portal/revenue-execution/adoption",
+      },
+      {
+        id: "revenue_execution-ownership",
+        label: "Commercial Ownership",
+        fieldIds: S2_OWNERSHIP,
+        href: "/portal/revenue-execution/ownership",
+      },
+      {
+        id: "revenue_execution-crm",
+        label: "CRM & Revenue Process",
+        fieldIds: S2_CRM,
+        href: "/portal/revenue-execution/crm",
+      },
+      {
+        id: "revenue_execution-campaigns",
+        label: "Campaign Performance",
+        fieldIds: S2_CAMPAIGNS,
+        href: "/portal/revenue-execution/campaigns",
+      },
+      {
+        id: "revenue_execution-scorecard",
+        label: "Balanced Scorecard",
+        fieldIds: S2_SCORECARD,
+        href: "/portal/revenue-execution/scorecard",
+      },
+      {
+        id: "revenue_execution-qbr",
+        label: "QBR & Annual Reset",
+        fieldIds: S2_QBR,
+        href: "/portal/revenue-execution/qbr",
+      },
+      {
+        id: "revenue_execution-people-cap",
+        label: "People & Capability",
+        fieldIds: S2_PEOPLE_CAP,
+        href: "/portal/revenue-execution/people-capability",
+      },
+    ],
+  },
+  {
+    id: "execution_planning",
+    label: "Execution Planning",
+    icon: "ClipboardCheck",
+    children: [
+      {
+        id: "execution_planning-priorities",
+        label: "Priority Setting",
+        fieldIds: S3_PRIORITIES,
+        href: "/portal/execution-planning/priorities",
+      },
+      {
+        id: "execution_planning-90day",
+        label: "90-Day Action Plans",
+        fieldIds: S3_90DAY,
+        href: "/portal/execution-planning/90-day",
+      },
+      {
+        id: "execution_planning-accountability",
+        label: "Accountability",
+        fieldIds: S3_ACCOUNTABILITY,
+        href: "/portal/execution-planning/accountability",
+      },
+      {
+        id: "execution_planning-risk",
+        label: "Risk & Dependencies",
+        fieldIds: S3_RISK,
+        href: "/portal/execution-planning/risk",
+      },
+      {
+        id: "execution_planning-governance",
+        label: "Governance",
+        fieldIds: S3_GOVERNANCE,
+        href: "/portal/execution-planning/governance",
+      },
+      {
+        id: "execution_planning-kpi-dashboard",
+        label: "KPI Dashboard",
+        fieldIds: S3_KPI_DASHBOARD,
+        href: "/portal/execution-planning/kpi-dashboard",
+      },
+      {
+        id: "execution_planning-reset",
+        label: "Quarterly Reset",
+        fieldIds: S3_RESET,
+        href: "/portal/execution-planning/reset",
+      },
+    ],
+  },
 ];
 
 // ── Utility fns ──────────────────────────────────────────────
@@ -361,12 +563,31 @@ export function isFieldAnswered(fieldId: string, value: unknown): boolean {
     if (fieldId.endsWith("-weight")) return trimmed.length > 0;
     // Checklist items — boolean-like
     if (fieldId.includes("_checklist_")) return trimmed.length > 0;
+    // S2/S3 select fields — just needs a value
+    if (
+      fieldId.startsWith("s2-") && (fieldId.endsWith("-current") || fieldId.endsWith("-fit") ||
+        fieldId.endsWith("-duration") || fieldId.endsWith("-coaching") || fieldId.endsWith("-platform") ||
+        fieldId.endsWith("-quality") || fieldId.endsWith("-mql") || fieldId.endsWith("-sql") ||
+        fieldId.endsWith("-framework") || fieldId.endsWith("-succession") ||
+        fieldId.endsWith("-rag") || fieldId.endsWith("-owner"))
+    ) return trimmed.length > 0;
+    if (
+      fieldId.startsWith("s3-") && (fieldId.endsWith("-rag") || fieldId.endsWith("-owner") ||
+        fieldId.endsWith("-current") || fieldId.endsWith("-target"))
+    ) return trimmed.length > 0;
+    // S2/S3 JSON table fields (actions, matrices, registers)
+    if (fieldId.endsWith("-actions") || fieldId.endsWith("-matrix") ||
+        fieldId.endsWith("-register") || fieldId.endsWith("-calendar") ||
+        fieldId.endsWith("-interventions") || fieldId.endsWith("-corrective-actions")) {
+      return trimmed.length > 2; // must be valid JSON or non-empty
+    }
     // Short inputs (name, feature, role, etc.)
     if (
       fieldId.includes("-name") || fieldId.includes("-role") ||
       fieldId.includes("-feature") || fieldId.includes("outcome-") ||
       fieldId.startsWith("overview_") || fieldId.includes("kpi") ||
-      fieldId.startsWith("proc_stage_")
+      fieldId.startsWith("proc_stage_") ||
+      fieldId.endsWith("-date") || fieldId.endsWith("-qstart") || fieldId.endsWith("-qend")
     ) {
       return trimmed.length >= 1;
     }
