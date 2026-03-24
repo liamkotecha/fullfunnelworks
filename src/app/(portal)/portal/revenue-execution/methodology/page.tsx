@@ -1,13 +1,13 @@
 "use client";
 
-import { ModulePageShell } from "@/components/framework/ModulePageShell";
+import { ReadOnlyModuleShell } from "@/components/framework/ReadOnlyModuleShell";
 import { REVENUE_EXECUTION_SECTION } from "@/lib/concept-map";
 
 const mod = REVENUE_EXECUTION_SECTION.modules.methodology;
 
 export default function MethodologyPage() {
   return (
-    <ModulePageShell
+    <ReadOnlyModuleShell
       section="revenue_execution"
       sub="methodology"
       title={`${mod.number} ${mod.title}`}

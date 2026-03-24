@@ -1,14 +1,14 @@
 "use client";
 
-import { ReadOnlyModuleShell } from "@/components/framework/ReadOnlyModuleShell";
-import { EXECUTION_PLANNING_SECTION } from "@/lib/concept-map";
+import { AdminModuleShell } from "@/components/admin/AdminModuleShell";
 import { RiskRegister } from "@/components/framework/RiskRegister";
+import { EXECUTION_PLANNING_SECTION } from "@/lib/concept-map";
 
 const mod = EXECUTION_PLANNING_SECTION.modules.risk;
 
-export default function RiskPage() {
+export default function AdminRiskPage() {
   return (
-    <ReadOnlyModuleShell
+    <AdminModuleShell
       section="execution_planning"
       sub="risk"
       title={`${mod.number} ${mod.title}`}
@@ -16,17 +16,19 @@ export default function RiskPage() {
       fields={mod.fields}
       measures={mod.measures}
     >
-      {(responses) => {
+      {({ responses, setField }) => {
         const stored = responses["s3-risk-register"];
         const rows = Array.isArray(stored) ? stored : [];
-        if (rows.length === 0) return null;
         return (
           <div className="space-y-2">
             <h3 className="text-sm font-semibold text-slate-700">Risk Register</h3>
-            <RiskRegister value={rows} onChange={() => {}} readOnly />
+            <RiskRegister
+              value={rows}
+              onChange={(r) => setField("s3-risk-register", r)}
+            />
           </div>
         );
       }}
-    </ReadOnlyModuleShell>
+    </AdminModuleShell>
   );
 }

@@ -1,15 +1,15 @@
 "use client";
 
-import { ReadOnlyModuleShell } from "@/components/framework/ReadOnlyModuleShell";
+import { AdminModuleShell } from "@/components/admin/AdminModuleShell";
 import { EXECUTION_PLANNING_SECTION } from "@/lib/concept-map";
 
-const mod = EXECUTION_PLANNING_SECTION.modules.priorities;
+const mod = EXECUTION_PLANNING_SECTION.modules.reset;
 
-export default function PrioritiesPage() {
+export default function AdminResetPage() {
   return (
-    <ReadOnlyModuleShell
+    <AdminModuleShell
       section="execution_planning"
-      sub="priorities"
+      sub="reset"
       title={`${mod.number} ${mod.title}`}
       intro={mod.purpose}
       fields={mod.fields}

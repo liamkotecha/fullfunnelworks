@@ -2,7 +2,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, AlertTriangle, CheckCircle, Clock, Plus, X } from "lucide-react";
+import { ArrowLeft, AlertTriangle, CheckCircle, Clock, Plus, X, TrendingUp, ClipboardCheck } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { SkeletonCard } from "@/components/ui/Skeleton";
@@ -232,6 +233,37 @@ export default function ProjectDetailPage() {
             ))}
           </div>
         )}
+      </motion.div>
+
+      {/* Consultant Framework Sections */}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="card space-y-4">
+        <h2 className="font-semibold text-slate-900">Consultant Framework</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Link
+            href={`/admin/projects/${id}/revenue-execution`}
+            className="flex items-center gap-3 rounded-lg border border-slate-200 p-4 hover:border-slate-300 transition-colors group"
+          >
+            <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+              <TrendingUp className="w-4.5 h-4.5" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-slate-900 group-hover:text-brand-blue transition-colors">Revenue Execution</p>
+              <p className="text-xs text-slate-500">S2 — Methodology, CRM, Scorecard</p>
+            </div>
+          </Link>
+          <Link
+            href={`/admin/projects/${id}/execution-planning`}
+            className="flex items-center gap-3 rounded-lg border border-slate-200 p-4 hover:border-slate-300 transition-colors group"
+          >
+            <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <ClipboardCheck className="w-4.5 h-4.5" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-slate-900 group-hover:text-brand-blue transition-colors">Execution Planning</p>
+              <p className="text-xs text-slate-500">S3 — 90-Day Plans, Governance</p>
+            </div>
+          </Link>
+        </div>
       </motion.div>
 
       {/* Block Modal */}

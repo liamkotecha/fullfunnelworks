@@ -27,6 +27,7 @@ export interface ReportData {
     assignedConsultantName?: string;
   };
   sections: ReportSection[];
+  consultantSections?: ConsultantSection[];
   financialSummary?: FinancialSummary | null;
   includeNotes: boolean;
   notes?: Record<string, string>; // fieldId → note
@@ -42,6 +43,16 @@ export interface ReportSection {
       answer: string | null;
       note?: string;
     }[];
+  }[];
+}
+
+export interface ConsultantSection {
+  sectionTitle: string;
+  modules: {
+    moduleTitle: string;
+    fields: { label: string; value: string }[];
+    measures: { label: string; current: string; target: string }[];
+    tables: { label: string; rows: string[][] }[];
   }[];
 }
 
@@ -238,6 +249,61 @@ const styles = StyleSheet.create({
     fontFamily: "Helvetica-Bold",
     color: NAVY,
   },
+  /* Consultant sections */
+  moduleHeader: {
+    fontSize: 11,
+    fontFamily: "Helvetica-Bold",
+    color: "#334155",
+    marginBottom: 6,
+    marginTop: 12,
+  },
+  tableHeader: {
+    fontSize: 8,
+    fontFamily: "Helvetica-Bold",
+    color: "#64748B",
+    textTransform: "uppercase" as const,
+    letterSpacing: 0.5,
+    marginBottom: 2,
+    marginTop: 8,
+  },
+  tableRow: {
+    flexDirection: "row" as const,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E2E8F0",
+    paddingVertical: 3,
+  },
+  tableCell: {
+    fontSize: 8,
+    color: "#1E293B",
+    flex: 1,
+    paddingHorizontal: 4,
+  },
+  tableCellHeader: {
+    fontSize: 7,
+    fontFamily: "Helvetica-Bold",
+    color: "#64748B",
+    flex: 1,
+    paddingHorizontal: 4,
+    textTransform: "uppercase" as const,
+  },
+  measureRow: {
+    flexDirection: "row" as const,
+    justifyContent: "space-between" as const,
+    paddingVertical: 3,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E2E8F0",
+  },
+  measureLabel: {
+    fontSize: 9,
+    color: "#475569",
+    flex: 2,
+  },
+  measureValue: {
+    fontSize: 9,
+    color: "#1E293B",
+    flex: 1,
+    textAlign: "center" as const,
+  },
   /* Footer */
   footer: {
     position: "absolute",
@@ -328,9 +394,14 @@ function ClientReportDocument({ data }: { data: ReportData }) {
             {i + 1}. {section.sectionLabel}
           </Text>
         ))}
+        {data.consultantSections?.map((cs, i) => (
+          <Text key={`cs-toc-${i}`} style={styles.tocItem}>
+            {data.sections.length + i + 1}. {cs.sectionTitle}
+          </Text>
+        ))}
         {data.financialSummary && (
           <Text style={styles.tocItem}>
-            {data.sections.length + 1}. Financial Summary
+            {data.sections.length + (data.consultantSections?.length ?? 0) + 1}. Financial Summary
           </Text>
         )}
         <Footer date={today} />
@@ -358,6 +429,64 @@ function ClientReportDocument({ data }: { data: ReportData }) {
                       <Text style={styles.noteText}>{field.note}</Text>
                     </View>
                   )}
+                </View>
+              ))}
+            </View>
+          ))}
+
+          <Footer date={today} />
+        </Page>
+      ))}
+
+      {/* Consultant framework sections (S2/S3) */}
+      {data.consultantSections?.map((cs, ci) => (
+        <Page key={`cs-${ci}`} size="A4" style={styles.page} wrap>
+          <Text style={styles.sectionHeader}>{cs.sectionTitle}</Text>
+
+          {cs.modules.map((mod, mi) => (
+            <View key={mi} wrap={false}>
+              <Text style={styles.moduleHeader}>{mod.moduleTitle}</Text>
+
+              {mod.fields.map((field, fi) => (
+                <View key={fi} style={styles.fieldBlock}>
+                  <Text style={styles.question}>{field.label}</Text>
+                  <Text style={styles.answer}>{field.value}</Text>
+                </View>
+              ))}
+
+              {mod.measures.length > 0 && (
+                <View style={{ marginTop: 6 }}>
+                  <Text style={styles.tableHeader}>Key Measures</Text>
+                  <View style={styles.measureRow}>
+                    <Text style={{ ...styles.measureLabel, fontFamily: "Helvetica-Bold", fontSize: 8, color: "#64748B" }}>Measure</Text>
+                    <Text style={{ ...styles.measureValue, fontFamily: "Helvetica-Bold", fontSize: 8, color: "#64748B" }}>Current</Text>
+                    <Text style={{ ...styles.measureValue, fontFamily: "Helvetica-Bold", fontSize: 8, color: "#64748B" }}>Target</Text>
+                  </View>
+                  {mod.measures.map((m, mIdx) => (
+                    <View key={mIdx} style={styles.measureRow}>
+                      <Text style={styles.measureLabel}>{m.label}</Text>
+                      <Text style={styles.measureValue}>{m.current || "—"}</Text>
+                      <Text style={styles.measureValue}>{m.target || "—"}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {mod.tables.map((table, ti) => (
+                <View key={ti} style={{ marginTop: 6 }}>
+                  <Text style={styles.tableHeader}>{table.label}</Text>
+                  {table.rows.map((row, ri) => (
+                    <View key={ri} style={styles.tableRow}>
+                      {row.map((cell, cellIdx) => (
+                        <Text
+                          key={cellIdx}
+                          style={ri === 0 ? styles.tableCellHeader : styles.tableCell}
+                        >
+                          {cell}
+                        </Text>
+                      ))}
+                    </View>
+                  ))}
                 </View>
               ))}
             </View>

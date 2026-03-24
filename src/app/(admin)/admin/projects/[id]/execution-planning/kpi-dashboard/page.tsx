@@ -1,36 +1,38 @@
 "use client";
 
-import { ReadOnlyModuleShell } from "@/components/framework/ReadOnlyModuleShell";
+import { AdminModuleShell } from "@/components/admin/AdminModuleShell";
 import { InterventionRules } from "@/components/framework/InterventionRules";
 import { EXECUTION_PLANNING_SECTION } from "@/lib/concept-map";
 
 const mod = EXECUTION_PLANNING_SECTION.modules.kpiDashboard;
-
-const areas = mod.interventionAreas.map((a, i) => ({
-  id: `s3-kpi-area-${i}`,
+const interventionAreas = mod.interventionAreas.map((a) => ({
+  id: a.area.toLowerCase().replace(/\s+/g, "-"),
   label: a.area,
 }));
 
-export default function KpiDashboardPage() {
+export default function AdminKpiDashboardPage() {
   return (
-    <ReadOnlyModuleShell
+    <AdminModuleShell
       section="execution_planning"
       sub="kpi-dashboard"
       title={`${mod.number} ${mod.title}`}
       intro={mod.purpose}
       fields={[]}
     >
-      {(responses) => {
+      {({ responses, setField }) => {
         const stored = responses["s3-intervention-rules"];
         const rows = Array.isArray(stored) ? stored : [];
-        if (rows.length === 0) return null;
         return (
           <div className="space-y-2">
             <h3 className="text-sm font-semibold text-slate-700">Intervention Rules</h3>
-            <InterventionRules areas={areas} value={rows} onChange={() => {}} readOnly />
+            <InterventionRules
+              areas={interventionAreas}
+              value={rows}
+              onChange={(r) => setField("s3-intervention-rules", r)}
+            />
           </div>
         );
       }}
-    </ReadOnlyModuleShell>
+    </AdminModuleShell>
   );
 }

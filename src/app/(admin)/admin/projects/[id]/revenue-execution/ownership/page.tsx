@@ -1,6 +1,6 @@
 "use client";
 
-import { ReadOnlyModuleShell } from "@/components/framework/ReadOnlyModuleShell";
+import { AdminModuleShell } from "@/components/admin/AdminModuleShell";
 import { OwnershipMatrix } from "@/components/framework/OwnershipMatrix";
 import { REVENUE_EXECUTION_SECTION } from "@/lib/concept-map";
 
@@ -11,9 +11,9 @@ const roles = mod.ownershipRoles.map((r, i) => ({
   label: `${r.role} — ${r.responsibility}`,
 }));
 
-export default function OwnershipPage() {
+export default function AdminOwnershipPage() {
   return (
-    <ReadOnlyModuleShell
+    <AdminModuleShell
       section="revenue_execution"
       sub="ownership"
       title={`${mod.number} ${mod.title}`}
@@ -21,7 +21,7 @@ export default function OwnershipPage() {
       fields={mod.fields}
       measures={mod.measures}
     >
-      {(responses) => {
+      {({ responses, setField }) => {
         const parsed = (() => {
           const v = responses["s2-ownership-matrix"];
           if (Array.isArray(v)) return v;
@@ -30,14 +30,17 @@ export default function OwnershipPage() {
           }
           return [];
         })();
-        if (parsed.length === 0) return null;
         return (
           <div className="space-y-2">
             <h3 className="text-sm font-semibold text-slate-700">Ownership Matrix</h3>
-            <OwnershipMatrix roles={roles} value={parsed} onChange={() => {}} readOnly />
+            <OwnershipMatrix
+              roles={roles}
+              value={parsed}
+              onChange={(rows) => setField("s2-ownership-matrix", rows)}
+            />
           </div>
         );
       }}
-    </ReadOnlyModuleShell>
+    </AdminModuleShell>
   );
 }
