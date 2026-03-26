@@ -1,6 +1,7 @@
 /**
- * AdminSidebar — admin/consultant navigation.
- * Shows client count badge + blocked project count.
+ * AdminSidebar — role-aware navigation.
+ * Admin sees full platform nav (clients, projects, pipeline, consultants, questions, invoices).
+ * Consultant sees lean workspace nav (their clients, invoices, settings).
  */
 "use client";
 
@@ -17,8 +18,10 @@ import {
   FileQuestion,
   KanbanSquare,
   Receipt,
+  UserCog,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { UserRole } from "@/types";
 
 interface Counts {
   clients: number;
@@ -29,29 +32,38 @@ interface Counts {
 interface AdminSidebarProps {
   open?: boolean;
   onClose?: () => void;
+  role?: UserRole;
 }
 
-export function AdminSidebar({ open = true, onClose }: AdminSidebarProps) {
+export function AdminSidebar({ open = true, onClose, role = "consultant" }: AdminSidebarProps) {
   const pathname = usePathname();
   const [counts, setCounts] = useState<Counts>({ clients: 0, blockedProjects: 0, activeProspects: 0 });
 
   useEffect(() => {
-    Promise.all([
+    const isAdmin = role === "admin";
+    const promises: Promise<unknown>[] = [
       fetch("/api/clients").then((r) => r.json()),
       fetch("/api/projects").then((r) => r.json()),
-      fetch("/api/prospects?stage=mql,sql,discovery,proposal,negotiating").then((r) => r.json()),
-    ])
+    ];
+    // Only admin needs to fetch the prospect/pipeline badge
+    if (isAdmin) {
+      promises.push(
+        fetch("/api/prospects?stage=mql,sql,discovery,proposal,negotiating").then((r) => r.json())
+      );
+    }
+
+    Promise.all(promises)
       .then(([c, p, pr]) => {
-        const allClients: { status: string }[] = c.data ?? [];
-        const allProjects: { status: string }[] = p.data ?? [];
+        const allClients: { status: string }[] = (c as { data?: { status: string }[] }).data ?? [];
+        const allProjects: { status: string }[] = (p as { data?: { status: string }[] }).data ?? [];
         setCounts({
           clients: allClients.length,
           blockedProjects: allProjects.filter((x) => x.status === "blocked").length,
-          activeProspects: pr.total ?? 0,
+          activeProspects: (pr as { total?: number } | undefined)?.total ?? 0,
         });
       })
       .catch(() => {});
-  }, []);
+  }, [role]);
 
   type NavItem = {
     href: string;
@@ -60,7 +72,8 @@ export function AdminSidebar({ open = true, onClose }: AdminSidebarProps) {
     badge: { label: string; className: string } | null;
   };
 
-  const NAV_MAIN: NavItem[] = [
+  // ── Admin navigation (full platform)
+  const ADMIN_NAV: NavItem[] = [
     { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard, badge: null },
     {
       href: "/admin/clients",
@@ -86,9 +99,33 @@ export function AdminSidebar({ open = true, onClose }: AdminSidebarProps) {
           ? { label: String(counts.activeProspects), className: "bg-white/20 text-white/80" }
           : null,
     },
+    { href: "/admin/consultants", label: "Consultants", icon: UserCog, badge: null },
     { href: "/admin/questions", label: "Questions", icon: FileQuestion, badge: null },
     { href: "/admin/invoices", label: "Invoices", icon: Receipt, badge: null },
   ];
+
+  // ── Consultant navigation (own clients only)
+  const CONSULTANT_NAV: NavItem[] = [
+    { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard, badge: null },
+    {
+      href: "/admin/clients",
+      label: "My Clients",
+      icon: Users,
+      badge: counts.clients > 0 ? { label: String(counts.clients), className: "bg-white/20 text-white/80" } : null,
+    },
+    {
+      href: "/admin/projects",
+      label: "Projects",
+      icon: FolderKanban,
+      badge:
+        counts.blockedProjects > 0
+          ? { label: String(counts.blockedProjects), className: "bg-red-500/80 text-white" }
+          : null,
+    },
+    { href: "/admin/invoices", label: "Invoices", icon: Receipt, badge: null },
+  ];
+
+  const NAV_MAIN = role === "admin" ? ADMIN_NAV : CONSULTANT_NAV;
 
   const NAV_BOTTOM: NavItem[] = [
     { href: "/admin/settings", label: "Settings", icon: Settings, badge: null },
@@ -172,9 +209,9 @@ export function AdminSidebar({ open = true, onClose }: AdminSidebarProps) {
 
         {/* Nav */}
         <div className="flex flex-col flex-1 overflow-y-auto py-4 px-3">
-          {/* Section label */}
+          {/* Role label */}
           <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-white/30">
-            Navigation
+            {role === "admin" ? "Platform" : "My Workspace"}
           </p>
 
           <ul className="space-y-0.5 flex-1">
@@ -192,3 +229,4 @@ export function AdminSidebar({ open = true, onClose }: AdminSidebarProps) {
     </>
   );
 }
+

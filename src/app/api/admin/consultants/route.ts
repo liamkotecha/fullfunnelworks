@@ -79,6 +79,7 @@ export async function GET() {
           totalLeadsAssigned: (profile.totalLeadsAssigned as number) ?? 0,
           currentActiveClients: currentActive,
           capacityPercent,
+          allowedModules: (profile.allowedModules as string[]) ?? [],
         },
       };
     });

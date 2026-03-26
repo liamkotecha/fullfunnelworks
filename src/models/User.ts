@@ -15,6 +15,8 @@ export interface IConsultantProfile {
   roundRobinWeight: number;
   lastAssignedAt?: Date;
   totalLeadsAssigned: number;
+  /** Modules this consultant is permitted to enable for their clients */
+  allowedModules: string[];
 }
 
 export interface IUser extends Document {
@@ -70,6 +72,7 @@ const UserSchema = new Schema<IUser>(
       roundRobinWeight: { type: Number, default: 1, min: 1, max: 5 },
       lastAssignedAt: { type: Date },
       totalLeadsAssigned: { type: Number, default: 0 },
+      allowedModules: [{ type: String, trim: true }],
     },
   },
   { timestamps: true }

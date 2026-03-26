@@ -23,7 +23,7 @@ export default async function AdminLayout({
   const user = session.user as SessionUser;
 
   return (
-    <AdminShell userName={user.name} userEmail={user.email}>
+    <AdminShell userName={user.name} userEmail={user.email} role={user.role}>
       {children}
     </AdminShell>
   );

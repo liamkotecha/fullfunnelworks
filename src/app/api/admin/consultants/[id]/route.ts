@@ -54,6 +54,15 @@ export async function PATCH(
     if (body.roundRobinWeight !== undefined) {
       update["consultantProfile.roundRobinWeight"] = Math.max(1, Math.min(5, Number(body.roundRobinWeight)));
     }
+    if (body.allowedModules !== undefined) {
+      const ALL_MODULES = [
+        "assessment", "people", "product", "process", "roadmap",
+        "kpis", "gtm", "modeller", "hiring", "revenue_execution", "execution_planning",
+      ];
+      update["consultantProfile.allowedModules"] = Array.isArray(body.allowedModules)
+        ? body.allowedModules.filter((m: string) => ALL_MODULES.includes(m))
+        : [];
+    }
 
     const ops: Record<string, unknown> = {};
     if (Object.keys(update).length > 0) ops.$set = update;

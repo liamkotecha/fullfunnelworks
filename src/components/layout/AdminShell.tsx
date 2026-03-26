@@ -9,14 +9,16 @@ import { useState, useCallback } from "react";
 import { TopBar } from "@/components/layout/TopBar";
 import { AdminSidebar } from "@/components/layout/AdminSidebar";
 import { SessionExpiryWarning } from "@/components/SessionExpiryWarning";
+import type { UserRole } from "@/types";
 
 interface AdminShellProps {
   children: React.ReactNode;
   userName?: string;
   userEmail?: string;
+  role?: UserRole;
 }
 
-export function AdminShell({ children, userName, userEmail }: AdminShellProps) {
+export function AdminShell({ children, userName, userEmail, role }: AdminShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const toggleSidebar = useCallback(() => setSidebarOpen((v) => !v), []);
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
@@ -32,6 +34,7 @@ export function AdminShell({ children, userName, userEmail }: AdminShellProps) {
       <AdminSidebar
         open={sidebarOpen}
         onClose={closeSidebar}
+        role={role}
       />
       <SessionExpiryWarning />
       <main className="pt-20 md:ml-64 min-h-screen px-4 pb-4 md:px-6 md:pb-6">

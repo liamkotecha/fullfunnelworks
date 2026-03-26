@@ -366,6 +366,8 @@ export interface ConsultantProfileDTO {
   totalLeadsAssigned: number;
   currentActiveClients: number;
   capacityPercent: number;
+  /** Modules this consultant is permitted to enable for their clients */
+  allowedModules: ModuleId[];
 }
 
 export interface ConsultantDTO {
