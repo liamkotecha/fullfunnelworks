@@ -130,6 +130,8 @@ function Avatar({ name, size = "w-7 h-7" }: { name: string; size?: string }) {
 /* ── page ────────────────────────────────────────────────────── */
 export default function DashboardPage() {
   const { data: session } = useSession();
+  const role = (session?.user as { role?: string })?.role ?? "consultant";
+  const isAdmin = role === "admin";
   const { error: toastError, success } = useToast();
   const [clients, setClients] = useState<ClientDTO[]>([]);
   const [projects, setProjects] = useState<ProjectDTO[]>([]);
@@ -144,30 +146,38 @@ export default function DashboardPage() {
   const PAGE_SIZE = 8;
 
   useEffect(() => {
-    Promise.all([
-      fetch("/api/clients").then((r) => r.json()),
-      fetch("/api/projects").then((r) => r.json()),
-      fetch("/api/prospects").then((r) => r.json()),
-      fetch("/api/invoices").then((r) => r.json()),
-    ]).then(([c, p, pr, inv]) => {
-      setClients(c.data ?? []);
-      setProjects(p.data ?? []);
-      setProspects(pr.data ?? []);
-      setInvoices(inv.data ?? []);
-      setLoading(false);
-    }).catch(() => {
-      toastError("Couldn't load dashboard", "Please refresh the page");
-      setLoading(false);
-    });
+    const fetches: Promise<Response>[] = [
+      fetch("/api/clients"),
+      fetch("/api/projects"),
+      fetch("/api/invoices"),
+    ];
+    if (isAdmin) fetches.splice(2, 0, fetch("/api/prospects"));
 
-    // Fire-and-forget staleness sync
-    fetch("/api/admin/staleness/sync", { method: "POST" })
-      .then(() => fetch("/api/projects").then((r) => r.json()))
-      .then((p) => {
-        if (p.data) setProjects(p.data);
+    Promise.all(fetches.map((f) => f.then((r) => r.json())))
+      .then((results) => {
+        const [c, p, ...rest] = results;
+        const [pr, inv] = isAdmin ? rest : [{ data: [] }, rest[0]];
+        setClients(c.data ?? []);
+        setProjects(p.data ?? []);
+        setProspects(pr.data ?? []);
+        setInvoices(inv.data ?? []);
+        setLoading(false);
       })
-      .catch(() => {});
-  }, []);
+      .catch(() => {
+        toastError("Couldn't load dashboard", "Please refresh the page");
+        setLoading(false);
+      });
+
+    // Fire-and-forget staleness sync (admin only)
+    if (isAdmin) {
+      fetch("/api/admin/staleness/sync", { method: "POST" })
+        .then(() => fetch("/api/projects").then((r) => r.json()))
+        .then((p) => {
+          if (p.data) setProjects(p.data);
+        })
+        .catch(() => {});
+    }
+  }, [isAdmin]);
 
   /* ── derived metrics ─────────────────────────────────────── */
   const blocked = projects.filter((p) => p.status === "blocked");
@@ -514,7 +524,7 @@ export default function DashboardPage() {
 
       {/* ── KPI STAT CARDS ─────────────────────────────────── */}
       <motion.div variants={fadeUp} className="px-8 pt-4 pb-6">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className={`grid grid-cols-2 ${isAdmin ? "lg:grid-cols-4" : "lg:grid-cols-3"} gap-4`}>
           {[
             {
               icon: Users2,
@@ -524,14 +534,14 @@ export default function DashboardPage() {
               value: activeClients.length,
               sub: `${clients.length} total · ${avgPortfolioProgress}% avg progress`,
             },
-            {
+            ...(isAdmin ? [{
               icon: TrendingUp,
               iconBg: "bg-violet-500/10",
               iconColor: "text-violet-500",
               label: "Pipeline Value",
               value: formatPence(pipelineValue),
               sub: `${leadsThisMonth} new lead${leadsThisMonth !== 1 ? "s" : ""} this month`,
-            },
+            }] : []),
             {
               icon: CircleDollarSign,
               iconBg: "bg-emerald-500/10",
@@ -582,6 +592,7 @@ export default function DashboardPage() {
         {/* ── LEFT COLUMN (2/3) ────────────────────────────── */}
         <div className="lg:col-span-2 space-y-6">
           {/* ── SALES PIPELINE ─────────────────────────────── */}
+          {isAdmin && (
           <motion.div variants={fadeUp}>
             <div className="bg-white rounded-xl ring-1 ring-black/[0.06] p-5">
               <div className="flex items-center justify-between mb-4">
@@ -708,6 +719,7 @@ export default function DashboardPage() {
               )}
             </div>
           </motion.div>
+          )}
 
           {/* ── PROJECTS OVERVIEW ──────────────────────────── */}
           <motion.div variants={fadeUp}>

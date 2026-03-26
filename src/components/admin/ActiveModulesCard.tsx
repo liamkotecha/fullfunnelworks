@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/components/notifications/ToastContext";
 import type { ModuleId, ProjectDTO } from "@/types";
 import { MODULE_META } from "@/types";
+import { ShieldOff } from "lucide-react";
 
 const ICON_MAP: Record<string, React.ReactNode> = {
   Search:     <Search className="w-3.5 h-3.5" />,
@@ -46,9 +47,11 @@ const ALL_MODULES = Object.keys(MODULE_META) as ModuleId[];
 interface ActiveModulesCardProps {
   clientId: string;
   projects: ProjectDTO[];
+  /** When provided (consultant mode), modules not in this list are plan-locked */
+  allowedModules?: ModuleId[];
 }
 
-export function ActiveModulesCard({ clientId, projects }: ActiveModulesCardProps) {
+export function ActiveModulesCard({ clientId, projects, allowedModules }: ActiveModulesCardProps) {
   const { success, error: toastError } = useToast();
   const [activeModules, setActiveModules] = useState<ModuleId[]>([]);
   const [saving, setSaving] = useState(false);
@@ -147,27 +150,36 @@ export function ActiveModulesCard({ clientId, projects }: ActiveModulesCardProps
           const meta = MODULE_META[moduleId];
           const isActive = activeModules.includes(moduleId);
           const isAssessment = moduleId === "assessment";
+          const isPlanLocked = allowedModules !== undefined && !allowedModules.includes(moduleId);
 
           return (
             <motion.button
               key={moduleId}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => toggle(moduleId)}
-              disabled={saving || isAssessment}
+              whileTap={isPlanLocked ? {} : { scale: 0.97 }}
+              onClick={() => !isPlanLocked && toggle(moduleId)}
+              disabled={saving || isAssessment || isPlanLocked}
               className={cn(
                 "flex items-center gap-2.5 px-3 py-2.5 rounded-lg border text-left transition-all duration-150 w-full",
-                isActive
-                  ? "bg-[#141414] text-white border-[#141414] shadow-sm"
-                  : "bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50",
-                isAssessment && "opacity-70 cursor-default",
+                isPlanLocked
+                  ? "bg-slate-50 text-slate-300 border-slate-200 cursor-not-allowed"
+                  : isActive
+                    ? "bg-[#141414] text-white border-[#141414] shadow-sm"
+                    : "bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50",
+                isAssessment && !isPlanLocked && "opacity-70 cursor-default",
                 saving && "pointer-events-none"
               )}
-              title={isAssessment ? "Assessment is always active" : meta.description}
+              title={
+                isPlanLocked
+                  ? "Not in your plan — contact admin to unlock"
+                  : isAssessment
+                    ? "Assessment is always active"
+                    : meta.description
+              }
             >
               <span
                 className={cn(
                   "w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 transition-colors",
-                  isActive ? "bg-white/15" : "bg-slate-100"
+                  isPlanLocked ? "bg-slate-100" : isActive ? "bg-white/15" : "bg-slate-100"
                 )}
               >
                 {ICON_MAP[meta.icon]}
@@ -177,14 +189,16 @@ export function ActiveModulesCard({ clientId, projects }: ActiveModulesCardProps
                 <p
                   className={cn(
                     "text-[10px] leading-tight truncate mt-0.5",
-                    isActive ? "text-white/50" : "text-slate-400"
+                    isPlanLocked ? "text-slate-300" : isActive ? "text-white/50" : "text-slate-400"
                   )}
                 >
-                  {meta.description}
+                  {isPlanLocked ? "Not in your plan" : meta.description}
                 </p>
               </div>
               <span className="flex-shrink-0">
-                {isActive ? (
+                {isPlanLocked ? (
+                  <ShieldOff className="w-3.5 h-3.5 text-slate-300" />
+                ) : isActive ? (
                   <Unlock className="w-3.5 h-3.5 text-brand-green" />
                 ) : (
                   <Lock className="w-3.5 h-3.5 text-slate-300" />

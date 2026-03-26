@@ -4,6 +4,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import {
   DndContext,
   DragOverlay,
@@ -137,6 +139,13 @@ function KanbanColumn({
 
 /* ── Main Page ────────────────────────────────────────────── */
 export default function PipelinePage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  useEffect(() => {
+    if (status === "loading") return;
+    if ((session?.user as { role?: string })?.role !== "admin") router.replace("/admin/dashboard");
+  }, [session, status, router]);
+
   const [prospects, setProspects] = useState<ProspectDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);

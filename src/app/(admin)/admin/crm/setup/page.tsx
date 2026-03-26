@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import {
   Copy,
   Check,
@@ -34,6 +36,13 @@ const inputCls =
   "w-full px-3 py-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-slate-400 focus:ring-1 focus:ring-slate-200 focus:outline-none transition-all";
 
 export default function CrmSetupPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  useEffect(() => {
+    if (status === "loading") return;
+    if ((session?.user as { role?: string })?.role !== "admin") router.replace("/admin/dashboard");
+  }, [session, status, router]);
+
   const { success, error: toastError } = useToast();
   const [showKey, setShowKey] = useState(false);
   const [copied, setCopied] = useState(false);

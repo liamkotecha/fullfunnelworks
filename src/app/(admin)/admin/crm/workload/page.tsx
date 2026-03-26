@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, RefreshCw, UserCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -78,6 +80,13 @@ function timeAgo(dateStr: string): string {
 
 /* ── Page ───────────────────────────────────────────────────── */
 export default function WorkloadPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  useEffect(() => {
+    if (status === "loading") return;
+    if ((session?.user as { role?: string })?.role !== "admin") router.replace("/admin/dashboard");
+  }, [session, status, router]);
+
   const { success, error: toastError } = useToast();
   const [loading, setLoading] = useState(true);
   const [consultants, setConsultants] = useState<ConsultantDTO[]>([]);

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
 import { Edit2, Plus, Trash2, FolderOpen, AlertTriangle, Globe, Phone, Mail, MapPin, Briefcase, User, Users, UserPlus, CheckCircle2, Clock, ToggleLeft, ToggleRight, X, Download } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -11,7 +12,7 @@ import { Input, Textarea, Select } from "@/components/ui/Input";
 import { useToast } from "@/components/notifications/ToastContext";
 import { ActiveModulesCard } from "@/components/admin/ActiveModulesCard";
 import { formatDate, formatDateTime } from "@/lib/utils";
-import { ClientDTO, ProjectDTO, CLIENT_STATUS_META, PROJECT_STATUS_META, ClientStatus } from "@/types";
+import { ClientDTO, ProjectDTO, CLIENT_STATUS_META, PROJECT_STATUS_META, ClientStatus, ModuleId } from "@/types";
 
 const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.07 } } };
 const fadeUp = { hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0, transition: { duration: 0.3 } } };
@@ -19,11 +20,14 @@ const fadeUp = { hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0, transi
 export default function ClientDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const { data: session } = useSession();
+  const role = (session?.user as { role?: string })?.role;
   const { success, error: toastError } = useToast();
 
   const [client, setClient] = useState<ClientDTO | null>(null);
   const [projects, setProjects] = useState<ProjectDTO[]>([]);
   const [loading, setLoading] = useState(true);
+  const [allowedModules, setAllowedModules] = useState<ModuleId[] | undefined>(undefined);
   const [editModal, setEditModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
   const [projectModal, setProjectModal] = useState(false);
@@ -65,11 +69,25 @@ export default function ClientDetailPage() {
   const [downloadIncludeFinancial, setDownloadIncludeFinancial] = useState(true);
 
   useEffect(() => {
-    Promise.all([
+    const fetches: Promise<unknown>[] = [
       fetch(`/api/clients/${id}`).then((r) => r.json()),
       fetch(`/api/projects?clientId=${id}`).then((r) => r.json()),
       fetch(`/api/team/${id}`).then((r) => r.json()),
-    ]).then(([c, p, t]) => {
+    ];
+    if (role === "consultant") {
+      fetches.push(fetch("/api/me/profile").then((r) => r.json()));
+    }
+
+    Promise.all(fetches).then((results) => {
+      const [c, p, t, profileRes] = results as [
+        { data: ClientDTO },
+        { data: ProjectDTO[] },
+        { teamMode: boolean; members: typeof teamMembers; allSubmitted: boolean },
+        { allowedModules?: ModuleId[] } | undefined,
+      ];
+      if (role === "consultant" && profileRes?.allowedModules) {
+        setAllowedModules(profileRes.allowedModules);
+      }
       setClient(c.data);
       setForm({
         businessName:   c.data?.businessName   ?? "",
@@ -93,7 +111,7 @@ export default function ClientDetailPage() {
       setAllSubmitted(t.allSubmitted ?? false);
       setLoading(false);
     });
-  }, [id]);
+  }, [id, role]);
 
   const validateForm = () => {
     const errs: Record<string, string> = {};
@@ -501,7 +519,7 @@ export default function ClientDetailPage() {
 
       {/* Active Modules */}
       <motion.div variants={fadeUp}>
-        <ActiveModulesCard clientId={id} projects={projects} />
+        <ActiveModulesCard clientId={id} projects={projects} allowedModules={allowedModules} />
       </motion.div>
 
       {/* Assessment Team */}

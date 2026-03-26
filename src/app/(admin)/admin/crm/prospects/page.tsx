@@ -4,6 +4,8 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Search,
@@ -62,6 +64,13 @@ function StageBadge({ stage }: { stage: ProspectStage }) {
 }
 
 export default function ProspectListPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  useEffect(() => {
+    if (status === "loading") return;
+    if ((session?.user as { role?: string })?.role !== "admin") router.replace("/admin/dashboard");
+  }, [session, status, router]);
+
   const [prospects, setProspects] = useState<ProspectDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");

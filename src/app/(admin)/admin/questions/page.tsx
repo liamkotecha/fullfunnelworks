@@ -5,6 +5,8 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
@@ -85,7 +87,14 @@ const SUBSECTION_LABELS: Record<string, string> = {
 // ── Main Page ────────────────────────────────────────────────
 
 export default function AdminQuestionsPage() {
-  const [questions, setQuestions] = useState<Question[]>([]);
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  useEffect(() => {
+    if (status === "loading") return;
+    if ((session?.user as { role?: string })?.role !== "admin") router.replace("/admin/dashboard");
+  }, [session, status, router]);
+
+  const [questions, setQuestions] = useState<Question[]>();([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
