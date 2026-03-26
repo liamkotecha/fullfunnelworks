@@ -8,6 +8,7 @@ import { ProjectProvider, useProjectContext } from "@/context/ProjectContext";
 import { ActivityPing } from "@/components/portal/ActivityPing";
 import { ViewAsBanner } from "@/components/portal/ViewAsBanner";
 import { NotesPanel } from "@/components/portal/NotesPanel";
+import { SessionExpiryWarning } from "@/components/SessionExpiryWarning";
 import { usePortalClient } from "@/hooks/usePortalClient";
 
 interface PortalShellProps {
@@ -159,6 +160,7 @@ function PortalShellInner({
         onClose={closeSidebar}
       />
       <StaleBanner />
+      <SessionExpiryWarning />
       {clientId && (
         <NotesPanel open={notesOpen} onClose={closeNotes} clientId={clientId} />
       )}

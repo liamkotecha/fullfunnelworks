@@ -6,7 +6,8 @@
 
 import { useMemo, useCallback, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { usePortalClient } from "@/hooks/usePortalClient";
 import { useResponses } from "@/hooks/useResponses";
@@ -53,6 +54,8 @@ export default function LeadershipPage() {
   );
 
   const totalAnswered = answeredStatus.filter(Boolean).length;
+  // True when the user clicked "Review" — all answered but completion card hidden
+  const isReviewMode = !sectionComplete && hasAutoInit && totalAnswered === totalCount && totalCount > 0;
 
   // Auto-jump to first unanswered question on load
   useEffect(() => {
@@ -112,6 +115,14 @@ export default function LeadershipPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
+      <Link
+        href="/portal/assessment"
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-slate-700 transition-colors mb-3"
+      >
+        <ArrowLeft className="w-3.5 h-3.5" />
+        Back to Assessment
+      </Link>
+
       <SectionProgressHeader
         title="Leadership Questions"
         answeredCount={totalAnswered}
@@ -243,7 +254,15 @@ export default function LeadershipPage() {
               </button>
 
               <div className="flex items-center gap-2">
-                {!isLastQuestion && (
+                {isReviewMode && (
+                  <button
+                    onClick={() => setSectionComplete(true)}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:border-slate-300 hover:text-slate-900 transition-all"
+                  >
+                    ← Back to summary
+                  </button>
+                )}
+                {!isLastQuestion && !isReviewMode && (
                   <button
                     onClick={() => goTo(currentIndex + 1)}
                     className="px-4 py-2.5 rounded-lg border border-slate-200 text-sm font-medium text-slate-500 hover:border-slate-300 hover:text-slate-700 transition-all"

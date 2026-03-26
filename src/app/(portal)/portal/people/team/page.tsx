@@ -5,7 +5,7 @@
 "use client";
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
-import { Plus, Trash2, GripVertical, Users } from "lucide-react";
+import { Plus, Trash2, GripVertical, Users, AlertCircle } from "lucide-react";
 import { Reorder, useDragControls, motion } from "framer-motion";
 import { usePortalClient } from "@/hooks/usePortalClient";
 import { useResponses } from "@/hooks/useResponses";
@@ -49,17 +49,36 @@ const TEAM_FIELD_ID = "team-members";
 // ---------------------------------------------------------------------------
 // Auto-resizing cell input (single line for team members)
 // ---------------------------------------------------------------------------
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 function CellInput({
   value, placeholder, onChange, type = "text",
 }: { value: string; placeholder: string; onChange: (v: string) => void; type?: string }) {
+  const [touched, setTouched] = useState(false);
+  const isEmailInvalid = type === "email" && touched && value.trim() !== "" && !EMAIL_RE.test(value);
+
   return (
-    <input
-      type={type}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      className="w-full bg-transparent border-none outline-none text-sm text-gray-900 placeholder:text-gray-400 focus:ring-0 py-0"
-    />
+    <div className="relative w-full">
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => { onChange(e.target.value); }}
+        onBlur={() => setTouched(true)}
+        placeholder={placeholder}
+        className={cn(
+          "w-full bg-transparent border-none outline-none text-sm placeholder:text-gray-400 focus:ring-0 py-0",
+          isEmailInvalid ? "text-red-500" : "text-gray-900"
+        )}
+      />
+      {isEmailInvalid && (
+        <span
+          title="Invalid email address"
+          className="absolute right-0 top-1/2 -translate-y-1/2 text-red-400"
+        >
+          <AlertCircle className="w-3.5 h-3.5" />
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -220,6 +239,11 @@ export default function TeamMembersPage() {
     [members],
   );
 
+  const isEmpty = useMemo(
+    () => members.every((m) => !m.name.trim()),
+    [members],
+  );
+
   if (loading || !initialised) {
     return (
       <div className="space-y-4">
@@ -251,6 +275,16 @@ export default function TeamMembersPage() {
           Add everyone in your team here. These records are used across the Company Structure and Team Capability Tracker sections.
         </p>
       </div>
+
+      {isEmpty && (
+        <div className="mb-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center">
+          <Users className="w-8 h-8 text-slate-300 mx-auto mb-3" />
+          <p className="text-sm font-semibold text-slate-600 mb-1">No team members yet</p>
+          <p className="text-xs text-slate-400">
+            Start by typing into the first row below, or click <strong>Add team member</strong> to grow the list.
+          </p>
+        </div>
+      )}
 
       <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm">
         <div className="overflow-x-auto">

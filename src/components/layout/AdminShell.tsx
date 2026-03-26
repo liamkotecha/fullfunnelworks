@@ -8,6 +8,7 @@
 import { useState, useCallback } from "react";
 import { TopBar } from "@/components/layout/TopBar";
 import { AdminSidebar } from "@/components/layout/AdminSidebar";
+import { SessionExpiryWarning } from "@/components/SessionExpiryWarning";
 
 interface AdminShellProps {
   children: React.ReactNode;
@@ -32,6 +33,7 @@ export function AdminShell({ children, userName, userEmail }: AdminShellProps) {
         open={sidebarOpen}
         onClose={closeSidebar}
       />
+      <SessionExpiryWarning />
       <main className="pt-20 md:ml-64 min-h-screen px-4 pb-4 md:px-6 md:pb-6">
         {children}
       </main>

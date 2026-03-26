@@ -393,6 +393,14 @@ export default function AdminQuestionsPage() {
               npx tsx scripts/seed-questions.ts
             </code>
           )}
+          {questions.length > 0 && (
+            <button
+              onClick={() => { setSectionFilter("all"); setSubSectionFilter("all"); setSearch(""); setShowInactive(false); }}
+              className="mt-4 text-sm font-medium text-slate-500 underline underline-offset-2 hover:text-slate-800 transition-colors"
+            >
+              Clear all filters
+            </button>
+          )}
         </div>
       )}
 

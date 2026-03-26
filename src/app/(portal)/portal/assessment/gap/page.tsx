@@ -14,6 +14,7 @@ import {
 } from "@/components/framework";
 import { isFieldAnswered } from "@/lib/framework-nav";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { NumberRadixSlider } from "@/components/ui/NumberRadixSlider";
 
 const FIELDS = [
   {
@@ -155,18 +156,19 @@ export default function GapPage() {
                   )}
 
                   {field.type === "number" && (
-                    <input
-                      type="number"
-                      min={1}
-                      max={10}
-                      value={value}
-                      onChange={(e) => {
-                        onChange(e.target.value);
-                        setLocalResponse(field.id, e.target.value);
-                      }}
-                      placeholder={field.placeholder}
-                      className="w-32 input-field"
-                    />
+                    <div className="space-y-2">
+                      <NumberRadixSlider
+                        value={value && !isNaN(parseInt(value, 10)) ? parseInt(value, 10) : 1}
+                        onValueChange={(n) => {
+                          onChange(String(n));
+                          setLocalResponse(field.id, String(n));
+                        }}
+                        min={1}
+                        max={10}
+                        step={1}
+                      />
+                      <p className="text-xs text-slate-400">1 = minimal impact · 10 = critical to growth</p>
+                    </div>
                   )}
 
                   {field.type === "select" && field.options && (

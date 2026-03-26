@@ -4,7 +4,7 @@
 "use client";
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
-import { Plus, Trash2, GripVertical } from "lucide-react";
+import { Plus, Trash2, GripVertical, Lightbulb } from "lucide-react";
 import { Reorder, useDragControls, motion } from "framer-motion";
 import { usePortalClient } from "@/hooks/usePortalClient";
 import { useResponses } from "@/hooks/useResponses";
@@ -244,6 +244,11 @@ export default function OutcomesPage() {
     [rows],
   );
 
+  const isEmpty = useMemo(
+    () => rows.every((r) => !r.feature.trim() && !r.problem.trim() && !r.outcome.trim() && !r.impact.trim()),
+    [rows],
+  );
+
   if (loading || !initialised) {
     return (
       <div className="space-y-4">
@@ -277,6 +282,16 @@ export default function OutcomesPage() {
           Map each feature to the customer problem it solves, the outcome it produces, and its measurable business impact.
         </p>
       </div>
+
+      {isEmpty && (
+        <div className="mb-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center">
+          <Lightbulb className="w-8 h-8 text-slate-300 mx-auto mb-3" />
+          <p className="text-sm font-semibold text-slate-600 mb-1">No outcomes mapped yet</p>
+          <p className="text-xs text-slate-400 max-w-sm mx-auto">
+            Start filling in the first row — link a feature to the problem it solves, the outcome it delivers, and the business impact it creates.
+          </p>
+        </div>
+      )}
 
       {/* Table */}
       <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm">
