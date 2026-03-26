@@ -8,7 +8,7 @@ import IntakeResponse from "@/models/IntakeResponse";
 import { sendEmail } from "@/lib/sendgrid";
 import { onboardingInviteEmail } from "@/lib/email-templates/onboarding-invite";
 import { getAllFieldIds, calculateProgress } from "@/lib/framework-nav";
-import { requireAuth } from "@/lib/api-helpers";
+import { requireAuth, consultantFilter, assertConsultantOwnsClient } from "@/lib/api-helpers";
 import type { IIntakeResponse } from "@/models/IntakeResponse";
 
 const createSchema = z.object({
@@ -36,7 +36,7 @@ export async function GET() {
 
     await connectDB();
 
-    const clients = await Client.find()
+    const clients = await Client.find(consultantFilter(userOrRes))
       .populate("userId", "email name")
       .populate("assignedConsultant", "name email")
       .sort({ createdAt: -1 })
@@ -84,12 +84,20 @@ export async function POST(req: NextRequest) {
       user = await User.create({ email: email.toLowerCase(), name: resolvedName, role: "client" });
     }
 
+    // Consultant creating a client always owns them; admin can optionally specify
+    const userOrRes2 = await requireAuth();
+    const creatingUserId = userOrRes2 instanceof NextResponse ? undefined : userOrRes2;
+    const resolvedConsultant =
+      creatingUserId?.role === "consultant"
+        ? creatingUserId.id
+        : (assignedConsultant || undefined);
+
     // Create client record
     const client = await Client.create({
       userId: user._id,
       businessName,
       status: "invited",
-      assignedConsultant: assignedConsultant || undefined,
+      assignedConsultant: resolvedConsultant,
     });
 
     // Send invite email

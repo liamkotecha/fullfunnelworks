@@ -10,12 +10,16 @@ export async function GET() {
     const userOrRes = await requireAuth();
     if (userOrRes instanceof NextResponse) return userOrRes;
     const user = userOrRes as AuthenticatedUser;
-    if (user.role !== "admin") {
+    if (user.role !== "admin" && user.role !== "consultant") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     await connectDB();
-    const settings = await Settings.findOne().lean();
+    // Admin gets global settings (no consultantId); consultant gets their own
+    const query = user.role === "consultant"
+      ? { consultantId: user.id }
+      : { consultantId: { $exists: false } };
+    const settings = await Settings.findOne(query).lean();
 
     return NextResponse.json({
       data: settings ?? {
@@ -51,12 +55,13 @@ export async function PATCH(req: NextRequest) {
     const userOrRes = await requireAuth();
     if (userOrRes instanceof NextResponse) return userOrRes;
     const user = userOrRes as AuthenticatedUser;
-    if (user.role !== "admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
 
     const body = await req.json();
     await connectDB();
+
+    if (user.role !== "admin" && user.role !== "consultant") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     const allowedFields = [
       "leadNotificationEmail",
@@ -73,7 +78,15 @@ export async function PATCH(req: NextRequest) {
       if (key in body) update[key] = body[key];
     }
 
-    const settings = await Settings.findOneAndUpdate({}, update, {
+    // Scope to consultant or global
+    const filter = user.role === "consultant"
+      ? { consultantId: user.id }
+      : { consultantId: { $exists: false } };
+    const upsertSet = user.role === "consultant"
+      ? { ...update, consultantId: user.id }
+      : update;
+
+    const settings = await Settings.findOneAndUpdate(filter, upsertSet, {
       upsert: true,
       new: true,
     }).lean();

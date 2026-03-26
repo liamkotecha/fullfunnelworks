@@ -8,8 +8,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { connectDB } from "@/lib/db";
 import { requireAuth, apiError } from "@/lib/api-helpers";
-import Invoice from "@/models/Invoice";
 import Client from "@/models/Client";
+import Invoice from "@/models/Invoice";
 import { createStripeInvoice } from "@/lib/stripe";
 import { formatPence } from "@/lib/format";
 import { sendEmail } from "@/lib/sendgrid";
@@ -61,9 +61,15 @@ export async function GET(req: NextRequest) {
     const clientId = searchParams.get("clientId");
     const projectId = searchParams.get("projectId");
 
-    const filter: Record<string, string> = {};
+    const filter: Record<string, unknown> = {};
     if (clientId) filter.clientId = clientId;
     if (projectId) filter.projectId = projectId;
+
+    // Consultants can only see invoices for their own clients
+    if (user.role === "consultant") {
+      const clientIds = await Client.find({ assignedConsultant: user.id }).distinct("_id");
+      filter.clientId = clientId ? clientId : { $in: clientIds };
+    }
 
     const invoices = await Invoice.find(filter)
       .sort({ createdAt: -1 })

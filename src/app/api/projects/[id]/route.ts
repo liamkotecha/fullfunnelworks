@@ -39,13 +39,21 @@ export async function GET(
 
     await connectDB();
     const project = await Project.findById(params.id)
-      .populate("clientId", "businessName")
+      .populate("clientId", "businessName assignedConsultant")
       .populate("assignedTo", "name email")
       .lean();
 
     if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
 
-    return NextResponse.json({ data: { ...project, id: String((project as Record<string, unknown>)._id) } });
+    // Consultants can only access projects belonging to their clients
+    if (userOrRes.role === "consultant") {
+      const cl = (project as Record<string, unknown>).clientId as Record<string, unknown> | null;
+      if (!cl || String(cl.assignedConsultant) !== userOrRes.id) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
+
+    return NextResponse.json({ data: { ...(project as Record<string, unknown>), id: String((project as Record<string, unknown>)._id) } });
   } catch (error) {
     console.error("[PROJECT GET]", error);
     return NextResponse.json({ error: "Failed to fetch project" }, { status: 500 });
@@ -68,6 +76,14 @@ export async function PATCH(
       .populate("clientId");
 
     if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
+
+    // Consultants can only modify projects belonging to their clients
+    if (userOrRes.role === "consultant") {
+      const cl = project.clientId as Record<string, unknown> | null;
+      if (!cl || String((cl as Record<string, unknown>).assignedConsultant) !== userOrRes.id) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
 
     // ── Raise block ────────────────────────────────────────
     if (body.action === "raiseBlock") {

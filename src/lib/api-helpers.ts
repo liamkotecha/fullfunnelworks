@@ -62,6 +62,44 @@ export async function requireAuth(): Promise<AuthenticatedUser | NextResponse> {
   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 }
 
+// ── Multi-tenancy: consultant scope helpers ───────────────────
+
+/**
+ * Returns a MongoDB filter fragment that scopes a query to the consultant's
+ * own records. Pass into Client.find() / Prospect.find() directly.
+ * - admin  → {} (no restriction)
+ * - consultant → { assignedConsultant: user.id }
+ */
+export function consultantFilter(
+  user: AuthenticatedUser
+): Record<string, unknown> {
+  if (user.role === "consultant") return { assignedConsultant: user.id };
+  return {};
+}
+
+/**
+ * Verifies a consultant owns the given client (via assignedConsultant).
+ * Admins always pass. Returns a 403 NextResponse if access is denied.
+ *
+ * Usage:
+ *   const check = assertConsultantOwnsClient(user, client as Record<string, unknown>);
+ *   if (check) return check;
+ */
+export function assertConsultantOwnsClient(
+  user: AuthenticatedUser,
+  client: Record<string, unknown>
+): NextResponse | null {
+  if (user.role === "admin") return null;
+  if (user.role === "consultant") {
+    const ac = client.assignedConsultant as Record<string, unknown> | string | null | undefined;
+    const ownerId = ac && typeof ac === "object" ? String(ac._id) : String(ac ?? "");
+    if (ownerId !== user.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+  }
+  return null;
+}
+
 // ── Client DTO mapping ───────────────────────────────────────
 
 /**

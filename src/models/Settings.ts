@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document, Types } from "mongoose";
 
 export interface IGA4EventConfig {
   leadReceived: boolean;
@@ -15,6 +15,7 @@ export interface IGA4EventConfig {
 }
 
 export interface ISettings extends Document {
+  consultantId?: Types.ObjectId; // null = global admin settings; set = per-consultant
   leadNotificationEmail?: string;
   autoResponseReplyTo?: string;
   calendlyUrl?: string;
@@ -46,6 +47,7 @@ const GA4EventConfigSchema = new Schema<IGA4EventConfig>(
 
 const SettingsSchema = new Schema<ISettings>(
   {
+    consultantId: { type: Schema.Types.ObjectId, ref: "User", sparse: true },
     leadNotificationEmail: { type: String, trim: true, lowercase: true },
     autoResponseReplyTo: { type: String, trim: true, lowercase: true },
     calendlyUrl: { type: String, trim: true },
@@ -57,6 +59,9 @@ const SettingsSchema = new Schema<ISettings>(
   },
   { timestamps: true }
 );
+
+// Unique sparse index: one settings doc per consultant (nulls excluded)
+SettingsSchema.index({ consultantId: 1 }, { unique: true, sparse: true });
 
 const Settings =
   mongoose.models.Settings ??

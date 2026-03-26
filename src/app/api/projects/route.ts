@@ -50,6 +50,13 @@ export async function GET(req: NextRequest) {
     if (status) filter.status = status;
     if (clientId) filter.clientId = clientId;
 
+    // Consultants can only see projects belonging to their clients
+    if (userOrRes.role === "consultant") {
+      const clientIds = await Client.find({ assignedConsultant: userOrRes.id })
+        .distinct("_id");
+      filter.clientId = clientId ? clientId : { $in: clientIds };
+    }
+
     const projects = await Project.find(filter)
       .populate("clientId", "businessName")
       .populate("assignedTo", "name")
@@ -116,6 +123,14 @@ export async function POST(req: NextRequest) {
 
     const data = createSchema.parse(body);
     await connectDB();
+
+    // Consultants may only create projects for their own clients
+    if (userOrRes.role === "consultant") {
+      const client = await Client.findById(data.clientId).select("assignedConsultant").lean() as Record<string, unknown> | null;
+      if (!client || String(client.assignedConsultant) !== userOrRes.id) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
 
     const project = await Project.create({
       ...data,

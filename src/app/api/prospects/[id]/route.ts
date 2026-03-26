@@ -164,6 +164,14 @@ export async function GET(_req: NextRequest, { params }: Params) {
       return NextResponse.json({ error: "Prospect not found" }, { status: 404 });
     }
 
+    // Consultants can only access their own prospects
+    if (user.role === "consultant") {
+      const doc = prospect as Record<string, unknown>;
+      const ac = doc.assignedConsultant as Record<string, unknown> | null;
+      const ownerId = ac ? String(ac._id) : "";
+      if (ownerId !== user.id) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     return NextResponse.json({ data: toProspectDTO(prospect as Record<string, unknown>) });
   } catch (error) {
     return apiError("PROSPECT GET", error);
@@ -187,6 +195,13 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const prospect = await Prospect.findById(id);
     if (!prospect) {
       return NextResponse.json({ error: "Prospect not found" }, { status: 404 });
+    }
+
+    // Consultants can only modify their own prospects
+    if (user.role === "consultant") {
+      const ac = prospect.assignedConsultant as Record<string, unknown> | string | null;
+      const ownerId = ac && typeof ac === "object" ? String((ac as Record<string, unknown>)._id) : String(ac ?? "");
+      if (ownerId !== user.id) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     // Stage change validation

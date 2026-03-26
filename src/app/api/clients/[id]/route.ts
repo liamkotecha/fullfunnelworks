@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { connectDB } from "@/lib/db";
 import Client from "@/models/Client";
-import { requireAuth, toClientDTO } from "@/lib/api-helpers";
+import { requireAuth, toClientDTO, assertConsultantOwnsClient } from "@/lib/api-helpers";
 
 const updateSchema = z.object({
   businessName:   z.string().min(1).optional(),
@@ -38,6 +38,8 @@ export async function GET(
       .lean();
 
     if (!client) return NextResponse.json({ error: "Client not found" }, { status: 404 });
+    const guard = assertConsultantOwnsClient(userOrRes, client as Record<string, unknown>);
+    if (guard) return guard;
     return NextResponse.json({ data: toClientDTO(client) }, { status: 200 });
   } catch (error) {
     console.error("[CLIENT GET]", error);
@@ -54,9 +56,18 @@ export async function PATCH(
     if (userOrRes instanceof NextResponse) return userOrRes;
 
     const body = await req.json();
-    const data = updateSchema.parse(body);
+    const parsed = updateSchema.parse(body);
+    // Consultants cannot reassign clients to another consultant
+    const data: typeof parsed = { ...parsed };
+    if (userOrRes.role === "consultant") delete (data as Record<string, unknown>).assignedConsultant;
 
     await connectDB();
+    // Fetch first to verify ownership
+    const existing = await Client.findById(params.id).lean();
+    if (!existing) return NextResponse.json({ error: "Client not found" }, { status: 404 });
+    const guard = assertConsultantOwnsClient(userOrRes, existing as Record<string, unknown>);
+    if (guard) return guard;
+
     const client = await Client.findByIdAndUpdate(params.id, data, { new: true })
       .populate("userId", "email name")
       .populate("assignedConsultant", "name email")
@@ -81,8 +92,11 @@ export async function DELETE(
     if (userOrRes instanceof NextResponse) return userOrRes;
 
     await connectDB();
-    const client = await Client.findByIdAndDelete(params.id);
-    if (!client) return NextResponse.json({ error: "Client not found" }, { status: 404 });
+    const existing = await Client.findById(params.id).lean();
+    if (!existing) return NextResponse.json({ error: "Client not found" }, { status: 404 });
+    const guard = assertConsultantOwnsClient(userOrRes, existing as Record<string, unknown>);
+    if (guard) return guard;
+    await Client.findByIdAndDelete(params.id);
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
     console.error("[CLIENT DELETE]", error);

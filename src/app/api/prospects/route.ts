@@ -155,6 +155,9 @@ export async function GET(req: NextRequest) {
     const source = searchParams.get("source");
     if (source) filter.source = source;
 
+    // Consultants can only see prospects assigned to them
+    if (user.role === "consultant") filter.assignedConsultant = user.id;
+
     const prospects = await Prospect.find(filter)
       .populate("assignedConsultant", "name email")
       .sort({ createdAt: -1 })
