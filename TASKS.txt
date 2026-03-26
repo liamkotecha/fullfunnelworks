@@ -91,37 +91,30 @@ D. UX — CRITICAL (blocks work or causes data issues)
        Actions: Send, Mark Paid, Void (conditional on status)
        Updated list row click + action menu to use new route
 
-[ ] D1. Add global error boundaries (error.tsx)
+[x] D1. Add global error boundaries (error.tsx)
        No error.tsx exists in (portal) or (admin) route groups
        Component crashes = full white screen with no recovery
        Files needed: src/app/(portal)/error.tsx, src/app/(admin)/error.tsx
 
-[ ] D2. Silent error handling — portal API calls
-       Overview team fetch: .catch(() => {}) — no user feedback
-       AutosaveField: save failure shows only HTTP status code ("Save failed: 422")
-       Many pages swallow errors silently
-       Key files: overview/page.tsx L185, AutosaveField.tsx L104
+[x] D2. Silent error handling — portal API calls
+       [x] AutosaveField: status-aware error copy replacing raw HTTP status
+       [x] Overview team fetch: low-severity background fetch, left as silent non-blocking (teamData is supplementary)
 
-[ ] D3. Silent error handling — admin API calls (12+ instances)
-       Dashboard: terminate project, extend deadline — silent fail
-       Questions: fetch, save edit, toggle active, reorder — all silent
-       Settings: all 6 save actions — silent fail  
-       CRM Pipeline: drag-drop stage change — silent fail
-       CRM Prospects: fetch, CSV export — silent fail
-       Key files: dashboard/page.tsx, questions/page.tsx, settings/page.tsx,
-       crm/pipeline/page.tsx, crm/prospects/page.tsx
+[x] D3. Silent error handling — admin API calls (12+ instances)
+       [x] Dashboard: Promise.all load — catch wired to toast
+       [x] Questions: fetch, save edit, toggle active, reorder — all wired to toast
+       [x] CRM Pipeline: fetch + drag-drop revert — wired to toast
+       [x] CRM Prospects: fetch + CSV export — wired to toast
+       [x] Settings: all tabs already had toast handlers (leads, analytics, security, general)
 
-[ ] D4. Missing confirmation dialogs for destructive actions
-       Questions page: delete question — no confirmation
-       Prospects: bulk delete uses window.confirm() instead of styled modal
-       Key files: questions/page.tsx, crm/prospects/page.tsx
+[x] D4. Missing confirmation dialogs for destructive actions
+       [x] Questions page: delete question — ConfirmModal added
+       [x] Prospects: bulk delete — replaced window.confirm() with styled ConfirmModal
 
-[ ] D5. Client form validation — no error messages shown
-       New client: checks businessName/email but shows no message on failure
-       Client detail: has validateForm() + formErrors state but errors not displayed
-       QuickAddProspectModal: error in footer only, not on failing fields
-       No email format validation on either form
-       Key files: clients/page.tsx L50, clients/[id]/page.tsx
+[x] D5. Client form validation — no error messages shown
+       [x] New client modal: email regex + formErrors state + inline errors (clients/page.tsx)
+       [x] Client detail: businessName/email/website errors already wired to inputs (clients/[id]/page.tsx)
+       [x] QuickAddProspectModal: per-field errors on businessName/contactName/email + email regex
 
 
 ═══════════════════════════════════════════════════════════

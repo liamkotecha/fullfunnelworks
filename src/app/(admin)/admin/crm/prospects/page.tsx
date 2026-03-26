@@ -23,6 +23,8 @@ import { cn, formatDate } from "@/lib/utils";
 import { formatPence } from "@/lib/format";
 import { LeadScoreBadge } from "@/components/crm/LeadScoreBadge";
 import { QuickAddProspectModal } from "@/components/crm/QuickAddProspectModal";
+import { ConfirmModal } from "@/components/ui/Modal";
+import { useToast } from "@/components/notifications/ToastContext";
 import type { ProspectDTO, ProspectStage } from "@/types";
 import { PROSPECT_STAGE_META } from "@/types";
 
@@ -70,7 +72,9 @@ export default function ProspectListPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [showAddModal, setShowAddModal] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
   const hasFetched = useRef(false);
+  const { error: toastError, success } = useToast();
 
   const fetchProspects = useCallback(async () => {
     try {
@@ -78,11 +82,11 @@ export default function ProspectListPage() {
       const json = await res.json();
       setProspects(json.data ?? []);
     } catch {
-      // silent
+      toastError("Couldn't load prospects", "Please refresh the page");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [toastError]);
 
   useEffect(() => {
     if (hasFetched.current) return;
@@ -178,12 +182,18 @@ export default function ProspectListPage() {
   /* ── Bulk delete ────────────────────────────────────── */
   const handleBulkDelete = async () => {
     if (selected.size === 0) return;
-    if (!window.confirm(`Delete ${selected.size} prospect(s)?`)) return;
+    setBulkDeleteConfirm(true);
+  };
+
+  const confirmBulkDelete = async () => {
+    setBulkDeleteConfirm(false);
+    const count = selected.size;
     for (const id of selected) {
       await fetch(`/api/prospects/${id}`, { method: "DELETE" });
     }
     setProspects((prev) => prev.filter((p) => !selected.has(p.id)));
     setSelected(new Set());
+    success(`${count} prospect${count !== 1 ? "s" : ""} deleted`);
   };
 
   /* ── CSV export ─────────────────────────────────────── */
@@ -200,7 +210,7 @@ export default function ProspectListPage() {
       a.click();
       URL.revokeObjectURL(url);
     } catch {
-      // silent
+      toastError("Export failed", "Couldn't generate CSV — please try again");
     } finally {
       setExporting(false);
     }
@@ -436,6 +446,16 @@ export default function ProspectListPage() {
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
         onCreated={(p) => setProspects((prev) => [p, ...prev])}
+      />
+
+      <ConfirmModal
+        isOpen={bulkDeleteConfirm}
+        onClose={() => setBulkDeleteConfirm(false)}
+        onConfirm={confirmBulkDelete}
+        title={`Delete ${selected.size} prospect${selected.size !== 1 ? "s" : ""}?`}
+        message="This will permanently delete the selected prospects and cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
       />
     </div>
   );

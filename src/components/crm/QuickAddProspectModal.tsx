@@ -52,6 +52,7 @@ export function QuickAddProspectModal({ isOpen, onClose, onCreated }: QuickAddPr
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<{ businessName?: string; contactName?: string; contactEmail?: string }>({});
   const [consultants, setConsultants] = useState<Consultant[]>([]);
 
   useEffect(() => {
@@ -74,13 +75,22 @@ export function QuickAddProspectModal({ isOpen, onClose, onCreated }: QuickAddPr
   const update = (key: string, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
     setError("");
+    if (key === "businessName" || key === "contactName" || key === "contactEmail") {
+      setFieldErrors((prev) => ({ ...prev, [key]: undefined }));
+    }
   };
 
   const handleSubmit = async () => {
-    if (!form.businessName.trim() || !form.contactName.trim() || !form.contactEmail.trim()) {
-      setError("Business name, contact name, and email are required.");
-      return;
+    const errs: { businessName?: string; contactName?: string; contactEmail?: string } = {};
+    if (!form.businessName.trim()) errs.businessName = "Business name is required";
+    if (!form.contactName.trim()) errs.contactName = "Contact name is required";
+    if (!form.contactEmail.trim()) {
+      errs.contactEmail = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.contactEmail)) {
+      errs.contactEmail = "Enter a valid email address";
     }
+    if (Object.keys(errs).length) { setFieldErrors(errs); return; }
+    setFieldErrors({});
     setSaving(true);
     setError("");
     try {
@@ -127,17 +137,23 @@ export function QuickAddProspectModal({ isOpen, onClose, onCreated }: QuickAddPr
   const selectClass =
     "w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 focus:border-slate-400 focus:ring-1 focus:ring-slate-200 focus:outline-none transition-all";
 
+  const handleClose = () => {
+    setFieldErrors({});
+    setError("");
+    onClose();
+  };
+
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleClose}
       title="Add prospect"
       size="md"
       footer={
         <div className="flex items-center justify-between">
           {error && <p className="text-xs text-red-600 font-medium">{error}</p>}
           <div className="flex gap-3 ml-auto">
-            <Button variant="secondary" onClick={onClose} disabled={saving}>
+            <Button variant="secondary" onClick={handleClose} disabled={saving}>
               Cancel
             </Button>
             <Button onClick={handleSubmit} isLoading={saving}>
@@ -153,6 +169,7 @@ export function QuickAddProspectModal({ isOpen, onClose, onCreated }: QuickAddPr
           placeholder="e.g. CloudScale Systems"
           value={form.businessName}
           onChange={(e) => update("businessName", e.target.value)}
+          error={fieldErrors.businessName}
         />
         <div className="grid grid-cols-2 gap-4">
           <Input
@@ -160,6 +177,7 @@ export function QuickAddProspectModal({ isOpen, onClose, onCreated }: QuickAddPr
             placeholder="e.g. Sarah Chen"
             value={form.contactName}
             onChange={(e) => update("contactName", e.target.value)}
+            error={fieldErrors.contactName}
           />
           <Input
             label="Email *"
@@ -167,6 +185,7 @@ export function QuickAddProspectModal({ isOpen, onClose, onCreated }: QuickAddPr
             placeholder="e.g. sarah@example.com"
             value={form.contactEmail}
             onChange={(e) => update("contactEmail", e.target.value)}
+            error={fieldErrors.contactEmail}
           />
         </div>
         <Input

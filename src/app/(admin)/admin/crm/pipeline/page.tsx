@@ -25,6 +25,7 @@ import { ProspectCard } from "@/components/crm/ProspectCard";
 import { QuickAddProspectModal } from "@/components/crm/QuickAddProspectModal";
 import type { ProspectDTO, ProspectStage } from "@/types";
 import { PROSPECT_STAGE_META } from "@/types";
+import { useToast } from "@/components/notifications/ToastContext";
 
 /* ── Column config ────────────────────────────────────────── */
 const ACTIVE_STAGES: ProspectStage[] = ["mql", "sql", "discovery", "proposal", "negotiating"];
@@ -143,6 +144,7 @@ export default function PipelinePage() {
   const [showClosed, setShowClosed] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const hasFetched = useRef(false);
+  const { error: toastError } = useToast();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -154,11 +156,11 @@ export default function PipelinePage() {
       const json = await res.json();
       setProspects(json.data ?? []);
     } catch {
-      // silent
+      toastError("Couldn't load prospects", "Please refresh the page");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [toastError]);
 
   useEffect(() => {
     if (hasFetched.current) return;
@@ -267,6 +269,7 @@ export default function PipelinePage() {
           p.id === prospectId ? { ...p, stage: prospect.stage, daysInStage: prospect.daysInStage } : p
         )
       );
+      toastError("Couldn't update stage", "The change was reverted — please try again");
     }
   }
 
