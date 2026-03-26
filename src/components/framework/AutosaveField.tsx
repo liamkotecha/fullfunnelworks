@@ -108,7 +108,7 @@ export function AutosaveField({
 
         // Clear "Saved" indicator after 2s
         if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
-        savedTimerRef.current = setTimeout(() => setIsSaved(false), 2000);
+        savedTimerRef.current = setTimeout(() => setIsSaved(false), 4000);
       } catch (err) {
         setIsSaving(false);
         setHasError(true);

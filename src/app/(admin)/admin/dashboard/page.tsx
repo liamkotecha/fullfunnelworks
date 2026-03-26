@@ -130,7 +130,7 @@ function Avatar({ name, size = "w-7 h-7" }: { name: string; size?: string }) {
 /* ── page ────────────────────────────────────────────────────── */
 export default function DashboardPage() {
   const { data: session } = useSession();
-  const { error: toastError } = useToast();
+  const { error: toastError, success } = useToast();
   const [clients, setClients] = useState<ClientDTO[]>([]);
   const [projects, setProjects] = useState<ProjectDTO[]>([]);
   const [prospects, setProspects] = useState<ProspectDTO[]>([]);
@@ -267,12 +267,14 @@ export default function DashboardPage() {
   const handleTerminate = useCallback(async () => {
     if (!terminateTarget || !terminateReason.trim()) return;
     setTerminating(true);
+    const title = terminateTarget.title;
     try {
-      await fetch(`/api/projects/${terminateTarget.id}`, {
+      const res = await fetch(`/api/projects/${terminateTarget.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "terminate", reason: terminateReason }),
       });
+      if (!res.ok) throw new Error("Server error");
       setProjects((prev) =>
         prev.map((p) =>
           p.id === terminateTarget.id
@@ -287,22 +289,25 @@ export default function DashboardPage() {
       );
       setTerminateTarget(null);
       setTerminateReason("");
+      success("Project terminated", `${title} has been closed`);
     } catch {
-      // Silent fail
+      toastError("Failed to terminate project", "Please try again");
     } finally {
       setTerminating(false);
     }
-  }, [terminateTarget, terminateReason]);
+  }, [terminateTarget, terminateReason, success, toastError]);
 
   const handleExtendDeadline = useCallback(async () => {
     if (!extendTarget || !extendDate) return;
     setExtending(true);
+    const title = extendTarget.title;
     try {
-      await fetch(`/api/projects/${extendTarget.id}`, {
+      const res = await fetch(`/api/projects/${extendTarget.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ dueDate: extendDate }),
       });
+      if (!res.ok) throw new Error("Server error");
       setProjects((prev) =>
         prev.map((p) =>
           p.id === extendTarget.id ? { ...p, dueDate: extendDate } : p
@@ -310,12 +315,13 @@ export default function DashboardPage() {
       );
       setExtendTarget(null);
       setExtendDate("");
+      success("Deadline extended", `${title} deadline updated`);
     } catch {
-      // Silent fail
+      toastError("Failed to extend deadline", "Please try again");
     } finally {
       setExtending(false);
     }
-  }, [extendTarget, extendDate]);
+  }, [extendTarget, extendDate, success, toastError]);
 
   /* ── Needs attention items ───────────────────────────────── */
   const attentionItems = useMemo(() => {
