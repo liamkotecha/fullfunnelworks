@@ -302,6 +302,31 @@ function LoginContent() {
           </AnimatePresence>
         </div>
 
+        {/* Demo quick-login — only visible in development */}
+        {process.env.NODE_ENV === "development" && (
+          <div className="mt-6 pt-5 border-t border-slate-100">
+            <p className="text-center text-xs text-slate-400 mb-3 uppercase tracking-wide font-medium">
+              Demo accounts
+            </p>
+            <div className="flex gap-2 justify-center flex-wrap">
+              {[
+                { label: "Admin",      email: "admin@demo.fullf.io",      pw: "demo1234" },
+                { label: "Consultant", email: "consultant@demo.fullf.io", pw: "demo1234" },
+                { label: "Client",     email: "client@demo.fullf.io",     pw: "demo1234" },
+              ].map((d) => (
+                <button
+                  key={d.label}
+                  type="button"
+                  onClick={() => { setTab("password"); setEmail(d.email); setPassword(d.pw); }}
+                  className="px-3 py-1.5 rounded-md bg-slate-100 hover:bg-slate-200 text-xs font-medium text-slate-600 transition-colors"
+                >
+                  {d.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <p className="text-center text-xs text-slate-400 mt-6">
           Private portal — authorised access only
         </p>

@@ -17,6 +17,7 @@ import { useProgress } from "@/context/ProgressContext";
 import { getSubSectionFieldIds } from "@/lib/framework-nav";
 import { useProjectContext } from "@/context/ProjectContext";
 import { usePortalClient } from "@/hooks/usePortalClient";
+import { Speedometer } from "@/components/ui/Speedometer";
 
 // ── Data model ───────────────────────────────────────────────
 
@@ -339,9 +340,9 @@ export default function PortalOverviewPage() {
         </motion.div>
       )}
 
-      {/* Greeting row */}
-      <motion.div variants={fadeUp} className="flex items-end justify-between gap-4 pt-1">
-        <div>
+      {/* Greeting row + Speedometer */}
+      <motion.div variants={fadeUp} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pt-1">
+        <div className="flex-1 min-w-0">
           <h1 className="text-3xl font-bold text-slate-900" style={{ letterSpacing: "-0.02em" }}>
             {getGreeting(firstName)}
           </h1>
@@ -351,18 +352,11 @@ export default function PortalOverviewPage() {
               : `${overallAnswered} of ${overallTotal} questions answered across your framework.`}
           </p>
         </div>
-        {/* Overall pill */}
-        {overallTotal > 0 && (
-          <div className="flex-shrink-0 flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5">
-            <div className="w-16 h-1.5 rounded-full bg-slate-200 overflow-hidden">
-              <motion.div
-                className="h-full rounded-full bg-brand-blue"
-                initial={{ width: 0 }}
-                animate={{ width: `${overallPercent}%` }}
-                transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
-              />
-            </div>
-            <span className="text-sm font-bold text-slate-700 tabular-nums">{overallPercent}%</span>
+        {/* Maturity speedometer — only once some progress loaded */}
+        {progressLoaded && (
+          <div className="flex-shrink-0 flex flex-col items-center">
+            <Speedometer percent={overallPercent} size={160} />
+            <p className="text-xs text-slate-400 mt-0.5 tracking-wide uppercase font-medium">Maturity Score</p>
           </div>
         )}
       </motion.div>
