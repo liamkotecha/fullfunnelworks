@@ -25,6 +25,8 @@ import {
   Hash,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/components/notifications/ToastContext";
+import { ConfirmModal } from "@/components/ui/Modal";
 
 // ── Types ────────────────────────────────────────────────────
 
@@ -102,6 +104,11 @@ export default function AdminQuestionsPage() {
   // Add new question
   const [showAdd, setShowAdd] = useState(false);
 
+  // Delete confirmation
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const { error: toastError, success: toastSuccess } = useToast();
+
   // ── Fetch ────────────────────────────────────────────────
 
   const fetchQuestions = useCallback(async () => {
@@ -114,12 +121,12 @@ export default function AdminQuestionsPage() {
       const data = await res.json();
       setQuestions(data.questions ?? []);
       setStats(data.stats ?? null);
-    } catch {
-      /* silent */
+    } catch (e) {
+      toastError("Couldn't load questions", (e as Error).message ?? "Please refresh the page");
     } finally {
       setLoading(false);
     }
-  }, [sectionFilter, subSectionFilter]);
+  }, [sectionFilter, subSectionFilter, toastError]);
 
   useEffect(() => {
     fetchQuestions();
@@ -184,9 +191,12 @@ export default function AdminQuestionsPage() {
           prev.map((q) => (q._id === id ? { ...q, ...data.question } : q))
         );
         cancelEdit();
+        toastSuccess("Question saved");
+      } else {
+        toastError("Save failed", "The question couldn't be updated");
       }
-    } catch {
-      /* silent */
+    } catch (e) {
+      toastError("Save failed", (e as Error).message);
     } finally {
       setSaving(null);
     }
@@ -206,9 +216,12 @@ export default function AdminQuestionsPage() {
             item._id === q._id ? { ...item, active: !item.active } : item
           )
         );
+        toastSuccess(q.active ? "Question deactivated" : "Question activated");
+      } else {
+        toastError("Update failed", "Couldn't change question visibility");
       }
-    } catch {
-      /* silent */
+    } catch (e) {
+      toastError("Update failed", (e as Error).message);
     } finally {
       setSaving(null);
     }
@@ -246,10 +259,25 @@ export default function AdminQuestionsPage() {
           return item;
         })
       );
-    } catch {
-      /* silent */
+    } catch (e) {
+      toastError("Reorder failed", (e as Error).message);
     } finally {
       setSaving(null);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    setDeleteId(null);
+    try {
+      const res = await fetch(`/api/admin/questions/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        setQuestions((prev) => prev.filter((q) => q._id !== id));
+        toastSuccess("Question deleted");
+      } else {
+        toastError("Delete failed", "The question couldn't be deleted");
+      }
+    } catch (e) {
+      toastError("Delete failed", (e as Error).message);
     }
   };
 
@@ -413,6 +441,7 @@ export default function AdminQuestionsPage() {
                       onToggleActive={() => toggleActive(q)}
                       onMoveUp={idx > 0 ? () => moveQuestion(q, "up") : undefined}
                       onMoveDown={idx < groupQuestions.length - 1 ? () => moveQuestion(q, "down") : undefined}
+                      onDelete={() => setDeleteId(q._id)}
                     />
                   ))}
                 </div>
@@ -434,6 +463,17 @@ export default function AdminQuestionsPage() {
           />
         )}
       </AnimatePresence>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={deleteId !== null}
+        onClose={() => setDeleteId(null)}
+        onConfirm={() => deleteId && handleDelete(deleteId)}
+        title="Delete question?"
+        message="This question will be permanently removed from the framework. This action cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+      />
     </div>
   );
 }
@@ -454,6 +494,7 @@ function QuestionRow({
   onToggleActive,
   onMoveUp,
   onMoveDown,
+  onDelete,
 }: {
   q: Question;
   isEditing: boolean;
@@ -468,6 +509,7 @@ function QuestionRow({
   onToggleActive: () => void;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
+  onDelete: () => void;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -592,6 +634,13 @@ function QuestionRow({
               title={q.active ? "Deactivate" : "Reactivate"}
             >
               {q.active ? <EyeOff className="w-3.5 h-3.5" /> : <RotateCcw className="w-3.5 h-3.5" />}
+            </button>
+            <button
+              onClick={onDelete}
+              className="p-1.5 rounded-md text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+              title="Delete question"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>

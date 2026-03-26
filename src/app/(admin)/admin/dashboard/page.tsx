@@ -31,6 +31,7 @@ import {
 } from "@/types";
 import type { ProspectStage } from "@/types";
 import { formatPence } from "@/lib/format";
+import { useToast } from "@/components/notifications/ToastContext";
 
 /* ── animation variants ─────────────────────────────────────── */
 const stagger = {
@@ -129,6 +130,7 @@ function Avatar({ name, size = "w-7 h-7" }: { name: string; size?: string }) {
 /* ── page ────────────────────────────────────────────────────── */
 export default function DashboardPage() {
   const { data: session } = useSession();
+  const { error: toastError } = useToast();
   const [clients, setClients] = useState<ClientDTO[]>([]);
   const [projects, setProjects] = useState<ProjectDTO[]>([]);
   const [prospects, setProspects] = useState<ProspectDTO[]>([]);
@@ -152,6 +154,9 @@ export default function DashboardPage() {
       setProjects(p.data ?? []);
       setProspects(pr.data ?? []);
       setInvoices(inv.data ?? []);
+      setLoading(false);
+    }).catch(() => {
+      toastError("Couldn't load dashboard", "Please refresh the page");
       setLoading(false);
     });
 

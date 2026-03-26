@@ -19,6 +19,7 @@ export default function ClientsPage() {
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ businessName: "", email: "" });
+  const [formErrors, setFormErrors] = useState<{ businessName?: string; email?: string }>({});
   const [saving, setSaving] = useState(false);
   const { success, error: toastError } = useToast();
   const router = useRouter();
@@ -27,7 +28,8 @@ export default function ClientsPage() {
     setLoading(true);
     fetch("/api/clients")
       .then((r) => r.json())
-      .then((d) => { setClients(d.data ?? []); setLoading(false); });
+      .then((d) => { setClients(d.data ?? []); setLoading(false); })
+      .catch(() => { toastError("Couldn't load clients", "Please refresh the page"); setLoading(false); });
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -39,7 +41,15 @@ export default function ClientsPage() {
   );
 
   const handleCreate = async () => {
-    if (!form.businessName || !form.email) return;
+    const errors: { businessName?: string; email?: string } = {};
+    if (!form.businessName.trim()) errors.businessName = "Business name is required";
+    if (!form.email.trim()) {
+      errors.email = "Email address is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      errors.email = "Enter a valid email address";
+    }
+    if (Object.keys(errors).length) { setFormErrors(errors); return; }
+    setFormErrors({});
     setSaving(true);
     try {
       const res = await fetch("/api/clients", {
@@ -202,13 +212,13 @@ export default function ClientsPage() {
       {/* New Client Modal */}
       <Modal
         isOpen={showModal}
-        onClose={() => setShowModal(false)}
+        onClose={() => { setShowModal(false); setFormErrors({}); }}
         title="Add New Client"
         size="sm"
         footer={
           <div className="flex gap-3 justify-end">
-            <Button variant="secondary" onClick={() => setShowModal(false)}>Cancel</Button>
-            <Button isLoading={saving} onClick={handleCreate} disabled={!form.businessName || !form.email}>
+            <Button variant="secondary" onClick={() => { setShowModal(false); setFormErrors({}); }}>Cancel</Button>
+            <Button isLoading={saving} onClick={handleCreate} disabled={saving}>
               Create & Invite
             </Button>
           </div>
@@ -218,16 +228,18 @@ export default function ClientsPage() {
           <Input
             label="Business name"
             value={form.businessName}
-            onChange={(e) => setForm((f) => ({ ...f, businessName: e.target.value }))}
+            onChange={(e) => { setForm((f) => ({ ...f, businessName: e.target.value })); setFormErrors((fe) => ({ ...fe, businessName: undefined })); }}
             placeholder="Acme Ltd"
+            error={formErrors.businessName}
           />
           <Input
             label="Client email address"
             type="email"
             value={form.email}
-            onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+            onChange={(e) => { setForm((f) => ({ ...f, email: e.target.value })); setFormErrors((fe) => ({ ...fe, email: undefined })); }}
             placeholder="owner@acme.com"
             hint="An onboarding invite will be sent to this address"
+            error={formErrors.email}
           />
         </div>
       </Modal>

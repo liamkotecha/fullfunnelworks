@@ -85,7 +85,13 @@ export function AutosaveField({
         });
 
         if (!res.ok) {
-          throw new Error(`Save failed: ${res.status}`);
+          throw new Error(
+            res.status >= 500
+              ? "Couldn't save — server error, please try again"
+              : res.status === 401 || res.status === 403
+              ? "Couldn't save — your session may have expired, please refresh"
+              : "Couldn't save — please check your connection and try again"
+          );
         }
 
         const result = await res.json();
