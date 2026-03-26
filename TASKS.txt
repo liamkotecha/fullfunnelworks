@@ -8,27 +8,27 @@ Status key: [ ] todo  [~] in progress  [x] done  [-] deferred (waiting on call)
 A. JONATHAN'S FEEDBACK — BUILD NOW (no ambiguity)
 ═══════════════════════════════════════════════════════════
 
-[ ] A1. RAG badges on portal overview section cards
+[x] A1. RAG badges on portal overview section cards
        Red (<33%) / Amber (33-66%) / Green (>66%) completion indicators
        File: src/app/(portal)/portal/overview/page.tsx
        Scope: UI-only, uses existing progress data
 
-[ ] A2. Add sponsorId field to Project model
+[x] A2. Add sponsorId field to Project model
        New optional ref to User (the project sponsor / chairperson)
        File: src/models/Project.ts
        Scope: Schema addition only, no UI yet
 
-[ ] A3. Extend staleness engine to flag sponsor notifications
+[x] A3. Extend staleness engine to flag sponsor notifications
        Add shouldNotifySponsor to StalenessResult (stalled + at_risk)
        File: src/lib/staleness.ts
 
-[ ] A4. Module dependency map — static config
+[x] A4. Module dependency map — static config
        Define which modules depend on which (e.g. GTM needs Product + Process)
-       File: new utility in src/lib/module-dependencies.ts
+       File: src/lib/module-dependencies.ts
        Include: misalignment detection function that takes module completion
        percentages and returns warnings
 
-[ ] A5. Wire dependency warnings into admin project detail view
+[x] A5. Wire dependency warnings into admin project detail view
        Show "GTM 80% but Product only 15% — misalignment risk" style alerts
        Scope: consultant/admin dashboard, not portal (yet)
 

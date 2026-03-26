@@ -21,6 +21,7 @@ export interface IProject extends Document {
   package: string;
   milestones: IMilestone[];
   assignedTo?: Types.ObjectId;
+  sponsorId?: Types.ObjectId;
   dueDate?: Date;
   activeModules: string[];
   lastActivityAt: Date;
@@ -57,6 +58,7 @@ const ProjectSchema = new Schema<IProject>(
     package: { type: String, required: true },
     milestones: [MilestoneSchema],
     assignedTo: { type: Schema.Types.ObjectId, ref: "User" },
+    sponsorId: { type: Schema.Types.ObjectId, ref: "User" },
     dueDate: { type: Date },
     activeModules: {
       type: [String],

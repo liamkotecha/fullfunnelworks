@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, AlertTriangle, CheckCircle, Clock, Plus, X, TrendingUp, ClipboardCheck } from "lucide-react";
+import { ArrowLeft, AlertTriangle, CheckCircle, Clock, Plus, X, TrendingUp, ClipboardCheck, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -12,6 +12,41 @@ import { Select, Textarea, Input } from "@/components/ui/Input";
 import { useToast } from "@/components/notifications/ToastContext";
 import { formatDate, formatDateTime } from "@/lib/utils";
 import { ProjectDTO, PROJECT_STATUS_META, ProjectStatus } from "@/types";
+import { detectMisalignments, ModuleKey, MisalignmentWarning } from "@/lib/module-dependencies";
+
+// ── Helpers ───────────────────────────────────────────────────
+
+type SubProgressMap = Record<string, { answeredCount: number; totalCount: number }>;
+
+function keyToModule(key: string): ModuleKey | null {
+  if (key.startsWith("assessment")) return "assessment";
+  if (key.startsWith("people")) return "people";
+  if (key.startsWith("product")) return "product";
+  if (key.startsWith("process")) return "process";
+  if (key.startsWith("gtm")) return "gtm";
+  if (key.startsWith("revenue_execution")) return "revenue_execution";
+  if (key.startsWith("execution_planning")) return "execution_planning";
+  if (key.startsWith("roadmap")) return "roadmap";
+  if (key.startsWith("kpis")) return "kpis";
+  return null;
+}
+
+function computeModuleCompletions(subProgress: SubProgressMap): Partial<Record<ModuleKey, number>> {
+  const groups: Partial<Record<ModuleKey, number[]>> = {};
+  for (const [key, val] of Object.entries(subProgress)) {
+    if (val.totalCount === 0) continue;
+    const module = keyToModule(key);
+    if (!module) continue;
+    const pct = Math.round((val.answeredCount / val.totalCount) * 100);
+    if (!groups[module]) groups[module] = [];
+    groups[module]!.push(pct);
+  }
+  const result: Partial<Record<ModuleKey, number>> = {};
+  for (const [mod, pcts] of Object.entries(groups) as [ModuleKey, number[]][]) {
+    result[mod] = Math.round(pcts.reduce((a, b) => a + b, 0) / pcts.length);
+  }
+  return result;
+}
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -23,10 +58,12 @@ export default function ProjectDetailPage() {
   const [resolveModal, setResolveModal] = useState(false);
   const [statusModal, setStatusModal] = useState(false);
   const [milestoneModal, setMilestoneModal] = useState(false);
+  const [resetModal, setResetModal] = useState(false);
   const [blockReason, setBlockReason] = useState("");
   const [newStatus, setNewStatus] = useState<ProjectStatus>("in_progress");
   const [newMilestone, setNewMilestone] = useState({ title: "", dueDate: "" });
   const [saving, setSaving] = useState(false);
+  const [misalignments, setMisalignments] = useState<MisalignmentWarning[]>([]);
 
   const load = () => {
     fetch(`/api/projects/${id}`)
@@ -34,13 +71,41 @@ export default function ProjectDetailPage() {
       .then((d) => {
         const p = d.data ?? null;
         setProject(p);
-        if (p) setNewStatus(p.status);
+        if (p) {
+          setNewStatus(p.status);
+          // Fetch client progress for misalignment detection
+          const clientId = typeof p.clientId === "object" ? p.clientId._id : p.clientId;
+          fetch(`/api/responses/${clientId}`)
+            .then((r) => r.json())
+            .then((resp) => {
+              const subProgress: SubProgressMap = resp.subSectionProgress ?? {};
+              const completions = computeModuleCompletions(subProgress);
+              setMisalignments(detectMisalignments(completions));
+            })
+            .catch(() => {});
+        }
         setLoading(false);
       });
   };
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load(); }, [id]);
+
+  const handleReset = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/projects/${id}/reset`, { method: "POST" });
+      if (!res.ok) throw new Error((await res.json()).error);
+      success("Responses cleared", "All framework answers have been reset.");
+      setResetModal(false);
+      setMisalignments([]);
+      load();
+    } catch (e) {
+      toastError("Reset failed", (e as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleRaiseBlock = async () => {
     if (!blockReason) return;
@@ -157,6 +222,14 @@ export default function ProjectDetailPage() {
                 Raise Block
               </Button>
             )}
+            <Button
+              size="sm"
+              variant="secondary"
+              leftIcon={<RotateCcw className="w-3.5 h-3.5" />}
+              onClick={() => setResetModal(true)}
+            >
+              Reset Demo
+            </Button>
           </div>
         </div>
 
@@ -191,6 +264,50 @@ export default function ProjectDetailPage() {
               </div>
             </div>
           ))}
+        </motion.div>
+      )}
+
+      {/* Module misalignment warnings */}
+      {misalignments.length > 0 && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="card space-y-3">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0" />
+            <h2 className="font-semibold text-slate-900">Module Alignment</h2>
+          </div>
+          <p className="text-xs text-slate-500">
+            These modules are significantly ahead of their prerequisites. The client may be skipping foundational work.
+          </p>
+          <div className="space-y-2">
+            {misalignments.map((w, i) => (
+              <div
+                key={i}
+                className={`rounded-lg border px-4 py-3 flex items-start gap-3 ${
+                  w.severity === "critical"
+                    ? "bg-red-50 border-red-200"
+                    : "bg-amber-50 border-amber-200"
+                }`}
+              >
+                <AlertTriangle className={`w-4 h-4 mt-0.5 flex-shrink-0 ${
+                  w.severity === "critical" ? "text-red-500" : "text-amber-500"
+                }`} />
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm font-semibold ${w.severity === "critical" ? "text-red-800" : "text-amber-800"}`}>
+                    {w.moduleLabel} ({w.modulePercent}%) — {w.blockedByLabel} only {w.blockedByPercent}%
+                  </p>
+                  <p className={`text-xs mt-0.5 ${w.severity === "critical" ? "text-red-600" : "text-amber-600"}`}>
+                    {w.moduleLabel} is {w.modulePercent - w.blockedByPercent} points ahead of its prerequisite. Consider pausing until {w.blockedByLabel} catches up.
+                  </p>
+                </div>
+                <span className={`text-[10px] font-bold uppercase tracking-wide flex-shrink-0 px-1.5 py-0.5 rounded ${
+                  w.severity === "critical"
+                    ? "bg-red-100 text-red-700"
+                    : "bg-amber-100 text-amber-700"
+                }`}>
+                  {w.severity}
+                </span>
+              </div>
+            ))}
+          </div>
         </motion.div>
       )}
 
@@ -304,6 +421,17 @@ export default function ProjectDetailPage() {
         message="Mark this block as resolved and set the project back to In Progress?"
         confirmLabel="Resolve Block"
         variant="primary"
+      />
+
+      {/* Reset Demo Confirm */}
+      <ConfirmModal
+        isOpen={resetModal}
+        onClose={() => setResetModal(false)}
+        onConfirm={handleReset}
+        title="Reset All Responses"
+        message="This will permanently clear all framework answers for this client. Use this for demo and testing only. This cannot be undone."
+        confirmLabel="Reset Responses"
+        variant="danger"
       />
 
       {/* Status Modal */}

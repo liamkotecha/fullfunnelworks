@@ -6,6 +6,7 @@ export interface StalenessResult {
   status: StalenessStatus;
   daysSinceActivity: number;
   shouldNotifyConsultant: boolean;
+  shouldNotifySponsor: boolean;
 }
 
 export function calculateStaleness(
@@ -17,6 +18,7 @@ export function calculateStaleness(
       status: "terminated",
       daysSinceActivity: 0,
       shouldNotifyConsultant: false,
+      shouldNotifySponsor: false,
     };
   }
 
@@ -27,22 +29,26 @@ export function calculateStaleness(
       status: "at_risk",
       daysSinceActivity: days,
       shouldNotifyConsultant: true,
+      shouldNotifySponsor: true,
     };
   if (days >= 14)
     return {
       status: "stalled",
       daysSinceActivity: days,
       shouldNotifyConsultant: true,
+      shouldNotifySponsor: true,
     };
   if (days >= 7)
     return {
       status: "nudge",
       daysSinceActivity: days,
       shouldNotifyConsultant: false,
+      shouldNotifySponsor: false,
     };
   return {
     status: "active",
     daysSinceActivity: days,
     shouldNotifyConsultant: false,
+    shouldNotifySponsor: false,
   };
 }

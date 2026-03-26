@@ -134,6 +134,42 @@ function getSectionPercent(
 const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.07 } } };
 const fadeUp = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.32, ease: "easeOut" } } };
 
+// ── RAG badge ────────────────────────────────────────────────
+
+function RagBadge({ percent, hasSubs }: { percent: number; hasSubs: boolean }) {
+  if (!hasSubs) return <Clock className="w-3.5 h-3.5 text-slate-300 flex-shrink-0 mt-0.5" />;
+  if (percent >= 67) {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-1.5 py-0.5 flex-shrink-0">
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
+        {percent === 100 ? "Complete" : "On track"}
+      </span>
+    );
+  }
+  if (percent >= 33) {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-1.5 py-0.5 flex-shrink-0">
+        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />
+        In progress
+      </span>
+    );
+  }
+  if (percent > 0) {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-600 bg-red-50 border border-red-200 rounded-md px-1.5 py-0.5 flex-shrink-0">
+        <span className="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0" />
+        Behind
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-600 bg-red-50 border border-red-200 rounded-md px-1.5 py-0.5 flex-shrink-0">
+      <span className="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0" />
+      Not started
+    </span>
+  );
+}
+
 // ── Circular progress ring (motion.dev-style) ─────────────────
 
 function CircularProgress({ percent }: { percent: number }) {
@@ -407,7 +443,6 @@ export default function PortalOverviewPage() {
           {sectionData.map((s) => {
             const Icon = s.icon;
             const isComplete = s.percent >= 100;
-            const isInProgress = s.percent > 0 && s.percent < 100;
             return (
               <Link
                 key={s.id}
@@ -423,22 +458,7 @@ export default function PortalOverviewPage() {
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-[#141414]">
                     <Icon className={cn("w-4 h-4", s.iconColor)} />
                   </div>
-                  {isComplete ? (
-                    <div className="w-6 h-6 rounded-full bg-[#141414] flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <Check className="w-3.5 h-3.5 text-brand-green" strokeWidth={2.5} />
-                    </div>
-                  ) : isInProgress ? (
-                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-1.5 py-0.5 flex-shrink-0">
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />
-                      In progress
-                    </span>
-                  ) : s.subs.length > 0 ? (
-                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-400 bg-slate-50 border border-slate-200 rounded-md px-1.5 py-0.5 flex-shrink-0">
-                      Not started
-                    </span>
-                  ) : (
-                    <Clock className="w-3.5 h-3.5 text-slate-300 flex-shrink-0 mt-0.5" />
-                  )}
+                  <RagBadge percent={s.percent} hasSubs={s.subs.length > 0} />
                 </div>
                 <p className="text-[15px] font-semibold text-slate-600">
                   {s.label}
