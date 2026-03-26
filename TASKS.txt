@@ -121,7 +121,7 @@ D. UX — CRITICAL (blocks work or causes data issues)
 E. UX — HIGH (confusing or frustrating)
 ═══════════════════════════════════════════════════════════
 
-[ ] E1. No breadcrumbs anywhere in the portal
+[x] E1. No breadcrumbs anywhere in the portal
        User has no context of where they are (Assessment > Checklist)
        Must rely on sidebar which is collapsed on mobile
        Affects ALL content pages
@@ -133,14 +133,14 @@ E. UX — HIGH (confusing or frustrating)
        No required vs optional field indicators anywhere
        SWOT weights: unclear these are optional
 
-[ ] E3. Autosave feedback too subtle / too brief
+[x] E3. Autosave feedback too subtle / too brief
        "Saved" indicator disappears after 2s — too fast
        FieldCard saved badge in top-right corner — easy to miss
        No visual indication while typing that changes are detected
        Unmount flush is completely silent — user doesn't know data saved
        Key file: AutosaveField.tsx L97, FieldCard.tsx L41
 
-[ ] E4. Missing success feedback — admin actions
+[x] E4. Missing success feedback — admin actions
        Dashboard: terminate project — no success toast
        Questions: save question — no success toast
        Settings: most tabs — inconsistent (some show ✓, most don't)
