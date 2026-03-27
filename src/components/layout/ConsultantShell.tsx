@@ -8,6 +8,7 @@ import { useState, useCallback } from "react";
 import { TopBar } from "@/components/layout/TopBar";
 import { ConsultantSidebar } from "@/components/layout/ConsultantSidebar";
 import { SessionExpiryWarning } from "@/components/SessionExpiryWarning";
+import ViewAsConsultantBanner from "@/components/layout/ViewAsConsultantBanner";
 
 interface ConsultantShellProps {
   children: React.ReactNode;
@@ -22,13 +23,14 @@ export function ConsultantShell({ children, userName, userEmail }: ConsultantShe
 
   return (
     <div className="antialiased" style={{ backgroundColor: "#F9FAFB" }}>
+      <ViewAsConsultantBanner />
       <TopBar
         userName={userName}
         userEmail={userEmail}
         onMenuToggle={toggleSidebar}
         menuOpen={sidebarOpen}
       />
-      <ConsultantSidebar open={sidebarOpen} onClose={closeSidebar} />
+      <ConsultantSidebar open={sidebarOpen} onClose={closeSidebar} userName={userName} />
       <SessionExpiryWarning />
       <main className="pt-20 md:ml-64 min-h-screen px-4 pb-4 md:px-6 md:pb-6">
         {children}

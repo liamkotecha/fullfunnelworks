@@ -17,6 +17,7 @@ import {
   BadgeCheck,
   Pencil,
   AlertCircle,
+  Eye,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -115,6 +116,7 @@ export default function ConsultantDetailPage({
   const [savingPlan, setSavingPlan] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState<string>("");
   const [editingPlan, setEditingPlan] = useState(false);
+  const [viewingAs, setViewingAs] = useState(false);
 
   // Auth guard
   useEffect(() => {
@@ -243,6 +245,26 @@ export default function ConsultantDetailPage({
           </div>
           <SubBadge status={subStatus} />
         </div>
+        <button
+          disabled={viewingAs}
+          onClick={async () => {
+            setViewingAs(true);
+            const res = await fetch("/api/admin/view-as-consultant", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ consultantId: consultant.id }),
+            });
+            if (res.ok) {
+              window.location.href = "/consultant/dashboard";
+            } else {
+              setViewingAs(false);
+            }
+          }}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50"
+        >
+          {viewingAs ? <Loader2 className="w-4 h-4 animate-spin" /> : <Eye className="w-4 h-4" />}
+          View as consultant
+        </button>
       </div>
 
       {/* Tabs */}

@@ -67,13 +67,18 @@ export async function requireAuth(): Promise<AuthenticatedUser | NextResponse> {
 /**
  * Returns a MongoDB filter fragment that scopes a query to the consultant's
  * own records. Pass into Client.find() / Prospect.find() directly.
- * - admin  → {} (no restriction)
+ * - admin (no impersonation) → {} (no restriction)
+ * - admin impersonating a consultant → { assignedConsultant: <impersonated id> }
  * - consultant → { assignedConsultant: user.id }
  */
-export function consultantFilter(
+export async function consultantFilter(
   user: AuthenticatedUser
-): Record<string, unknown> {
+): Promise<Record<string, unknown>> {
   if (user.role === "consultant") return { assignedConsultant: user.id };
+  // Admin: check if impersonating a consultant
+  const cookieStore = await cookies();
+  const viewAsId = cookieStore.get("view-as-consultant-id")?.value;
+  if (viewAsId) return { assignedConsultant: viewAsId };
   return {};
 }
 

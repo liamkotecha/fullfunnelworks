@@ -36,7 +36,7 @@ export async function GET() {
 
     await connectDB();
 
-    const clients = await Client.find(consultantFilter(userOrRes))
+    const clients = await Client.find(await consultantFilter(userOrRes))
       .populate("userId", "email name")
       .populate("assignedConsultant", "name email")
       .sort({ createdAt: -1 })

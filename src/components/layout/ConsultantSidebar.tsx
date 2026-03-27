@@ -16,6 +16,8 @@ import {
   Settings,
   KanbanSquare,
   Receipt,
+  CreditCard,
+  AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -25,14 +27,23 @@ interface Counts {
   activeProspects: number;
 }
 
+interface BillingInfo {
+  planName: string | null;
+  planStatus: string | null;
+  activeClients: number;
+  maxClients: number;
+}
+
 interface ConsultantSidebarProps {
   open?: boolean;
   onClose?: () => void;
+  userName?: string;
 }
 
-export function ConsultantSidebar({ open = true, onClose }: ConsultantSidebarProps) {
+export function ConsultantSidebar({ open = true, onClose, userName }: ConsultantSidebarProps) {
   const pathname = usePathname();
   const [counts, setCounts] = useState<Counts>({ clients: 0, blockedProjects: 0, activeProspects: 0 });
+  const [billing, setBilling] = useState<BillingInfo | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -48,6 +59,22 @@ export function ConsultantSidebar({ open = true, onClose }: ConsultantSidebarPro
           blockedProjects: allProjects.filter((x) => x.status === "blocked").length,
           activeProspects: (pr as { total?: number } | undefined)?.total ?? 0,
         });
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/consultant/billing")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.plan || d.subscription) {
+          setBilling({
+            planName: d.plan?.name ?? null,
+            planStatus: d.subscription?.status ?? null,
+            activeClients: d.activeClients ?? 0,
+            maxClients: d.maxActiveClients ?? 5,
+          });
+        }
       })
       .catch(() => {});
   }, []);
@@ -90,6 +117,14 @@ export function ConsultantSidebar({ open = true, onClose }: ConsultantSidebarPro
         counts.activeProspects > 0
           ? { label: String(counts.activeProspects), className: "bg-white/20 text-white/80" }
           : null,
+    },
+    {
+      href: "/consultant/billing",
+      label: "Billing",
+      icon: CreditCard,
+      badge: billing?.planStatus === "past_due"
+        ? { label: "!", className: "bg-red-500 text-white" }
+        : null,
     },
   ];
 
@@ -175,9 +210,34 @@ export function ConsultantSidebar({ open = true, onClose }: ConsultantSidebarPro
 
         {/* Nav */}
         <div className="flex flex-col flex-1 overflow-y-auto py-4 px-3">
-          <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-white/30">
-            My Workspace
-          </p>
+          {/* Consultant name + plan badge */}
+          <div className="px-3 mb-3">
+            {userName && (
+              <p className="text-sm font-semibold text-white truncate mb-1">{userName}</p>
+            )}
+            {billing?.planName ? (
+              billing.planStatus === "past_due" ? (
+                <Link
+                  href="/consultant/billing"
+                  onClick={onClose}
+                  className="inline-flex items-center gap-1.5 text-[10px] font-medium px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 hover:bg-red-500/30 transition-colors"
+                >
+                  <AlertTriangle className="w-2.5 h-2.5" />
+                  Payment issue
+                </Link>
+              ) : (
+                <Link
+                  href="/consultant/billing"
+                  onClick={onClose}
+                  className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 transition-colors"
+                >
+                  {billing.planName} · {billing.activeClients}/{billing.maxClients}
+                </Link>
+              )
+            ) : (
+              <p className="text-[10px] font-bold uppercase tracking-widest text-white/30">My Workspace</p>
+            )}
+          </div>
 
           <ul className="space-y-0.5 flex-1">
             {NAV_MAIN.map(renderItem)}

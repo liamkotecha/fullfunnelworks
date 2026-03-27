@@ -21,6 +21,11 @@ import {
   CheckCircle2,
   Clock,
   BarChart3,
+  CreditCard,
+  Package,
+  UserPlus,
+  ArrowRight,
+  AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/notifications/ToastContext";
@@ -31,7 +36,10 @@ const TABS = [
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "leads",         label: "Lead Gen",      icon: Megaphone },
   { id: "analytics",     label: "Analytics",     icon: BarChart3 },
-  { id: "security",      label: "Security",       icon: Shield },
+  { id: "security",      label: "Security",      icon: Shield },
+  { id: "plans",         label: "Plans",          icon: Package },
+  { id: "payments",      label: "Payments",       icon: CreditCard },
+  { id: "onboarding",    label: "Onboarding",     icon: UserPlus },
   { id: "branding",      label: "Branding",       icon: Palette },
 ] as const;
 type TabId = typeof TABS[number]["id"];
@@ -1014,6 +1022,229 @@ function AnalyticsTab() {
   );
 }
 
+/* ── Plans Tab ──────────────────────────────────────────────── */
+function PlansTab() {
+  const [plans, setPlans] = useState<Array<{ id: string; name: string; monthlyPricePence: number; maxActiveClients: number; isActive: boolean }>>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/admin/plans")
+      .then((r) => r.json())
+      .then((d) => { setPlans(d.data ?? []); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
+
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>;
+
+  return (
+    <div className="space-y-5">
+      <div>
+        <h2 className="text-base font-semibold text-slate-900">Subscription Plans</h2>
+        <p className="text-sm text-slate-500 mt-1">{plans.length} plan{plans.length !== 1 ? "s" : ""} configured</p>
+      </div>
+
+      {plans.length === 0 ? (
+        <p className="text-sm text-slate-400">No plans found. Create your first plan to get started.</p>
+      ) : (
+        <div className="space-y-2">
+          {plans.map((plan) => (
+            <div key={plan.id} className="flex items-center justify-between p-4 rounded-xl border border-slate-100 bg-slate-50/50">
+              <div className="flex items-center gap-3">
+                <Package className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-slate-900">{plan.name}</p>
+                  <p className="text-xs text-slate-400 tabular-nums">
+                    £{(plan.monthlyPricePence / 100).toFixed(2)}/mo · up to {plan.maxActiveClients} clients
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", plan.isActive ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500")}>
+                  {plan.isActive ? "Active" : "Inactive"}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <a
+        href="/admin/plans"
+        className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#141414] text-white rounded-xl text-sm font-medium hover:bg-slate-800 transition-colors"
+      >
+        <ArrowRight className="w-4 h-4" />
+        Manage plans
+      </a>
+    </div>
+  );
+}
+
+/* ── Payments Tab ───────────────────────────────────────────── */
+function PaymentsTab() {
+  const { success } = useToast();
+  const [showSecretHook, setShowSecretHook] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const webhookEndpoint = typeof window !== "undefined" ? `${window.location.origin}/api/webhooks/stripe` : "";
+
+  const copyEndpoint = () => {
+    navigator.clipboard.writeText(webhookEndpoint);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-base font-semibold text-slate-900">Stripe Integration</h2>
+        <p className="text-sm text-slate-500 mt-1">Configure your Stripe webhook and billing settings.</p>
+      </div>
+
+      <div>
+        <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Webhook endpoint</label>
+        <div className="flex items-center gap-2">
+          <div className="flex-1 px-3 py-2.5 text-sm text-slate-600 bg-slate-50 border border-slate-200 rounded-lg font-mono truncate">
+            {webhookEndpoint || "Loading…"}
+          </div>
+          <button onClick={copyEndpoint} className="p-2.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors" title="Copy">
+            {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-slate-500" />}
+          </button>
+        </div>
+        <p className="text-xs text-slate-400 mt-1">Add this URL in your Stripe Dashboard → Webhooks.</p>
+      </div>
+
+      <div>
+        <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Webhook signing secret</label>
+        <div className="flex items-center gap-2">
+          <div className="flex-1 px-3 py-2.5 text-sm text-slate-600 bg-slate-50 border border-slate-200 rounded-lg font-mono">
+            {showSecretHook ? (process.env.NEXT_PUBLIC_STRIPE_WEBHOOK_HINT ?? "Set STRIPE_WEBHOOK_SECRET in environment") : "whsec_••••••••••••••••"}
+          </div>
+          <button onClick={() => setShowSecretHook((v) => !v)} className="p-2.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors" title={showSecretHook ? "Hide" : "Reveal"}>
+            {showSecretHook ? <EyeOff className="w-4 h-4 text-slate-500" /> : <Eye className="w-4 h-4 text-slate-500" />}
+          </button>
+        </div>
+        <p className="text-xs text-slate-400 mt-1">Set <code className="text-xs bg-slate-100 px-1 rounded">STRIPE_WEBHOOK_SECRET</code> in your environment variables.</p>
+      </div>
+
+      <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 flex gap-3">
+        <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-amber-800">Required Stripe webhook events</p>
+          <p className="text-xs text-amber-700">Ensure these events are enabled in your Stripe webhook configuration:</p>
+          <ul className="text-xs text-amber-700 list-disc list-inside space-y-0.5">
+            <li>checkout.session.completed</li>
+            <li>customer.subscription.updated</li>
+            <li>customer.subscription.deleted</li>
+            <li>invoice.payment_succeeded</li>
+            <li>invoice.payment_failed</li>
+          </ul>
+        </div>
+      </div>
+
+      <button
+        onClick={() => success("Payments configuration saved")}
+        className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium text-white bg-[#141414] hover:bg-slate-800 transition-colors"
+      >
+        <Save className="w-3.5 h-3.5" />
+        Save
+      </button>
+    </div>
+  );
+}
+
+/* ── Onboarding Tab ─────────────────────────────────────────── */
+function OnboardingTab() {
+  const { success, error: toastError } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [allowSelfReg, setAllowSelfReg] = useState(false);
+  const [requireApproval, setRequireApproval] = useState(true);
+  const [defaultTrialDays, setDefaultTrialDays] = useState(14);
+
+  useEffect(() => {
+    fetch("/api/admin/settings")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.data) {
+          setAllowSelfReg(d.data.allowConsultantSelfRegistration ?? false);
+          setRequireApproval(d.data.requireConsultantApproval ?? true);
+          setDefaultTrialDays(d.data.defaultTrialDays ?? 14);
+        }
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          allowConsultantSelfRegistration: allowSelfReg,
+          requireConsultantApproval: requireApproval,
+          defaultTrialDays,
+        }),
+      });
+      if (res.ok) {
+        success("Onboarding settings saved");
+      } else {
+        toastError("Failed to save", "Please try again.");
+      }
+    } catch {
+      toastError("Failed to save", "Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>;
+
+  return (
+    <div className="space-y-5">
+      <div>
+        <h2 className="text-base font-semibold text-slate-900">Consultant Onboarding</h2>
+        <p className="text-sm text-slate-500 mt-1">Control how consultants join the platform.</p>
+      </div>
+
+      <Toggle
+        checked={allowSelfReg}
+        onChange={setAllowSelfReg}
+        label="Allow self-registration"
+        description="Consultants can sign up at /register — they'll be prompted to choose a plan"
+      />
+
+      <Toggle
+        checked={requireApproval}
+        onChange={setRequireApproval}
+        label="Require admin approval"
+        description="New registrations are held as 'pending' until an admin approves them"
+      />
+
+      <Field label="Default trial period (days)">
+        <input
+          className={inputCls}
+          type="number"
+          min={0}
+          max={90}
+          value={defaultTrialDays}
+          onChange={(e) => setDefaultTrialDays(Number(e.target.value))}
+        />
+        <p className="text-xs text-slate-400 mt-1">How many trial days new consultants get before billing starts. Set 0 to disable trials.</p>
+      </Field>
+
+      <button
+        onClick={handleSave}
+        disabled={saving}
+        className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium text-white bg-[#141414] hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+      >
+        {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+        {saving ? "Saving…" : "Save onboarding settings"}
+      </button>
+    </div>
+  );
+}
+
 /* ── Page ───────────────────────────────────────────────────── */
 export default function AdminSettingsPage() {
   const [tab, setTab] = useState<TabId>("general");
@@ -1024,6 +1255,9 @@ export default function AdminSettingsPage() {
     leads:         <LeadGenTab />,
     analytics:     <AnalyticsTab />,
     security:      <SecurityTab />,
+    plans:         <PlansTab />,
+    payments:      <PaymentsTab />,
+    onboarding:    <OnboardingTab />,
     branding:      <BrandingTab />,
   };
 

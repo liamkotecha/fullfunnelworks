@@ -1,0 +1,1108 @@
+================================================================================
+FULL-FUNNEL PLATFORM — COMPLETE OVERVIEW
+Current State Documentation | For Gap Review
+================================================================================
+
+TECH STACK
+- Framework:    Next.js 14 (App Router)
+- Language:     TypeScript
+- Database:     MongoDB via Mongoose
+- Auth:         Custom (password, OTP, WebAuthn/passkey)
+- Styling:      Tailwind CSS
+- Email:        SendGrid
+- Payments:     Stripe
+- Analytics:    GA4
+- Hosting:      (Vercel-compatible)
+
+--------------------------------------------------------------------------------
+USER ROLES
+--------------------------------------------------------------------------------
+  1. admin       — Full platform access. Manages consultants, plans, billing,
+                   CRM, questions, settings, and all client/project data.
+  2. consultant  — Scoped to assigned clients. Manages their own projects,
+                   invoices, and CRM pipeline.
+  3. client      — Portal access only. Completing the growth framework,
+                   viewing their roadmap, KPIs, financial model, invoices.
+
+--------------------------------------------------------------------------------
+ROUTING & AUTH MIDDLEWARE
+--------------------------------------------------------------------------------
+  / (root)         → Redirects by role:
+                       admin       → /admin/dashboard
+                       consultant  → /consultant/dashboard
+                       client      → /portal/overview
+                       (unauth)    → /login
+
+  /admin/*         → Blocked if not admin
+  /consultant/*    → Blocked if not consultant or admin
+  /portal/*        → Client-only (consultants/admins can view read-only)
+
+  Public routes:   /login, /register, /pricing, /verify
+
+--------------------------------------------------------------------------------
+FRAMEWORK MODULES (11 total)
+--------------------------------------------------------------------------------
+  ID                  Label                     Description
+  ──────────────────────────────────────────────────────────────────────────
+  assessment          Assessment                SWOT, MOST, gap analysis,
+                                                leadership review
+  people              People                    Team structure, challenges,
+                                                capability mapping
+  product             Product                   Product challenges &
+                                                outcome mapping
+  process             Process                   Sales process, methodology,
+                                                checklist
+  roadmap             Roadmap                   Strategic milestones,
+                                                90-day planning
+  kpis                KPIs                      Key performance indicators
+  gtm                 GTM Playbook              Market intelligence,
+                                                competitive analysis
+  modeller            Financial Modeller        P&L scenario modelling
+  hiring              Hiring Plan               12-month hiring plan
+  revenue_execution   Revenue Execution         Sales methodology adoption,
+                                                CRM discipline, scorecard
+                                                (8 sub-sections)
+  execution_planning  Execution Planning        90-day action plans,
+                                                accountability, governance
+                                                (7 sub-sections)
+
+  Revenue Execution sub-sections:
+    2.1 Sales Methodology Selection
+    2.2 Adoption & Embedding
+    2.3 Commercial Leadership & Ownership
+    2.4 CRM Integration
+    2.5 Marketing Campaign Performance
+    2.6 Sales Performance & Balanced Scorecard
+    2.7 Quarterly Business Review & Annual Reset
+    2.8 People, Capability & Performance
+
+  Execution Planning sub-sections:
+    3.1 Growth Execution Planning & Priority Setting
+    3.2 90-Day Action Plans & Milestone Control
+    3.3 Functional Accountability & Operating Model
+    3.4 Resource, Risk & Dependency Management
+    3.5 Board, Leadership & Decision Governance
+    3.6 KPI Dashboard, Thresholds & Intervention Rules
+    3.7 Quarterly Reset & Annual Value Creation Review
+
+================================================================================
+ROLE 1 — ADMIN (/admin/*)
+================================================================================
+
+────────────────────────────────────────────────────────────────────────────────
+  DASHBOARD  /admin/dashboard
+────────────────────────────────────────────────────────────────────────────────
+  What it shows:
+  - KPI cards: total consultants, MRR (monthly recurring revenue), trialing
+    count, past due count
+  - Recent Consultants table: name, email, plan badge, subscription status
+  - Plan Breakdown widget: count of consultants per plan tier
+  - Needs Attention list: consultants with past_due subscription status
+
+  Actions available:
+  - Click a consultant row → /admin/consultants/[id]
+  - No direct actions from KPI cards (read-only)
+
+────────────────────────────────────────────────────────────────────────────────
+  CONSULTANTS  /admin/consultants
+────────────────────────────────────────────────────────────────────────────────
+  What it shows:
+  - Table of all consultant users
+  - Columns: name, email, plan badge (colour-coded by tier), subscription
+    status badge (active/trialing/past_due/cancelled), capacity bar
+    (active clients / max clients), active modules list, chevron →
+
+  Actions available:
+  - Click row → /admin/consultants/[id]
+
+────────────────────────────────────────────────────────────────────────────────
+  CONSULTANT DETAIL  /admin/consultants/[id]
+────────────────────────────────────────────────────────────────────────────────
+  4 tabs:
+
+  Tab 1 — Overview
+    - Current plan assignment (selector to change plan)
+    - Subscription status + next billing date
+    - Capacity stats: active clients / max clients
+    - Specialisms list (from user record)
+
+  Tab 2 — Clients
+    - List of clients assigned to this consultant
+    - Link → /admin/clients/[id]
+
+  Tab 3 — Projects
+    - List of projects owned by this consultant
+    - Link → /admin/projects/[id]
+
+  Tab 4 — Billing
+    - Subscription history for this consultant
+    - Invoice rows with status/amount/date
+    - Stripe-linked (no direct payment actions from UI)
+
+  Actions available:
+  - Change consultant's plan (dropdown → save)
+  - Navigate to client or project detail
+
+────────────────────────────────────────────────────────────────────────────────
+  PLANS  /admin/plans
+────────────────────────────────────────────────────────────────────────────────
+  What it shows:
+  - Grid of plan cards: name, price, client limit, included modules list
+
+  Actions available:
+  - Create new plan (modal: name, price, max clients, modules checkboxes)
+  - Edit existing plan (same modal pre-filled)
+  - Delete plan (guarded: checks if any consultants are on this plan before
+    allowing deletion)
+
+────────────────────────────────────────────────────────────────────────────────
+  INVOICES  /admin/invoices
+────────────────────────────────────────────────────────────────────────────────
+  2 tabs:
+
+  Tab 1 — Subscriptions (Consultant Billing)
+    - MRR table: consultant name, plan, price, status, next billing date
+    - Click row → /admin/consultants/[id] billing tab
+
+  Tab 2 — Client Invoices
+    - All client invoices across all consultants
+    - Columns: client name, consultant, amount, status, due date
+
+  Actions available:
+  - View invoice detail → /admin/invoices/[id]
+  - (Read-only listing — no direct creation from this page)
+
+────────────────────────────────────────────────────────────────────────────────
+  CLIENTS  /admin/clients
+────────────────────────────────────────────────────────────────────────────────
+  What it shows:
+  - List of all client companies across all consultants
+
+  Actions available:
+  - Click client → /admin/clients/[id]
+
+────────────────────────────────────────────────────────────────────────────────
+  CLIENT DETAIL  /admin/clients/[id]
+────────────────────────────────────────────────────────────────────────────────
+  Overview page:
+  - Company details card: name, industry, size, website, primary challenge
+  - Projects section: list of active projects with status
+  - Active Modules card: which of the 11 modules are enabled for this client
+  - Assessment Team section: list of users contributing to assessment responses
+
+  Sub-pages (sidebar navigation):
+  - /activity       — Chronological activity log (response submissions,
+                      status changes, invoices created, etc.)
+  - /responses      — Framework responses viewer: all answers grouped by
+                      module and question, with respondent attribution
+  - /synthesis      — Assessment synthesis: responses grouped by sub-section
+                      with divergence scores (0–1 scale showing team
+                      disagreement). Divergence highlighted if > threshold.
+  - /onboarding     — Onboarding tracker: checklist of onboarding steps
+                      with completion status
+  - /kpis           — KPI management: company and department KPIs with
+                      current vs target values, trend indicators
+  - /roadmap        — Strategic roadmap view: phases and milestones
+  - /financial-model — Financial model data for this client
+  - /hiring-plan    — Hiring plan view: roles, timelines, financial impact
+  - /invoices       — All invoices for this client with status
+
+  Actions available:
+  - Edit client details (name, industry, etc.)
+  - Toggle active modules
+  - Navigate to any sub-page
+
+────────────────────────────────────────────────────────────────────────────────
+  PROJECTS  /admin/projects
+────────────────────────────────────────────────────────────────────────────────
+  What it shows:
+  - List of all projects across all consultants and clients
+
+  Actions available:
+  - Click project → /admin/projects/[id]
+
+────────────────────────────────────────────────────────────────────────────────
+  PROJECT DETAIL  /admin/projects/[id]
+────────────────────────────────────────────────────────────────────────────────
+  What it shows:
+  - Open Blocks: incomplete or blocked framework sections flagged
+  - Module Alignment Warnings: inconsistencies across modules
+  - Milestones: project milestones with due dates and completion status
+  - Consultant Framework Responses: consultant-side answers for this project
+
+  Sub-sections accessible from project:
+  - /revenue-execution → hub page listing all 8 sub-sections with status
+    - /methodology        2.1 Sales Methodology Selection
+    - /adoption           2.2 Adoption & Embedding
+    - /ownership          2.3 Commercial Leadership & Ownership
+    - /crm                2.4 CRM Integration
+    - /campaigns          2.5 Marketing Campaign Performance
+    - /scorecard          2.6 Sales Performance & Balanced Scorecard
+    - /qbr                2.7 QBR & Annual Reset
+    - /people-cap         2.8 People, Capability & Performance
+
+  - /execution-planning → hub page listing all 7 sub-sections with status
+    - /priorities         3.1 Growth Execution Planning & Priority Setting
+    - /ninety-day         3.2 90-Day Action Plans & Milestone Control
+    - /accountability     3.3 Functional Accountability & Operating Model
+    - /risk               3.4 Resource, Risk & Dependency Management
+    - /governance         3.5 Board, Leadership & Decision Governance
+    - /kpi-dashboard      3.6 KPI Dashboard, Thresholds & Intervention Rules
+    - /reset              3.7 Quarterly Reset & Annual Value Creation Review
+
+  Actions available:
+  - Mark milestones complete
+  - Record consultant responses for each sub-section
+  - Flag/unflag blocks
+
+────────────────────────────────────────────────────────────────────────────────
+  CRM — PROSPECTS  /admin/crm/prospects
+────────────────────────────────────────────────────────────────────────────────
+  What it shows:
+  - Sortable table of all prospects (leads that came in via webhook or manual)
+  - Columns: name, company, email, status, lead score (0–100), assigned
+    consultant, created date
+  - Status filter dropdown
+  - Bulk select with delete action
+  - CSV export button
+
+  Actions available:
+  - Click prospect → /admin/crm/prospects/[id] detail view
+  - Bulk delete selected
+  - Export all/filtered to CSV
+  - Filter by status
+
+────────────────────────────────────────────────────────────────────────────────
+  CRM — PROSPECT DETAIL  /admin/crm/prospects/[id]
+────────────────────────────────────────────────────────────────────────────────
+  What it shows:
+  - All captured lead fields: business name, contact name, email, phone,
+    website, company size, revenue range, primary challenge, how they heard,
+    message (submitted via intake form / Elementor webhook)
+  - Lead score breakdown (which factors contributed)
+  - GA client ID and referrer URL (from hidden fields)
+  - Assigned consultant (auto or manual)
+  - Current CRM stage / status
+
+  Actions available:
+  - Edit lead details
+  - Manual assignment override (assign to a specific consultant)
+  - Change CRM stage
+  - Convert to client (creates a Client record and user account)
+
+────────────────────────────────────────────────────────────────────────────────
+  CRM — PIPELINE  /admin/crm/pipeline
+────────────────────────────────────────────────────────────────────────────────
+  What it shows:
+  - Kanban board with 5 active stages + 2 outcome columns:
+    MQL → SQL → Discovery → Proposal → Negotiating → Won / Lost
+  - Each card: prospect name, company, score badge
+  - Drag-and-drop (dnd-kit) to move cards between stages
+
+  Actions available:
+  - Drag cards to advance/change stage
+  - Click card → prospect detail
+  - (Won column → conversion to client flow)
+
+────────────────────────────────────────────────────────────────────────────────
+  CRM — WORKLOAD  /admin/crm/workload
+────────────────────────────────────────────────────────────────────────────────
+  What it shows:
+  - Consultant workload view: each consultant's active client count vs
+    max capacity, with visual capacity bar
+  - Used to see who has headroom for new leads before manual assignment
+
+  Actions available:
+  - Read-only view (no direct actions — navigate to consultant for changes)
+
+────────────────────────────────────────────────────────────────────────────────
+  CRM — SETUP  /admin/crm/setup
+────────────────────────────────────────────────────────────────────────────────
+  What it shows:
+  - Webhook URL (copy button) — endpoint for Elementor / external form
+  - Field mapping table: 10 fields showing how incoming form data maps to
+    prospect record fields:
+      business_name, contact_name, email, phone, website,
+      company_size, revenue_range, challenge, hear_about, message
+      + hidden: ga_client_id, referrer_url
+
+  Actions available:
+  - Copy webhook URL
+  - (Static config display — field mapping is code-level, not UI-editable)
+
+────────────────────────────────────────────────────────────────────────────────
+  SETTINGS  /admin/settings
+────────────────────────────────────────────────────────────────────────────────
+  6 tabs:
+
+  Tab 1 — General
+    - Platform name, support email, timezone settings
+
+  Tab 2 — Notifications
+    - Toggle: "Notify admin when a client submits a framework response"
+    - (Other notification toggles TBD / in progress)
+
+  Tab 3 — Lead Gen
+    - Webhook secret key (used to validate incoming Elementor webhooks)
+    - Auto-assign toggle (enable/disable automatic lead assignment)
+    - Assignment algorithm config (capacity weight, specialism weight)
+
+  Tab 4 — Analytics
+    - GA4 Measurement ID input
+    - GA4 event tracking toggles:
+        page_view, intake_submit, response_submit, invoice_paid,
+        prospect_converted
+
+  Tab 5 — Security
+    - Passkey management (WebAuthn credentials list)
+    - Register new passkey button
+    - Revoke existing passkeys
+
+  Tab 6 — Branding
+    - Logo upload
+    - Brand colour (primary colour picker)
+    - White-label toggle (Enterprise plan feature)
+
+  Actions available:
+  - Save each tab independently
+  - Upload logo
+  - Register / revoke passkeys
+
+────────────────────────────────────────────────────────────────────────────────
+  FRAMEWORK QUESTIONS  /admin/questions
+────────────────────────────────────────────────────────────────────────────────
+  What it shows:
+  - All framework questions grouped by section → sub-section → group
+  - Filter pills: by section, by sub-section
+  - Question count displayed
+  - Each question shows: text, type (slider/checkbox/text/select), order,
+    active status
+
+  Actions available:
+  - Add new question (modal: section, sub-section, group, text, type,
+    options if select/checkbox, order)
+  - Edit existing question
+  - Reorder questions (drag or order field)
+  - Deactivate / reactivate question
+
+────────────────────────────────────────────────────────────────────────────────
+  VOICE PREVIEW  /admin/voice-preview
+────────────────────────────────────────────────────────────────────────────────
+  What it shows:
+  - Edge TTS voice audition tool
+  - Dropdown of British and American voices
+  - Sample strategic question text field (editable)
+  - Play button → speaks the text using selected voice
+
+  Purpose:
+  - For admin to preview and select the AI voice used in the platform
+    (where audio playback is offered to clients)
+
+  Actions available:
+  - Select voice
+  - Edit sample text
+  - Play preview
+
+================================================================================
+ROLE 2 — CONSULTANT (/consultant/*)
+================================================================================
+
+Consultants see a scoped version of the admin interface — only their own
+clients, projects, prospects, and invoices. They cannot access plans, all-
+consultant workload, settings, or another consultant's data.
+
+────────────────────────────────────────────────────────────────────────────────
+  DASHBOARD  /consultant/dashboard
+────────────────────────────────────────────────────────────────────────────────
+  What it shows:
+  - Blocked Projects widget: projects with open blocks / stalled status
+  - Recent Clients list: their most recently active clients with quick links
+  - Overdue Invoices widget: invoices past due date
+
+  Actions available:
+  - Click project → project detail
+  - Click client → client detail
+  - Click invoice → invoice detail
+
+────────────────────────────────────────────────────────────────────────────────
+  CLIENTS  /consultant/clients
+────────────────────────────────────────────────────────────────────────────────
+  Same as admin client list but filtered to this consultant's assigned clients.
+
+  Actions available:
+  - Click client → /consultant/clients/[id]
+
+────────────────────────────────────────────────────────────────────────────────
+  CLIENT DETAIL  /consultant/clients/[id]
+────────────────────────────────────────────────────────────────────────────────
+  Identical structure to admin client detail:
+  - Overview: company details, projects, active modules, assessment team
+  - Sub-pages: /activity, /responses, /synthesis, /onboarding, /kpis,
+    /roadmap, /financial-model, /hiring-plan, /invoices
+
+  The consultant can view and edit responses, manage KPIs, update
+  the roadmap, and generate/manage invoices for their own clients.
+
+  Actions available:
+  - Same as admin client detail but scoped (cannot reassign client to
+    another consultant, cannot change plan/module settings)
+
+────────────────────────────────────────────────────────────────────────────────
+  PROJECTS  /consultant/projects/[id]
+────────────────────────────────────────────────────────────────────────────────
+  Same structure as admin project detail. Consultant can:
+  - View and update framework responses
+  - Navigate revenue-execution and execution-planning sub-sections
+  - Manage milestones
+  - Flag/unflag blocks
+
+  Sub-sections (same as admin):
+  - /revenue-execution + 8 sub-pages
+  - /execution-planning + 7 sub-pages
+
+────────────────────────────────────────────────────────────────────────────────
+  CRM PIPELINE  /consultant/crm/pipeline
+────────────────────────────────────────────────────────────────────────────────
+  Consultant's own prospect pipeline — same kanban layout as admin:
+  MQL → SQL → Discovery → Proposal → Negotiating → Won / Lost
+
+  Actions available:
+  - Drag cards between stages
+  - Click card → prospect detail (their own prospects only)
+  - (Cannot see other consultants' prospects)
+
+────────────────────────────────────────────────────────────────────────────────
+  INVOICES  /consultant/invoices
+────────────────────────────────────────────────────────────────────────────────
+  What it shows:
+  - KPI cards at top: Total Outstanding, Total Paid, Overdue count
+  - Sortable table of all invoices for their clients
+  - Columns: client name, invoice number, amount, status, due date
+  - Row actions: view, edit, mark paid, send reminder
+
+  Actions available:
+  - Create invoice (new invoice for one of their clients)
+  - View invoice detail → /consultant/invoices/[id]
+  - Mark invoice as paid
+  - Send payment reminder email
+  - Edit invoice amount/due date/items
+
+  /consultant/invoices/[id]
+  - Full invoice detail with line items
+  - Status management (draft → sent → paid / overdue)
+
+================================================================================
+ROLE 3 — CLIENT PORTAL (/portal/*)
+================================================================================
+
+The portal is the client-facing growth framework completion interface.
+Clients work through sections of the framework, see their progress,
+and access the financial modeller and invoices.
+
+────────────────────────────────────────────────────────────────────────────────
+  OVERVIEW  /portal/overview
+────────────────────────────────────────────────────────────────────────────────
+  What it shows:
+  - Time-of-day greeting: "Good morning/afternoon/evening, [name]"
+  - Progress "speedometer" gauge: overall completion % across all sections
+  - Resume card: "Continue where you left off" — shows the most recent
+    incomplete section with a direct link
+  - Section grid: all 11 framework sections as cards with:
+      - Section name and icon
+      - RAG status badge:
+          Not started (grey) | In progress (amber) |
+          On track (blue) | Complete (green)
+      - Click → enters that section
+  - In-progress tracker: list of sections currently in progress
+
+  Actions available:
+  - Click section card → section entry page
+  - Click resume card → last active sub-page
+  - (Read-only dashboard — no form inputs)
+
+────────────────────────────────────────────────────────────────────────────────
+  INTAKE  /portal/intake
+────────────────────────────────────────────────────────────────────────────────
+  Purpose: Initial onboarding intake form capturing company background.
+  This is typically the starting point for new clients.
+
+  What it shows:
+  - Section pill navigation (animated slide between sections)
+  - One section visible at a time, smooth transition animations
+  - Auto-save: responses saved after each section completion
+  - Progress bar showing intake completion
+  - Submit-all action at final section
+
+  Intake sections (in order):
+    overview, assessment, people, product, process, roadmap, kpis, gtm,
+    revenue_execution, execution_planning
+
+  Question types used: text inputs, selects, sliders, checkboxes
+
+  Actions available:
+  - Next section (auto-saves current section)
+  - Previous section
+  - Submit (final section)
+  - (Cannot skip sections — sequential)
+
+────────────────────────────────────────────────────────────────────────────────
+  ASSESSMENT  /portal/assessment/*
+────────────────────────────────────────────────────────────────────────────────
+  Sub-pages:
+
+  /checklist
+    - Assessment preparation checklist
+    - Checkbox list of items to complete before deep-dive
+    - Progress shown as completed / total
+
+  /swot
+    - SWOT Analysis: 4 quadrants (Strengths, Weaknesses, Opportunities,
+      Threats)
+    - Each entry has a text field + weight slider (1–5 importance)
+    - Multiple items per quadrant
+    - Save button per quadrant
+
+  /most
+    - MOST Analysis: Mission, Objectives, Strategy, Tactics
+    - Structured form per MOST element
+    - Descriptive text inputs + supporting detail fields
+
+  /gap
+    - Gap Analysis form
+    - Current state vs desired state per area
+    - Gap description and severity rating
+
+  /leadership
+    - Leadership assessment questions
+    - Slider responses (1–5 or 1–10 scale)
+    - Text commentary fields
+
+  Actions available across all assessment sub-pages:
+  - Save responses
+  - Navigate between sub-pages (sequential progress tracking)
+
+────────────────────────────────────────────────────────────────────────────────
+  PEOPLE  /portal/people/*
+────────────────────────────────────────────────────────────────────────────────
+  /team
+    - Team Member Tracker
+    - Add/edit team members: name, role, department
+    - Per-member skill sliders: Sales ability, Digital literacy,
+      Leadership capability (each 1–5)
+    - Training flag (needs training toggle)
+    - Add member button, delete member
+
+  /structure
+    - Company structure form
+    - Org chart / structure description
+    - Reporting lines, spans of control
+
+  /challenges
+    - People challenges input
+    - Primary people challenges (text)
+    - Strategic direction for people (text areas)
+
+  /methodology
+    - Team Capability Tracker
+    - Sales methodology alignment questions
+    - SMB capability methodology assessment
+
+  Actions available:
+  - Add/edit/remove team members
+  - Save per sub-page
+
+────────────────────────────────────────────────────────────────────────────────
+  PRODUCT  /portal/product/*
+────────────────────────────────────────────────────────────────────────────────
+  /challenges
+    - Product challenges form
+    - Current product challenges (text areas by category)
+    - Market fit assessment questions
+
+  /outcomes
+    - Customer Outcome Mapper
+    - Structured rows: Feature → Problem it solves → Customer Outcome →
+      Business Impact
+    - Add/remove/edit rows
+    - Connects product decisions to customer value
+
+  Actions available:
+  - Add/edit/remove outcome rows
+  - Save
+
+────────────────────────────────────────────────────────────────────────────────
+  PROCESS  /portal/process/*
+────────────────────────────────────────────────────────────────────────────────
+  /checklist
+    - Sales process checklist
+    - Pre-built items covering typical B2B sales process steps
+    - Mark complete / incomplete per item
+
+  /methodology
+    - Sales methodology selection and assessment
+    - SMB capability methodology — structured response form
+    - Questions about current methodology adoption level
+
+  /builder
+    - Process Builder
+    - Build out the sales process stage by stage
+    - Each stage: name, entry criteria, exit criteria, actions, tools used
+    - Add/remove/reorder stages
+
+  Actions available:
+  - Check/uncheck checklist items
+  - Build and edit process stages
+  - Save per sub-page
+
+────────────────────────────────────────────────────────────────────────────────
+  ROADMAP  /portal/roadmap
+────────────────────────────────────────────────────────────────────────────────
+  What it shows:
+  - 5-phase growth roadmap
+  - Each phase: name, timeframe, initiatives list, milestones
+  - Visual timeline layout
+  - Phase status (not started / in progress / complete)
+
+  Actions available:
+  - Edit phase initiatives and milestones
+  - Update phase status
+  - Save
+
+────────────────────────────────────────────────────────────────────────────────
+  KPIs  /portal/kpis
+────────────────────────────────────────────────────────────────────────────────
+  What it shows:
+  - Company-level KPIs (revenue targets, growth rate, etc.)
+  - Department-level KPIs (sales, marketing, product)
+  - Each KPI: name, current value, target value, unit, trend indicator
+  - Visual progress bars / trend arrows
+
+  Actions available:
+  - Add KPI
+  - Edit current value and target
+  - Remove KPI
+  - Save
+
+────────────────────────────────────────────────────────────────────────────────
+  GTM PLAYBOOK  /portal/gtm/*
+────────────────────────────────────────────────────────────────────────────────
+  /market
+    - Market Intelligence form
+    - Market size, segment definition, ICP (ideal customer profile)
+    - Target market description, addressable market estimate
+
+  /competition
+    - Competitive Analysis
+    - Add competitors: name, website, strengths, weaknesses, differentiation
+    - Comparison matrix (structured or free-text)
+
+  Actions available:
+  - Add/edit competitors
+  - Fill market intelligence fields
+  - Save
+
+────────────────────────────────────────────────────────────────────────────────
+  REVENUE EXECUTION  /portal/revenue-execution/* (8 sub-pages)
+────────────────────────────────────────────────────────────────────────────────
+  Hub page: lists all 8 sub-sections with completion status badges
+
+  /methodology        (2.1) Sales methodology selection — which methodology
+                      is in use / planned (MEDDIC, Challenger, SPIN, etc.)
+
+  /adoption           (2.2) Adoption & embedding assessment — how embedded
+                      is the methodology in the team's day-to-day
+
+  /ownership          (2.3) Commercial leadership ownership — accountability
+                      and leadership structure for revenue execution
+
+  /crm                (2.4) CRM integration — CRM tool, data quality,
+                      pipeline hygiene, usage compliance questions
+
+  /campaigns          (2.5) Marketing campaign performance — active campaigns,
+                      attribution, performance metrics, spend
+
+  /scorecard          (2.6) Sales performance & balanced scorecard — KPIs,
+                      performance ratings, individual vs team metrics
+
+  /qbr                (2.7) QBR & annual reset — cadence, format, attendees,
+                      last QBR outcomes
+
+  /people-cap         (2.8) People, capability & performance — team
+                      capability gaps, performance management, hiring needs
+
+  All sub-pages follow the same pattern:
+  - Section introduction text (context/purpose of this area)
+  - Framework questions (types vary: slider, checkbox, select, text)
+  - Save responses button
+  - Progress to next sub-section
+
+────────────────────────────────────────────────────────────────────────────────
+  EXECUTION PLANNING  /portal/execution-planning/* (7 sub-pages)
+────────────────────────────────────────────────────────────────────────────────
+  Hub page: lists all 7 sub-sections with completion status badges
+
+  /priorities         (3.1) Growth execution planning & priority setting —
+                      top priorities for the period, prioritisation framework
+
+  /ninety-day         (3.2) 90-day action plans & milestone control —
+                      specific actions, owners, due dates, milestones
+
+  /accountability     (3.3) Functional accountability & operating model —
+                      who owns what, RACI-style accountability map
+
+  /risk               (3.4) Resource, risk & dependency management —
+                      risks identified, owners, mitigation actions
+
+  /governance         (3.5) Board, leadership & decision governance —
+                      governance cadence, decision rights, escalation paths
+
+  /kpi-dashboard      (3.6) KPI dashboard, thresholds & intervention rules —
+                      KPI targets, red/amber/green thresholds,
+                      intervention triggers
+
+  /reset              (3.7) Quarterly reset & annual value creation review —
+                      reset cadence, review process, value creation tracking
+
+  Same sub-page pattern as Revenue Execution (context → questions → save).
+
+────────────────────────────────────────────────────────────────────────────────
+  FINANCIAL MODELLER  /portal/modeller
+────────────────────────────────────────────────────────────────────────────────
+  3 tabs:
+
+  Tab 1 — Base Model
+    - Input current P&L: revenue, cost of sales, headcount costs, overhead
+    - Growth assumptions: revenue growth %, margin targets
+    - Auto-calculates: gross margin, EBITDA, runway
+    - Save base model
+
+  Tab 2 — Scenarios
+    - Create named scenarios with 4 types:
+        hire      — Add a hire: role, salary, start date, revenue impact
+        price     — Price change: % increase/decrease, volume impact
+        revenue   — New revenue stream: amount, start date, confidence %
+        client    — New client win: contract value, start date, probability
+    - Each scenario shows incremental P&L impact
+    - Multiple scenarios can be built and named
+
+  Tab 3 — Compare
+    - Side-by-side comparison of base model vs scenarios
+    - Charts: revenue over time, EBITDA over time
+    - Scenario toggle (show/hide individual scenarios)
+    - Summary delta table
+
+  Actions available:
+  - Save base model
+  - Add/edit/delete scenarios
+  - Toggle scenarios in compare view
+
+────────────────────────────────────────────────────────────────────────────────
+  HIRING PLAN MODELLER  /portal/modeller/hiring
+────────────────────────────────────────────────────────────────────────────────
+  What it shows:
+  - 12-month hiring plan builder
+  - Add planned hires: role, level, team, start month, salary, OTE
+  - Cumulative headcount cost over 12 months
+  - Output tabs: Timeline view, Cost view, Org impact view
+  - Integration with base financial model (hiring costs feed into P&L)
+
+  Actions available:
+  - Add/edit/remove planned hires
+  - Adjust start months (drag timeline or date picker)
+  - View cumulative cost projections
+  - Save hiring plan
+
+────────────────────────────────────────────────────────────────────────────────
+  INVOICES  /portal/invoices
+────────────────────────────────────────────────────────────────────────────────
+  What it shows:
+  - Read-only list of all invoices raised against this client
+  - Columns: invoice number, amount, status, due date, issued date
+  - Status badges: draft / sent / paid / overdue
+
+  Actions available:
+  - View invoice detail (read-only PDF-style view)
+  - Download PDF (if implemented)
+  - (No creation or editing — read-only for clients)
+
+================================================================================
+AUTH FLOWS
+================================================================================
+
+────────────────────────────────────────────────────────────────────────────────
+  LOGIN  /login
+────────────────────────────────────────────────────────────────────────────────
+  2 tabs:
+
+  Tab 1 — Password
+    - Email + password fields
+    - "Sign in" button
+    - Error messages: invalid credentials, account not found
+    - Link to register
+
+  Tab 2 — OTP (Magic Link / Code)
+    - Email field → "Send code" button
+    - 6-digit animated input (one box per digit, auto-advances)
+    - 10-minute expiry on OTP codes
+    - Resend code option
+
+  Passkey (WebAuthn):
+  - Available as a third option (button appears if passkey registered)
+  - Biometric / hardware key authentication
+  - Managed via Settings → Security tab
+
+────────────────────────────────────────────────────────────────────────────────
+  REGISTER  /register
+────────────────────────────────────────────────────────────────────────────────
+  - Name, email, password, confirm password
+  - Creates user account (client role by default unless invited as consultant)
+  - Email verification required → redirects to /verify
+
+────────────────────────────────────────────────────────────────────────────────
+  EMAIL VERIFICATION  /verify
+────────────────────────────────────────────────────────────────────────────────
+  - 6-digit code sent to email on registration
+  - Same animated 6-digit input as OTP login
+  - On success → redirects to /portal/overview (or role-appropriate dashboard)
+
+================================================================================
+PUBLIC PAGES
+================================================================================
+
+────────────────────────────────────────────────────────────────────────────────
+  PRICING  /pricing
+────────────────────────────────────────────────────────────────────────────────
+  3 pricing tiers:
+
+  Starter — £495/month
+    - Up to 3 clients
+    - Full framework (all 6 core pillars)
+    - Assessment, SWOT, MOST
+    - GTM playbook
+    - Product module
+    - Revenue Execution
+    - Execution Planning
+    - Roadmap & KPIs
+    - Client portal
+
+  Growth — £995/month
+    - Up to 15 clients
+    - Everything in Starter, plus:
+    - Hiring plan
+    - Headcount modeller
+    - CRM pipeline
+    - Lead scoring
+    - Intake automation
+    - Multi-consultant support
+    - Custom module controls
+
+  Enterprise — Custom pricing
+    - Unlimited clients
+    - Everything in Growth, plus:
+    - White-label branding
+    - SSO (Single Sign-On)
+    - Dedicated account manager
+    - Custom integrations
+    - SLA guarantee
+
+  FAQ section: 6 frequently asked questions displayed below pricing cards
+
+================================================================================
+PLATFORM INTELLIGENCE FEATURES
+================================================================================
+
+────────────────────────────────────────────────────────────────────────────────
+  LEAD SCORING ALGORITHM  (0–100 points)
+────────────────────────────────────────────────────────────────────────────────
+  Company size (0–25 pts):
+    1–10 employees     →  5 pts
+    11–50              → 10 pts
+    51–200             → 18 pts
+    201–500            → 22 pts
+    500+               → 25 pts
+
+  Annual revenue (0–25 pts):
+    Pre-revenue        →  0 pts
+    Under £500k        →  8 pts
+    £500k–£2m          → 15 pts
+    £2m–£10m           → 22 pts
+    £10m+              → 25 pts
+
+  Primary challenge (0–25 pts):
+    Any value submitted → 15 pts base
+    High-intent keywords (scale, revenue, growth, sales, gtm, pipeline,
+    team, hiring, strategy, market) → +10 pts additional
+
+  Completeness (0–25 pts):
+    +5 each for: phone provided, website provided, how they heard provided,
+    message over 20 characters, primary challenge provided
+
+────────────────────────────────────────────────────────────────────────────────
+  AUTO-ASSIGNMENT ENGINE
+────────────────────────────────────────────────────────────────────────────────
+  Triggered when a new prospect/lead is created (webhook or manual).
+  Algorithm (weighted round-robin with checks):
+    1. Get all active consultants with available capacity
+       (active clients < maxActiveClients from plan)
+    2. Filter by specialism match: does consultant's specialism keywords
+       overlap with prospect's primaryChallenge?
+    3. Filter out consultants on holiday/unavailable
+       (expired holidays cleaned up automatically)
+    4. Sort by current active client count (ascending — least loaded first)
+    5. Assign to first eligible consultant
+    6. Log assignment to AssignmentLog model with reason/score
+  
+  If no eligible consultant found → prospect left unassigned, admin notified.
+
+────────────────────────────────────────────────────────────────────────────────
+  STALENESS ENGINE (Project Health)
+────────────────────────────────────────────────────────────────────────────────
+  Tracks time since last meaningful activity on a project.
+  States:
+    active      — Activity within expected window
+    nudge       — Getting stale but manageable
+    stalled     — No recent activity, needs attention
+    at_risk     — Significantly stalled, consultant intervention needed
+    terminated  — Project effectively inactive
+
+  Used for:
+  - Blocked Projects widget on consultant dashboard
+  - "Needs Attention" list on admin dashboard
+  - Project health badges on project lists
+
+────────────────────────────────────────────────────────────────────────────────
+  DIVERGENCE ENGINE (Team Response Analysis)
+────────────────────────────────────────────────────────────────────────────────
+  Measures disagreement between team members who complete the same framework
+  questions (0 = unanimous, 1 = maximum disagreement).
+
+  Calculation by question type:
+    Slider questions:   Variance-based calculation across respondents' values
+    Checkbox questions: Percentage of respondents who selected / didn't select
+    Text questions:     0.5 if all non-empty but all different responses;
+                        0 if all the same
+
+  Shown in:
+  - Admin synthesis page (/admin/clients/[id]/synthesis)
+  - Consultant synthesis page (/consultant/clients/[id]/synthesis)
+  - Responses grouped by sub-section with divergence score per question
+  - High divergence flagged visually (threshold highlighting)
+
+────────────────────────────────────────────────────────────────────────────────
+  WEBHOOK LEAD INTAKE
+────────────────────────────────────────────────────────────────────────────────
+  Endpoint: POST /api/webhooks/lead
+  Source: Elementor form on external website (or any webhook-compatible form)
+
+  Flow:
+    1. Receive POST with form data + webhook secret in header
+    2. Validate secret against stored Settings.webhookSecret
+    3. Parse 10 standard fields + 2 hidden fields:
+       Standard: business_name, contact_name, email, phone, website,
+                 company_size, revenue_range, challenge, hear_about, message
+       Hidden:   ga_client_id, referrer_url
+    4. Run lead scoring algorithm → score 0–100
+    5. If auto-assign enabled → run assignment engine
+    6. Create Prospect record in database
+    7. Send notification email to admin (and assigned consultant if applicable)
+    8. Return 200 OK
+
+================================================================================
+DATA MODELS SUMMARY
+================================================================================
+
+  User              — id, name, email, password, role (admin/consultant/client),
+                      passkeys, otp, verified, specialisms, maxActiveClients,
+                      holidayPeriods
+
+  Client            — id, company name, industry, size, website, challenge,
+                      assignedConsultant, activeModules, project refs
+
+  Project           — id, client, consultant, status, staleness, milestones,
+                      blocks, activeModules
+
+  Plan              — id, name, price, maxClients, includedModules, stripePriceId
+
+  Subscription      — id, consultant, plan, status (active/trialing/past_due/
+                      cancelled), stripeSubscriptionId, currentPeriodEnd
+
+  Prospect          — id, businessName, contactName, email, phone, website,
+                      companySize, revenueRange, primaryChallenge, hearAbout,
+                      message, gaClientId, referrerUrl, leadScore, crmStage,
+                      assignedConsultant, createdAt
+
+  FrameworkQuestion — id, section, subSection, group, text, type, options,
+                      order, active
+
+  IntakeResponse    — id, client, section, answers (map), submittedAt
+
+  ConsultantResponse — id, project, consultant, section, subSection, answers
+
+  ConsultantNote    — id, project, consultant, content, createdAt
+
+  HiringPlan        — id, client, roles (array), createdAt
+
+  ModellerBase      — id, client, revenue, cogs, headcount, overheads,
+                      growthAssumptions
+
+  ModellerScenario  — id, client, name, type (hire/price/revenue/client),
+                      parameters, createdAt
+
+  Invoice           — id, client, consultant, lineItems, total, status
+                      (draft/sent/paid/overdue), dueDate, issuedDate,
+                      stripeInvoiceId
+
+  AssignmentLog     — id, prospect, consultant, assignedAt, reason, score
+
+  Notification      — id, userId, type (info/success/warning/error), title,
+                      message, read, link, createdAt
+
+  Settings          — id (singleton), platformName, supportEmail, timezone,
+                      webhookSecret, autoAssign, ga4MeasurementId,
+                      notificationsEnabled, brandColour, logoUrl,
+                      whiteLabel (Enterprise)
+
+================================================================================
+IDENTIFIED GAPS — FOR REVIEW
+================================================================================
+
+(Blank section for your notes — add gaps as you identify them)
+
+ADMIN GAPS:
+  -
+  -
+  -
+
+CONSULTANT GAPS:
+  -
+  -
+  -
+
+PORTAL / CLIENT GAPS:
+  -
+  -
+  -
+
+FEATURE GAPS:
+  -
+  -
+  -
+
+UX / FLOW GAPS:
+  -
+  -
+  -
+
+DATA MODEL GAPS:
+  -
+  -
+  -
+
+INTEGRATION GAPS:
+  -
+  -
+  -
+
+================================================================================
+END OF DOCUMENT
+================================================================================

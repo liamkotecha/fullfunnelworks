@@ -33,6 +33,7 @@ export async function GET(req: NextRequest) {
       businessName: client.businessName,
       status: client.status,
       plan: client.plan ?? "standard",
+      activeModules: (client.activeModules as string[]) ?? [],
       isViewAs: resolved.isViewAs,
       ...(resolved.isViewAs
         ? {

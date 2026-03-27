@@ -10,7 +10,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import {
   ArrowRight, Search, Users, Target, Settings,
-  MapPin, BarChart3, Map, Check, Clock, X,
+  MapPin, BarChart3, Map, Check, Clock, X, Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useProgress } from "@/context/ProgressContext";
@@ -221,7 +221,7 @@ export default function PortalOverviewPage() {
   const { data: session } = useSession();
   const { progress, loaded: progressLoaded, refreshAll } = useProgress();
   const { staleness } = useProjectContext();
-  const { clientId } = usePortalClient();
+  const { clientId, activeModules } = usePortalClient();
   const firstName = session?.user?.name?.split(" ")[0] || "there";
 
   // Team progress
@@ -437,28 +437,38 @@ export default function PortalOverviewPage() {
           {sectionData.map((s) => {
             const Icon = s.icon;
             const isComplete = s.percent >= 100;
-            return (
-              <Link
-                key={s.id}
-                href={s.href}
+            // Backward compat: if activeModules is empty, all modules are unlocked
+            const isLocked = activeModules.length > 0 && !activeModules.includes(s.id);
+
+            const cardContent = (
+              <div
                 className={cn(
-                  "rounded-lg border p-4 transition-colors group shadow",
-                  isComplete
-                    ? "border-brand-green/30 bg-brand-green/5 hover:bg-brand-green/10"
-                    : "border-slate-100 bg-white hover:border-slate-200"
+                  "rounded-lg border p-4 shadow",
+                  isLocked
+                    ? "border-slate-100 bg-white opacity-40 select-none cursor-default"
+                    : cn(
+                        "transition-colors group",
+                        isComplete
+                          ? "border-brand-green/30 bg-brand-green/5 hover:bg-brand-green/10"
+                          : "border-slate-100 bg-white hover:border-slate-200"
+                      )
                 )}
               >
                 <div className="flex items-start justify-between gap-2 mb-3">
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-[#141414]">
-                    <Icon className={cn("w-4 h-4", s.iconColor)} />
+                    {isLocked ? (
+                      <Lock className="w-4 h-4 text-slate-400" />
+                    ) : (
+                      <Icon className={cn("w-4 h-4", s.iconColor)} />
+                    )}
                   </div>
-                  <RagBadge percent={s.percent} hasSubs={s.subs.length > 0} />
+                  {!isLocked && <RagBadge percent={s.percent} hasSubs={s.subs.length > 0} />}
                 </div>
                 <p className="text-[15px] font-semibold text-slate-600">
                   {s.label}
                 </p>
                 <p className="text-sm text-slate-700 mt-0.5 mb-3">{s.desc}</p>
-                {s.subs.length > 0 && (
+                {!isLocked && s.subs.length > 0 && (
                   <div className="flex items-center gap-2">
                     <div className="flex-1 h-1 rounded-full bg-slate-100 overflow-hidden">
                       <motion.div
@@ -476,9 +486,29 @@ export default function PortalOverviewPage() {
                     </span>
                   </div>
                 )}
-                {s.subs.length === 0 && (
+                {!isLocked && s.subs.length === 0 && (
                   <span className="text-xs text-slate-400">Coming soon</span>
                 )}
+                {isLocked && (
+                  <span className="text-xs text-slate-400">Not included in your plan</span>
+                )}
+              </div>
+            );
+
+            if (isLocked) {
+              return (
+                <div key={s.id} className="relative group/locked">
+                  {cardContent}
+                  <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-60 text-center text-xs bg-[#141414] text-white px-3 py-2 rounded-lg opacity-0 group-hover/locked:opacity-100 transition-opacity z-10">
+                    This module isn&apos;t included in your current plan. Contact your consultant to unlock it.
+                  </div>
+                </div>
+              );
+            }
+
+            return (
+              <Link key={s.id} href={s.href}>
+                {cardContent}
               </Link>
             );
           })}

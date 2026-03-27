@@ -24,6 +24,7 @@ export async function GET() {
     return NextResponse.json({
       role: user.role,
       allowedModules: (profile.allowedModules as string[]) ?? null,
+      maxActiveClients: (profile.maxActiveClients as number) ?? 5,
     });
   } catch (error) {
     console.error("ME PROFILE GET", error);
