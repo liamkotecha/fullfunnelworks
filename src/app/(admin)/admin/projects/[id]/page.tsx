@@ -35,11 +35,11 @@ function computeModuleCompletions(subProgress: SubProgressMap): Partial<Record<M
   const groups: Partial<Record<ModuleKey, number[]>> = {};
   for (const [key, val] of Object.entries(subProgress)) {
     if (val.totalCount === 0) continue;
-    const module = keyToModule(key);
-    if (!module) continue;
+    const mod = keyToModule(key);
+    if (!mod) continue;
     const pct = Math.round((val.answeredCount / val.totalCount) * 100);
-    if (!groups[module]) groups[module] = [];
-    groups[module]!.push(pct);
+    if (!groups[mod]) groups[mod] = [];
+    groups[mod]!.push(pct);
   }
   const result: Partial<Record<ModuleKey, number>> = {};
   for (const [mod, pcts] of Object.entries(groups) as [ModuleKey, number[]][]) {
