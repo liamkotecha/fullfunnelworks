@@ -441,17 +441,26 @@ export default function ConsultantDetailPage({
                   <span className="text-slate-500">Joined</span>
                   <span className="text-slate-900">{formatDate(consultant.createdAt)}</span>
                 </div>
-                {consultant.profile.specialisms.length > 0 && (
-                  <div className="flex flex-wrap gap-1 pt-1">
-                    {consultant.profile.specialisms.map((s) => (
-                      <span
-                        key={s}
-                        className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-700"
-                      >
-                        {s}
+                {consultant.profile.plan && (
+                  <>
+                    <div className="pt-1 border-t border-slate-100">
+                      <p className="text-[10px] text-slate-400 uppercase font-semibold tracking-wider mb-2">Plan usage</p>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Active clients</span>
+                      <span className="font-semibold text-slate-900">
+                        {currentActive}
+                        <span className="text-slate-400 font-normal">/{consultant.profile.plan.maxActiveClients}</span>
                       </span>
-                    ))}
-                  </div>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Projects / client</span>
+                      <span className="font-semibold text-slate-900">
+                        {projects.length}
+                        <span className="text-slate-400 font-normal"> used · max {consultant.profile.plan.maxProjectsPerClient}/client</span>
+                      </span>
+                    </div>
+                  </>
                 )}
               </div>
             </div>

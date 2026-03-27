@@ -235,17 +235,12 @@ export default function ConsultantDashboardPage() {
                 <Link
                   key={p.id}
                   href={`/consultant/projects/${p.id}`}
-                  className={cn(
-                    "flex items-start gap-3 p-3 rounded-lg border transition-colors group",
-                    p.status === "blocked"
-                      ? "border-red-100 hover:bg-red-50"
-                      : "border-amber-100 hover:bg-amber-50"
-                  )}
+                  className="flex items-start gap-3 p-3 rounded-lg border border-red-100 hover:bg-red-50 transition-colors group"
                 >
-                  <AlertTriangle className={cn("w-3.5 h-3.5 mt-0.5 flex-shrink-0", p.status === "blocked" ? "text-red-400" : "text-amber-400")} />
+                  <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-red-400" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-slate-900 truncate">{p.title}</p>
-                    <p className="text-xs text-slate-400 capitalize">{p.status.replace("_", " ")}</p>
+                    <p className="text-xs text-red-400">Action required — project is stuck and not progressing</p>
                   </div>
                 </Link>
               ))}

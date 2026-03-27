@@ -893,7 +893,82 @@ async function seed() {
   console.log("⚙️  Settings seeded: 1");
 
   // ┌──────────────────────────────────────────────────────────┐
-  // │  SUMMARY                                                 │
+  // │  PLANS                                                   │
+  // └──────────────────────────────────────────────────────────┘
+
+  // Import Plan inline (avoid circular imports at top level)
+  const PlanModel = (await import("../src/models/Plan")).default;
+  await PlanModel.deleteMany({});
+  console.log("\n🗑️  Cleared Plans");
+
+  await PlanModel.insertMany([
+    {
+      name: "Starter",
+      description: "For independent consultants managing a small client base.",
+      monthlyPricePence: 12900,   // £129/mo
+      annualPricePence: 124800,   // £1,248/yr (~£104/mo)
+      maxActiveClients: 3,
+      maxProjectsPerClient: 1,
+      allowedModules: [
+        "assessment",
+        "people",
+        "product",
+        "process",
+        "roadmap",
+        "kpis",
+        "gtm",
+      ],
+      trialDays: 14,
+      isActive: true,
+    },
+    {
+      name: "Growth",
+      description: "For boutique consultancies scaling their client base.",
+      monthlyPricePence: 99500,   // £995/mo
+      annualPricePence: 955200,   // £9,552/yr (~£796/mo)
+      maxActiveClients: 15,
+      maxProjectsPerClient: 3,
+      allowedModules: [
+        "assessment",
+        "people",
+        "product",
+        "process",
+        "roadmap",
+        "kpis",
+        "gtm",
+        "revenue_execution",
+        "execution_planning",
+        "modeller",
+        "hiring",
+      ],
+      trialDays: 14,
+      isActive: true,
+    },
+    {
+      name: "Enterprise",
+      description: "For large consultancies and in-house revenue teams.",
+      monthlyPricePence: 0,       // Custom pricing
+      annualPricePence: 0,
+      maxActiveClients: 999,
+      maxProjectsPerClient: 10,
+      allowedModules: [
+        "assessment",
+        "people",
+        "product",
+        "process",
+        "roadmap",
+        "kpis",
+        "gtm",
+        "revenue_execution",
+        "execution_planning",
+        "modeller",
+        "hiring",
+      ],
+      trialDays: 30,
+      isActive: true,
+    },
+  ]);
+  console.log("📦 Plans seeded: 3 (Starter £129, Growth £995, Enterprise custom)");
   // └──────────────────────────────────────────────────────────┘
 
   console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
@@ -916,6 +991,7 @@ async function seed() {
   console.log(`  Notifications     : 17`);
   console.log(`  ConsultantNotes   : 7`);
   console.log(`  Settings          : 1`);
+  console.log(`  Plans             : 3`);
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log("\n  ℹ️  FrameworkQuestions are seeded separately:");
   console.log("     npx tsx scripts/seed-questions.ts");

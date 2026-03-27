@@ -3,24 +3,20 @@ import Link from "next/link";
 import { Check } from "lucide-react";
 
 const plans = [
-  {
-    name: "Starter",
-    price: "£495",
-    period: "/ month",
-    description: "For independent consultants managing 1-3 clients.",
+  {name: "Starter", price: "£129", period: "/ month",
+    description: "For independent consultants managing 1–3 clients.",
     highlight: false,
     features: [
       "Up to 3 active client portals",
-      "Full growth framework (all 6 pillars)",
-      "Assessment, SWOT & MOST tools",
-      "GTM & product positioning modules",
-      "Revenue execution & execution planning",
-      "Roadmap & KPI tracking",
+      "Core framework: Assessment, People, Product, Process",
+      "GTM Playbook & KPI tracking",
+      "Strategic Roadmap module",
       "Client-facing portal access",
+      "14-day free trial",
       "Email support",
     ],
     cta: "Start free trial",
-    href: "/register",
+    href: "/register?role=consultant",
   },
   {
     name: "Growth",
@@ -31,15 +27,15 @@ const plans = [
     features: [
       "Up to 15 active client portals",
       "Everything in Starter",
-      "Hiring plan & headcount modeller",
-      "CRM pipeline & prospect tracking",
-      "Lead scoring & intake automation",
-      "Multi-consultant team support",
-      "Custom module access controls",
+      "Revenue Execution module",
+      "Execution Planning & 90-day accountability",
+      "Financial Modeller (scenario planning)",
+      "Hiring Plan & headcount modeller",
+      "Up to 3 projects per client",
       "Priority email & chat support",
     ],
     cta: "Start free trial",
-    href: "/register",
+    href: "/register?role=consultant",
   },
   {
     name: "Enterprise",
@@ -50,11 +46,11 @@ const plans = [
     features: [
       "Unlimited client portals",
       "Everything in Growth",
+      "Unlimited projects per client",
       "White-label portal branding",
       "SSO & advanced security",
       "Dedicated account manager",
-      "Custom integrations",
-      "SLA-backed uptime guarantee",
+      "Custom integrations & SLA",
       "Onboarding & training sessions",
     ],
     cta: "Contact us",
@@ -166,8 +162,8 @@ export default function PricingPage() {
                 href={plan.href}
                 className={`block w-full text-center px-4 py-3 rounded-xl font-semibold text-sm transition-colors mb-8 ${
                   plan.highlight
-                    ? "bg-brand-blue text-navy hover:bg-brand-blue/90"
-                    : "bg-navy text-white hover:bg-navy-600"
+                    ? "bg-[#6CC2FF] text-[#141414] hover:bg-[#6CC2FF]/90"
+                    : "bg-[#141414] text-white hover:bg-[#141414]/80"
                 }`}
               >
                 {plan.cta}
@@ -234,8 +230,8 @@ export default function PricingPage() {
             Start your free trial today. Set up your first client portal in minutes.
           </p>
           <Link
-            href="/register"
-            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-brand-blue text-navy font-bold text-sm hover:bg-brand-blue/90 transition-colors"
+            href="/register?role=consultant"
+            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-[#6CC2FF] text-[#141414] font-bold text-sm hover:bg-[#6CC2FF]/90 transition-colors"
           >
             Get started free
           </Link>
