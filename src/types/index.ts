@@ -248,11 +248,11 @@ export const PROJECT_STATUS_META: Record<ProjectStatus, { label: string; color: 
   completed:    { label: "Completed",   color: "emerald", badge: "success" },
 };
 
-export const CLIENT_STATUS_META: Record<ClientStatus, { label: string; badge: string }> = {
-  invited:     { label: "Invited",     badge: "info" },
-  onboarding:  { label: "Onboarding",  badge: "warning" },
-  active:      { label: "Active",      badge: "success" },
-  paused:      { label: "Paused",      badge: "neutral" },
+export const CLIENT_STATUS_META: Record<ClientStatus, { label: string; badge: string; pill: string; dot: string }> = {
+  invited:     { label: "Invited",     badge: "info",    pill: "bg-sky-50 text-sky-700",     dot: "bg-sky-400" },
+  onboarding:  { label: "Onboarding",  badge: "warning", pill: "bg-amber-50 text-amber-700",  dot: "bg-amber-400" },
+  active:      { label: "Active",      badge: "success", pill: "bg-emerald-50 text-emerald-700", dot: "bg-emerald-500" },
+  paused:      { label: "Paused",      badge: "neutral", pill: "bg-slate-100 text-slate-500",  dot: "bg-slate-400" },
 };
 
 // ── Prospect / CRM ───────────────────────────────────────────
@@ -357,24 +357,77 @@ export interface SettingsDTO {
 
 // ── Consultant Capacity ───────────────────────────────────────
 
+export interface PlanDTO {
+  id: string;
+  name: string;
+  description?: string | null;
+  monthlyPricePence: number;
+  annualPricePence: number;
+  maxActiveClients: number;
+  maxProjectsPerClient: number;
+  allowedModules: ModuleId[];
+  trialDays: number;
+  isActive: boolean;
+  consultantCount: number;
+  createdAt: string;
+}
+
+export interface PlanSummaryDTO {
+  id: string;
+  name: string;
+  maxActiveClients: number;
+  maxProjectsPerClient: number;
+  allowedModules: ModuleId[];
+  trialDays: number;
+  monthlyPricePence: number;
+  annualPricePence: number;
+}
+
+export type SubscriptionStatus = "trialing" | "active" | "past_due" | "canceled" | "paused";
+
+export interface SubscriptionDTO {
+  id: string;
+  consultantId: string;
+  consultantName: string;
+  consultantEmail: string;
+  planId: string;
+  planName: string;
+  monthlyPricePence: number;
+  mrrPence?: number;
+  status: SubscriptionStatus;
+  currentPeriodStart: string | null;
+  currentPeriodEnd: string | null;
+  trialEndsAt: string | null;
+  canceledAt: string | null;
+  stripeSubscriptionId: string | null;
+  notes: string | null;
+  createdAt: string;
+}
+
 export interface ConsultantProfileDTO {
   maxActiveClients: number;
-  availabilityStatus: "available" | "limited" | "unavailable";
-  holidayUntil?: string | null;
-  specialisms: string[];
-  roundRobinWeight: number;
-  lastAssignedAt?: string | null;
-  totalLeadsAssigned: number;
   currentActiveClients: number;
   capacityPercent: number;
-  /** Modules this consultant is permitted to enable for their clients */
-  allowedModules: ModuleId[];
+  specialisms: string[];
+  totalLeadsAssigned: number;
+  allowedModules?: ModuleId[];
+  activeClientCount?: number;
+  subscriptionStatus?: string | null;
+  // Plan info (populated from Plan doc)
+  plan: PlanSummaryDTO | null;
+  planStartedAt?: string | null;
+  trialEndsAt?: string | null;
+  // Availability/scheduling
+  availabilityStatus?: string;
+  holidayUntil?: string | null;
+  roundRobinWeight?: number;
 }
 
 export interface ConsultantDTO {
   id: string;
   name: string;
   email: string;
+  createdAt: string;
   profile: ConsultantProfileDTO;
 }
 

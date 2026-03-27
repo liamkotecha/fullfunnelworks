@@ -8,15 +8,20 @@ export interface IPasskeyCredential {
 }
 
 export interface IConsultantProfile {
+  // Plan-derived (read from plan at runtime, stored for quick access)
   maxActiveClients: number;
+  allowedModules: string[];
+  // Platform-managed
+  planId?: mongoose.Types.ObjectId;
+  planStartedAt?: Date;
+  trialEndsAt?: Date;
+  // Consultant-managed
   availabilityStatus: "available" | "limited" | "unavailable";
   holidayUntil?: Date;
   specialisms: string[];
   roundRobinWeight: number;
   lastAssignedAt?: Date;
   totalLeadsAssigned: number;
-  /** Modules this consultant is permitted to enable for their clients */
-  allowedModules: string[];
 }
 
 export interface IUser extends Document {
@@ -62,6 +67,10 @@ const UserSchema = new Schema<IUser>(
     currentChallenge: { type: String },
     consultantProfile: {
       maxActiveClients: { type: Number, default: 5 },
+      allowedModules: [{ type: String, trim: true }],
+      planId: { type: Schema.Types.ObjectId, ref: "Plan" },
+      planStartedAt: { type: Date },
+      trialEndsAt: { type: Date },
       availabilityStatus: {
         type: String,
         enum: ["available", "limited", "unavailable"],
@@ -72,7 +81,6 @@ const UserSchema = new Schema<IUser>(
       roundRobinWeight: { type: Number, default: 1, min: 1, max: 5 },
       lastAssignedAt: { type: Date },
       totalLeadsAssigned: { type: Number, default: 0 },
-      allowedModules: [{ type: String, trim: true }],
     },
   },
   { timestamps: true }

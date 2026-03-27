@@ -8,25 +8,17 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
-  Users,
-  FolderKanban,
   Settings,
   FileQuestion,
   Receipt,
   UserCog,
+  CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { UserRole } from "@/types";
-
-interface Counts {
-  clients: number;
-  blockedProjects: number;
-  activeProspects: number;
-}
 
 interface AdminSidebarProps {
   open?: boolean;
@@ -36,24 +28,6 @@ interface AdminSidebarProps {
 
 export function AdminSidebar({ open = true, onClose }: AdminSidebarProps) {
   const pathname = usePathname();
-  const [counts, setCounts] = useState<Counts>({ clients: 0, blockedProjects: 0, activeProspects: 0 });
-
-  useEffect(() => {
-    Promise.all([
-      fetch("/api/clients").then((r) => r.json()),
-      fetch("/api/projects").then((r) => r.json()),
-    ])
-      .then(([c, p]) => {
-        const allClients: { status: string }[] = (c as { data?: { status: string }[] }).data ?? [];
-        const allProjects: { status: string }[] = (p as { data?: { status: string }[] }).data ?? [];
-        setCounts({
-          clients: allClients.length,
-          blockedProjects: allProjects.filter((x) => x.status === "blocked").length,
-          activeProspects: 0,
-        });
-      })
-      .catch(() => {});
-  }, []);
 
   type NavItem = {
     href: string;
@@ -65,24 +39,10 @@ export function AdminSidebar({ open = true, onClose }: AdminSidebarProps) {
   // ── Admin navigation (full platform)
   const ADMIN_NAV: NavItem[] = [
     { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard, badge: null },
-    {
-      href: "/admin/clients",
-      label: "Clients",
-      icon: Users,
-      badge: counts.clients > 0 ? { label: String(counts.clients), className: "bg-white/20 text-white/80" } : null,
-    },
-    {
-      href: "/admin/projects",
-      label: "Projects",
-      icon: FolderKanban,
-      badge:
-        counts.blockedProjects > 0
-          ? { label: String(counts.blockedProjects), className: "bg-red-500/80 text-white" }
-          : null,
-    },
     { href: "/admin/consultants", label: "Consultants", icon: UserCog, badge: null },
+    { href: "/admin/plans", label: "Plans", icon: CreditCard, badge: null },
     { href: "/admin/questions", label: "Questions", icon: FileQuestion, badge: null },
-    { href: "/admin/invoices", label: "Invoices", icon: Receipt, badge: null },
+    { href: "/admin/invoices", label: "Billing", icon: Receipt, badge: null },
   ];
 
   const NAV_MAIN = ADMIN_NAV;

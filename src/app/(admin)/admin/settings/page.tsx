@@ -705,7 +705,7 @@ function LeadGenTab() {
                           </span>
                         )}
                         <span className="flex items-center gap-1 text-[11px] text-slate-400">
-                          Weight: <WeightDots value={c.profile.roundRobinWeight} />
+                          Weight: <WeightDots value={c.profile.roundRobinWeight ?? 1} />
                         </span>
                       </div>
                       <button
