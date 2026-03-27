@@ -29,6 +29,7 @@ export function ConsultantShell({ children, userName, userEmail }: ConsultantShe
         userEmail={userEmail}
         onMenuToggle={toggleSidebar}
         menuOpen={sidebarOpen}
+        role="consultant"
       />
       <ConsultantSidebar open={sidebarOpen} onClose={closeSidebar} userName={userName} />
       <SessionExpiryWarning />

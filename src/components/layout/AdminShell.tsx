@@ -28,6 +28,7 @@ export function AdminShell({ children, userName, userEmail, role }: AdminShellPr
       <TopBar
         userName={userName}
         userEmail={userEmail}
+        role="admin"
         onMenuToggle={toggleSidebar}
         menuOpen={sidebarOpen}
       />

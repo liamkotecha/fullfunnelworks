@@ -17,9 +17,10 @@ interface TopBarProps {
   userEmail?: string;
   onMenuToggle?: () => void;
   menuOpen?: boolean;
+  role?: "admin" | "consultant" | "portal";
 }
 
-export function TopBar({ userName, userEmail, onMenuToggle, menuOpen }: TopBarProps) {
+export function TopBar({ userName, userEmail, onMenuToggle, menuOpen, role }: TopBarProps) {
   const [userOpen, setUserOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [appsOpen, setAppsOpen] = useState(false);
@@ -131,10 +132,12 @@ export function TopBar({ userName, userEmail, onMenuToggle, menuOpen }: TopBarPr
             </button>
           )}
 
-          {/* Notifications */}
-          <div className="relative" ref={notifRef}>
-            <NotificationsButton open={notifOpen} onToggle={() => setNotifOpen((v) => !v)} onClose={() => setNotifOpen(false)} />
-          </div>
+          {/* Notifications — hidden for portal clients */}
+          {role !== "portal" && (
+            <div className="relative" ref={notifRef}>
+              <NotificationsButton role={role ?? (isAdmin ? "admin" : "consultant")} open={notifOpen} onToggle={() => setNotifOpen((v) => !v)} onClose={() => setNotifOpen(false)} />
+            </div>
+          )}
 
           {/* Apps */}
           <div className="relative" ref={appsRef}>

@@ -152,6 +152,7 @@ function PortalShellInner({
       <TopBar
         userName={userName}
         userEmail={userEmail}
+        role="portal"
         onMenuToggle={toggleSidebar}
         menuOpen={sidebarOpen}
       />

@@ -69,7 +69,7 @@ export default function ConsultantsPage() {
       fetch("/api/admin/consultants")
         .then((r) => r.json())
         .then((data) => {
-          setConsultants(Array.isArray(data) ? data : data.consultants ?? []);
+          setConsultants(data.data ?? []);
           setLoading(false);
         })
         .catch(() => {

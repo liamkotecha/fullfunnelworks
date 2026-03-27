@@ -33,14 +33,17 @@ export function NotificationsButton({
   open,
   onToggle,
   onClose,
+  role = "admin",
 }: {
   open: boolean;
   onToggle: () => void;
   onClose: () => void;
+  role?: "admin" | "consultant";
 }) {
   const router = useRouter();
   const [notifs, setNotifs] = useState<Notification[]>([]);
   const [read, setRead] = useState<Set<string>>(new Set());
+  const base = role === "consultant" ? "/consultant" : "/admin";
 
   useEffect(() => {
     /* Derive notifications from projects and clients */
@@ -73,7 +76,7 @@ export function NotificationsButton({
               type: "blocked",
               title: `${p.title} is blocked`,
               subtitle: clientName,
-              href: `/admin/projects/${p.id}`,
+              href: `${base}/projects/${p.id}`,
               ts: new Date(p.updatedAt),
               read: false,
             });
@@ -89,7 +92,7 @@ export function NotificationsButton({
               type: "client_added",
               title: `New client: ${c.businessName}`,
               subtitle: c.status === "invited" ? "Invite sent" : c.status,
-              href: `/admin/clients/${c.id}`,
+              href: `${base}/clients/${c.id}`,
               ts: new Date(c.createdAt),
               read: false,
             });
