@@ -14,6 +14,8 @@ export default function MethodologyPage() {
       intro={mod.purpose}
       fields={mod.fields}
       measures={mod.measures}
+      backHref="/portal/revenue-execution"
+      backLabel="Back to Revenue Execution"
     />
   );
 }

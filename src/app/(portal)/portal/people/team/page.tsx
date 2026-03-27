@@ -5,7 +5,8 @@
 "use client";
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
-import { Plus, Trash2, GripVertical, Users, AlertCircle } from "lucide-react";
+import Link from "next/link";
+import { Plus, Trash2, GripVertical, Users, AlertCircle, ArrowLeft } from "lucide-react";
 import { Reorder, useDragControls, motion } from "framer-motion";
 import { usePortalClient } from "@/hooks/usePortalClient";
 import { useResponses } from "@/hooks/useResponses";
@@ -263,6 +264,13 @@ export default function TeamMembersPage() {
 
   return (
     <div>
+      <Link
+        href="/portal/people"
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-slate-700 transition-colors mb-4"
+      >
+        <ArrowLeft className="w-3.5 h-3.5" />
+        Back to People
+      </Link>
       <SectionProgressHeader
         title="Team Members"
         answeredCount={filledCount}

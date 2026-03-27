@@ -14,6 +14,8 @@ export default function PrioritiesPage() {
       intro={mod.purpose}
       fields={mod.fields}
       measures={mod.measures}
+      backHref="/portal/execution-planning"
+      backLabel="Back to Execution Planning"
     />
   );
 }

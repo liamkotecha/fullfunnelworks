@@ -15,6 +15,8 @@ export default function ScorecardPage() {
       title={`${mod.number} ${mod.title}`}
       intro={mod.purpose}
       fields={mod.fields}
+      backHref="/portal/revenue-execution"
+      backLabel="Back to Revenue Execution"
     >
       {(responses) => (
         <div className="space-y-6">

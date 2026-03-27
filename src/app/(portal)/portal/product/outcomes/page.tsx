@@ -4,8 +4,9 @@
 "use client";
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
-import { Plus, Trash2, GripVertical, Lightbulb } from "lucide-react";
+import { Plus, Trash2, GripVertical, Lightbulb, ArrowLeft } from "lucide-react";
 import { Reorder, useDragControls, motion } from "framer-motion";
+import Link from "next/link";
 import { usePortalClient } from "@/hooks/usePortalClient";
 import { useResponses } from "@/hooks/useResponses";
 import { SectionProgressHeader, WhatsNext } from "@/components/framework";
@@ -269,6 +270,13 @@ export default function OutcomesPage() {
 
   return (
     <div>
+      <Link
+        href="/portal/product"
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-slate-700 transition-colors mb-4"
+      >
+        <ArrowLeft className="w-3.5 h-3.5" />
+        Back to Product
+      </Link>
       <SectionProgressHeader
         title="Customer Outcome Mapper"
         answeredCount={filledCount}

@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { useConsultantResponses } from "@/hooks/useConsultantResponses";
 import { MeasureTable } from "@/components/framework/MeasureTable";
 import { ActionTable } from "@/components/framework/ActionTable";
@@ -25,6 +27,8 @@ interface ReadOnlyModuleShellProps {
   intro: string;
   fields: readonly ModuleField[];
   measures?: readonly Measure[];
+  backHref?: string;
+  backLabel?: string;
   children?: (responses: Record<string, unknown>) => React.ReactNode;
 }
 
@@ -35,6 +39,8 @@ export function ReadOnlyModuleShell({
   intro,
   fields,
   measures,
+  backHref,
+  backLabel,
   children,
 }: ReadOnlyModuleShellProps) {
   const { responses, loading, updatedAt } = useConsultantResponses(section, sub);
@@ -67,6 +73,15 @@ export function ReadOnlyModuleShell({
 
   return (
     <div className="max-w-3xl mx-auto">
+      {backHref && (
+        <Link
+          href={backHref}
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-slate-700 transition-colors mb-4"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          {backLabel ?? "Back"}
+        </Link>
+      )}
       <div className="mb-6">
         <h1 className="text-xl font-bold text-slate-900">{title}</h1>
         <p className="text-sm text-slate-500 mt-1">{intro}</p>

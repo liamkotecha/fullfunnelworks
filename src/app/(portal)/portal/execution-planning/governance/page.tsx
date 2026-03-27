@@ -19,6 +19,8 @@ export default function GovernancePage() {
       title={`${mod.number} ${mod.title}`}
       intro={mod.purpose}
       fields={mod.fields}
+      backHref="/portal/execution-planning"
+      backLabel="Back to Execution Planning"
     >
       {(responses) => {
         const stored = responses["s3-governance-calendar"];

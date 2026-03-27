@@ -20,6 +20,8 @@ export default function OwnershipPage() {
       intro={mod.purpose}
       fields={mod.fields}
       measures={mod.measures}
+      backHref="/portal/revenue-execution"
+      backLabel="Back to Revenue Execution"
     >
       {(responses) => {
         const parsed = (() => {

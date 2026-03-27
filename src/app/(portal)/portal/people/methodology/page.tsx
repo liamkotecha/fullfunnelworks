@@ -7,7 +7,7 @@
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import Link from "next/link";
-import { Users, ChevronRight, BookOpen } from "lucide-react";
+import { Users, ChevronRight, BookOpen, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePortalClient } from "@/hooks/usePortalClient";
 import { useResponses } from "@/hooks/useResponses";
@@ -228,6 +228,13 @@ export default function TeamCapabilityPage() {
 
   return (
     <div className="max-w-3xl mx-auto">
+      <Link
+        href="/portal/people"
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-slate-700 transition-colors mb-4"
+      >
+        <ArrowLeft className="w-3.5 h-3.5" />
+        Back to People
+      </Link>
       <SectionProgressHeader
         title="Team Capability Tracker"
         answeredCount={filledCount}

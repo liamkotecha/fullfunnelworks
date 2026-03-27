@@ -6,7 +6,7 @@
 
 import { useMemo, useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { Check, Circle, ChevronRight } from "lucide-react";
+import { Check, Circle, ChevronRight, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { ROADMAP_SECTION } from "@/lib/concept-map";
 import { cn } from "@/lib/utils";
@@ -206,6 +206,13 @@ export default function RoadmapPage() {
 
   return (
     <div className="space-y-6">
+      <Link
+        href="/portal/overview"
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-slate-700 transition-colors"
+      >
+        <ArrowLeft className="w-3.5 h-3.5" />
+        Back to Overview
+      </Link>
 
       <SectionProgressHeader
         title={ROADMAP_SECTION.heading}

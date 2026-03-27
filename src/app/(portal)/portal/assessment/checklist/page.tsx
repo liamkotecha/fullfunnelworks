@@ -6,8 +6,9 @@
 "use client";
 
 import { useCallback, useMemo, useState, useRef } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
-import { Check } from "lucide-react";
+import { ArrowLeft, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePortalClient } from "@/hooks/usePortalClient";
 import { useResponses } from "@/hooks/useResponses";
@@ -157,6 +158,13 @@ export default function ChecklistPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
+      <Link
+        href="/portal/assessment"
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-slate-700 transition-colors mb-4"
+      >
+        <ArrowLeft className="w-3.5 h-3.5" />
+        Back to Assessment
+      </Link>
       <SectionProgressHeader
         title="Assessment Checklist"
         answeredCount={answeredCount}

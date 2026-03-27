@@ -7,7 +7,8 @@
 
 import { useMemo, useCallback, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Check } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePortalClient } from "@/hooks/usePortalClient";
 import { useResponses } from "@/hooks/useResponses";
@@ -207,6 +208,13 @@ export default function SwotPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
+      <Link
+        href="/portal/assessment"
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-slate-700 transition-colors mb-4"
+      >
+        <ArrowLeft className="w-3.5 h-3.5" />
+        Back to Assessment
+      </Link>
       <SectionProgressHeader
         title="SWOT Analysis"
         answeredCount={totalAnswered}

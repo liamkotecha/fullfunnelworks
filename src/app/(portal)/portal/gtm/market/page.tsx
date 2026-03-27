@@ -5,7 +5,8 @@
 
 import { useMemo, useState } from "react";
 import { motion, LayoutGroup } from "framer-motion";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePortalClient } from "@/hooks/usePortalClient";
 import { useResponses } from "@/hooks/useResponses";
@@ -78,6 +79,13 @@ export default function MarketPage() {
 
   return (
     <div className="max-w-4xl mx-auto">
+      <Link
+        href="/portal/gtm"
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-slate-700 transition-colors mb-4"
+      >
+        <ArrowLeft className="w-3.5 h-3.5" />
+        Back to GTM
+      </Link>
       <SectionProgressHeader
         title={GTM_SECTION.marketplace.heading}
         answeredCount={answeredCount}

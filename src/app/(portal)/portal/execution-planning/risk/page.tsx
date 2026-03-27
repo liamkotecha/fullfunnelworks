@@ -15,6 +15,8 @@ export default function RiskPage() {
       intro={mod.purpose}
       fields={mod.fields}
       measures={mod.measures}
+      backHref="/portal/execution-planning"
+      backLabel="Back to Execution Planning"
     >
       {(responses) => {
         const stored = responses["s3-risk-register"];

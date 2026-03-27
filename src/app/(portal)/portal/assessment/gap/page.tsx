@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useCallback, useState } from "react";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { usePortalClient } from "@/hooks/usePortalClient";
 import { useResponses } from "@/hooks/useResponses";
 import {
@@ -85,6 +87,13 @@ export default function GapPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
+      <Link
+        href="/portal/assessment"
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-slate-700 transition-colors mb-4"
+      >
+        <ArrowLeft className="w-3.5 h-3.5" />
+        Back to Assessment
+      </Link>
       <SectionProgressHeader
         title="Gap Analysis"
         answeredCount={answeredCount}

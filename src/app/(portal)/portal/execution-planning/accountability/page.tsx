@@ -20,6 +20,8 @@ export default function AccountabilityPage() {
       intro={mod.purpose}
       fields={[]}
       measures={mod.measures}
+      backHref="/portal/execution-planning"
+      backLabel="Back to Execution Planning"
     >
       {(responses) => {
         const stored = responses["s3-accountability-matrix"];

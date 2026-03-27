@@ -6,7 +6,7 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Public routes — allow through
-  const publicPaths = ["/login", "/verify", "/api/auth", "/api/webhooks"];
+  const publicPaths = ["/login", "/register", "/pricing", "/verify", "/api/auth", "/api/webhooks"];
   if (publicPaths.some((p) => pathname.startsWith(p))) {
     return NextResponse.next();
   }
