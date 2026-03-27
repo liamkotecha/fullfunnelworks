@@ -31,25 +31,29 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  const role = (token as { role?: string }).role;
+
   // Role-based redirect on root
   if (pathname === "/") {
-    const role = (token as { role?: string }).role;
-    if (role === "admin" || role === "consultant") {
-      return NextResponse.redirect(new URL("/admin/dashboard", req.url));
-    }
+    if (role === "admin") return NextResponse.redirect(new URL("/admin/dashboard", req.url));
+    if (role === "consultant") return NextResponse.redirect(new URL("/consultant/dashboard", req.url));
     return NextResponse.redirect(new URL("/portal/overview", req.url));
   }
 
-  // Block clients from admin routes
-  const role = (token as { role?: string }).role;
-  if (pathname.startsWith("/admin") && role !== "admin" && role !== "consultant") {
+  // Consultants must not visit /admin — send them home
+  if (pathname.startsWith("/admin") && role === "consultant") {
+    return NextResponse.redirect(new URL("/consultant/dashboard", req.url));
+  }
+
+  // Block clients/unauthenticated from admin routes
+  if (pathname.startsWith("/admin") && role !== "admin") {
     return NextResponse.redirect(new URL("/portal/overview", req.url));
   }
 
-  // Block admins from portal routes (optional — remove if admins should access)
-  // if (pathname.startsWith("/portal") && (role === "admin" || role === "consultant")) {
-  //   return NextResponse.redirect(new URL("/admin/dashboard", req.url));
-  // }
+  // Block clients from consultant routes
+  if (pathname.startsWith("/consultant") && role !== "consultant" && role !== "admin") {
+    return NextResponse.redirect(new URL("/portal/overview", req.url));
+  }
 
   return NextResponse.next();
 }

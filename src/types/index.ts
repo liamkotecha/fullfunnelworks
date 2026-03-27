@@ -160,6 +160,7 @@ export interface ProjectDTO {
   clientName?: string;
   dueDate?: string | null;
   activeModules: ModuleId[];
+  projectPrincipal?: { name: string; email: string; role?: string } | null;
   lastActivityAt: string;
   staleness: StalenessStatus;
   terminatedAt?: string | null;

@@ -23,6 +23,7 @@ export interface IProject extends Document {
   assignedTo?: Types.ObjectId;
   sponsorId?: Types.ObjectId;
   dueDate?: Date;
+  projectPrincipal?: { name: string; email: string; role?: string };
   activeModules: string[];
   lastActivityAt: Date;
   staleness: "active" | "nudge" | "stalled" | "at_risk" | "terminated";
@@ -60,6 +61,10 @@ const ProjectSchema = new Schema<IProject>(
     assignedTo: { type: Schema.Types.ObjectId, ref: "User" },
     sponsorId: { type: Schema.Types.ObjectId, ref: "User" },
     dueDate: { type: Date },
+    projectPrincipal: {
+      type: new Schema({ name: String, email: String, role: String }, { _id: false }),
+      required: false,
+    },
     activeModules: {
       type: [String],
       enum: [
@@ -72,6 +77,8 @@ const ProjectSchema = new Schema<IProject>(
         "gtm",
         "modeller",
         "hiring",
+        "revenue_execution",
+        "execution_planning",
       ],
       default: ["assessment"],
     },

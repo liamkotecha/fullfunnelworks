@@ -19,6 +19,7 @@ const createSchema = z.object({
   dueDate: z.string().optional(),
   milestones: z.array(z.object({ title: z.string(), dueDate: z.string().optional() })).optional(),
   activeModules: z.array(z.string()).optional().default(["assessment"]),
+  projectPrincipal: z.object({ name: z.string(), email: z.string(), role: z.string().optional() }).optional(),
 });
 
 const updateSchema = z.object({
@@ -28,6 +29,7 @@ const updateSchema = z.object({
   package: z.string().optional(),
   assignedTo: z.string().optional().nullable(),
   dueDate: z.string().optional().nullable(),
+  projectPrincipal: z.object({ name: z.string(), email: z.string(), role: z.string().optional() }).optional().nullable(),
 });
 
 const blockSchema = z.object({

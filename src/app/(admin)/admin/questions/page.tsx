@@ -94,7 +94,7 @@ export default function AdminQuestionsPage() {
     if ((session?.user as { role?: string })?.role !== "admin") router.replace("/admin/dashboard");
   }, [session, status, router]);
 
-  const [questions, setQuestions] = useState<Question[]>();([]);
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
@@ -485,7 +485,7 @@ export default function AdminQuestionsPage() {
       <ConfirmModal
         isOpen={deleteId !== null}
         onClose={() => setDeleteId(null)}
-        onConfirm={() => deleteId && handleDelete(deleteId)}
+        onConfirm={() => { if (deleteId) handleDelete(deleteId); }}
         title="Delete question?"
         message="This question will be permanently removed from the framework. This action cannot be undone."
         confirmLabel="Delete"

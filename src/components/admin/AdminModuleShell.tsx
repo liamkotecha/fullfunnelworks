@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, usePathname } from "next/navigation";
 import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/notifications/ToastContext";
@@ -47,6 +47,7 @@ export function AdminModuleShell({
 }: AdminModuleShellProps) {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const pathname = usePathname();
   const { success, error: toastError } = useToast();
 
   const [responses, setResponses] = useState<Record<string, unknown>>({});
@@ -55,7 +56,8 @@ export function AdminModuleShell({
   const [dirty, setDirty] = useState(false);
 
   const apiUrl = `/api/projects/${id}/consultant-responses/${section}/${sub}`;
-  const back = backHref ?? `/admin/projects/${id}/${section.replace("_", "-")}`;
+  // Derive back URL from current path so it works in both /admin and /consultant areas
+  const back = backHref ?? pathname.split("/").slice(0, -1).join("/");
 
   useEffect(() => {
     fetch(apiUrl)

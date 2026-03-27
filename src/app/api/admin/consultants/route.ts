@@ -4,7 +4,7 @@ import { connectDB } from "@/lib/db";
 import User from "@/models/User";
 import Client from "@/models/Client";
 import { requireAuth, apiError } from "@/lib/api-helpers";
-import type { ConsultantDTO } from "@/types";
+import type { ConsultantDTO, ModuleId } from "@/types";
 
 /* ── GET /api/admin/consultants ────────────────────────────── */
 export async function GET() {
@@ -79,7 +79,7 @@ export async function GET() {
           totalLeadsAssigned: (profile.totalLeadsAssigned as number) ?? 0,
           currentActiveClients: currentActive,
           capacityPercent,
-          allowedModules: (profile.allowedModules as string[]) ?? [],
+          allowedModules: ((profile.allowedModules as string[]) ?? []) as ModuleId[],
         },
       };
     });
