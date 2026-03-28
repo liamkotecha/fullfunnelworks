@@ -65,12 +65,15 @@ export async function GET() {
         name: String(doc.name ?? ""),
         email: String(doc.email ?? ""),
         createdAt: (doc.createdAt instanceof Date ? doc.createdAt : new Date(doc.createdAt as string)).toISOString(),
+        lastLoginAt: (doc.lastLoginAt as Date | undefined)?.toISOString() ?? null,
         profile: {
           maxActiveClients: maxActive,
           currentActiveClients: currentActive,
           capacityPercent,
           specialisms: (profile.specialisms as string[]) ?? [],
           totalLeadsAssigned: (profile.totalLeadsAssigned as number) ?? 0,
+          subscriptionStatus: (sub?.status as string) ?? null,
+          planName: plan ? (plan.name as string) : null,
           plan: plan
             ? {
                 id: String(plan._id),
@@ -86,6 +89,17 @@ export async function GET() {
           planStartedAt: (profile.planStartedAt as Date | undefined)?.toISOString() ?? null,
           trialEndsAt: (profile.trialEndsAt as Date | undefined)?.toISOString() ??
             (sub?.trialEndsAt ? (sub.trialEndsAt as Date).toISOString() : null),
+          subscription: sub
+            ? {
+                status: sub.status as string,
+                cardExpMonth: (sub.cardExpMonth as number | null) ?? null,
+                cardExpYear: (sub.cardExpYear as number | null) ?? null,
+                trialEndsAt: (sub.trialEndsAt as Date | undefined)?.toISOString() ?? null,
+              }
+            : null,
+          healthOverride: ((profile.healthOverride as "healthy" | null | undefined) ?? null),
+          healthOverrideNote: (profile.healthOverrideNote as string | undefined) ?? null,
+          healthOverrideAt: (profile.healthOverrideAt as Date | undefined)?.toISOString() ?? null,
         },
       };
     });

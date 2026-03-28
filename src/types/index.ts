@@ -413,6 +413,7 @@ export interface ConsultantProfileDTO {
   allowedModules?: ModuleId[];
   activeClientCount?: number;
   subscriptionStatus?: string | null;
+  planName?: string | null;
   // Plan info (populated from Plan doc)
   plan: PlanSummaryDTO | null;
   planStartedAt?: string | null;
@@ -421,6 +422,23 @@ export interface ConsultantProfileDTO {
   availabilityStatus?: string;
   holidayUntil?: string | null;
   roundRobinWeight?: number;
+  // Subscription card + status (for health scoring)
+  subscription?: {
+    id?: string;
+    status: string;
+    cardExpMonth: number | null;
+    cardExpYear: number | null;
+    trialEndsAt: string | null;
+    currentPeriodStart?: string | null;
+    currentPeriodEnd?: string | null;
+    canceledAt?: string | null;
+    notes?: string | null;
+    stripeSubscriptionId?: string | null;
+  } | null;
+  // Admin health override
+  healthOverride?: "healthy" | null;
+  healthOverrideNote?: string | null;
+  healthOverrideAt?: string | null;
 }
 
 export interface ConsultantDTO {
@@ -428,7 +446,27 @@ export interface ConsultantDTO {
   name: string;
   email: string;
   createdAt: string;
+  lastLoginAt: string | null;
+  loginHistory?: string[];
   profile: ConsultantProfileDTO;
+}
+
+// ── Assignment Log ────────────────────────────────────────────
+
+// ── Consultant Health ─────────────────────────────────────────
+
+export type ConsultantHealthStatus = "healthy" | "at_risk" | "churn_risk" | "new";
+
+export type AdminEmailType = "payment_reminder" | "check_in" | "upgrade_nudge";
+
+export interface AdminEmailDTO {
+  id: string;
+  consultantId: string;
+  emailType: AdminEmailType;
+  subject: string;
+  body: string;
+  sentAt: string;
+  createdAt: string;
 }
 
 // ── Assignment Log ────────────────────────────────────────────

@@ -23,6 +23,12 @@ function LoginContent() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/portal/overview";
 
+  function redirectAfterLogin(role: string) {
+    if (role === "admin") return "/admin/dashboard";
+    if (role === "consultant") return "/consultant/dashboard";
+    return callbackUrl;
+  }
+
   const handlePasswordLogin = async () => {
     if (!email || !password) return;
     setLoading(true);
@@ -40,7 +46,7 @@ function LoginContent() {
         return;
       }
       // Cookie is set — hard navigate to pick it up
-      window.location.href = callbackUrl;
+      window.location.href = redirectAfterLogin(data.user?.role ?? "");
     } catch {
       toastError("Sign in failed", "Something went wrong");
       setLoading(false);
@@ -87,7 +93,7 @@ function LoginContent() {
       if (!loginRes.ok) {
         toastError("Invalid code", loginData.error);
       } else {
-        window.location.href = callbackUrl;
+        window.location.href = redirectAfterLogin(loginData.user?.role ?? "");
       }
     } catch (e) {
       toastError("Invalid code", (e as Error).message);

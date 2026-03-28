@@ -17,6 +17,8 @@ export interface ISubscription extends Document {
   trialEndsAt?: Date;
   canceledAt?: Date;
   stripeSubscriptionId?: string;
+  cardExpMonth?: number | null;
+  cardExpYear?: number | null;
   notes?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -45,6 +47,8 @@ const SubscriptionSchema = new Schema<ISubscription>(
     trialEndsAt: { type: Date },
     canceledAt: { type: Date },
     stripeSubscriptionId: { type: String },
+    cardExpMonth: { type: Number, default: null },
+    cardExpYear: { type: Number, default: null },
     notes: { type: String },
   },
   { timestamps: true }

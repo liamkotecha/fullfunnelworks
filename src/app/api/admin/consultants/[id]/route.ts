@@ -5,6 +5,7 @@ import User from "@/models/User";
 import Subscription from "@/models/Subscription";
 import Plan from "@/models/Plan";
 import { requireAuth, apiError } from "@/lib/api-helpers";
+import AdminEmail from "@/models/AdminEmail";
 import { Types } from "mongoose";
 
 /* ── GET /api/admin/consultants/[id] ───────────────────────── */
@@ -43,10 +44,18 @@ export async function GET(
         name: String(doc.name ?? ""),
         email: String(doc.email ?? ""),
         createdAt: (doc.createdAt instanceof Date ? doc.createdAt : new Date(doc.createdAt as string)).toISOString(),
+        lastLoginAt: (doc.lastLoginAt as Date | undefined)?.toISOString() ?? null,
+        loginHistory: ((doc.loginHistory as Date[] | undefined) ?? [])
+          .map((d) => (d instanceof Date ? d : new Date(d)).toISOString())
+          .slice(-10)
+          .reverse(),
         profile: {
           maxActiveClients: maxActive,
           specialisms: (profile.specialisms as string[]) ?? [],
           totalLeadsAssigned: (profile.totalLeadsAssigned as number) ?? 0,
+          healthOverride: ((profile.healthOverride as "healthy" | null | undefined) ?? null),
+          healthOverrideNote: (profile.healthOverrideNote as string | undefined) ?? null,
+          healthOverrideAt: (profile.healthOverrideAt as Date | undefined)?.toISOString() ?? null,
           plan: plan
             ? {
                 id: String(plan._id),
@@ -68,6 +77,9 @@ export async function GET(
                 trialEndsAt: (sub.trialEndsAt as Date | null | undefined)?.toISOString() ?? null,
                 canceledAt: (sub.canceledAt as Date | null | undefined)?.toISOString() ?? null,
                 notes: (sub.notes as string | null | undefined) ?? null,
+                cardExpMonth: (sub.cardExpMonth as number | null) ?? null,
+                cardExpYear: (sub.cardExpYear as number | null) ?? null,
+                stripeSubscriptionId: (sub.stripeSubscriptionId as string | undefined) ?? null,
               }
             : null,
         },
@@ -106,6 +118,13 @@ export async function PATCH(
       updateFields["consultantProfile.specialisms"] = Array.isArray(body.specialisms)
         ? body.specialisms.map((s: string) => String(s).trim()).filter(Boolean)
         : [];
+    }
+
+    // Health override — admin can manually mark a consultant as healthy
+    if (body.healthOverride !== undefined) {
+      updateFields["consultantProfile.healthOverride"] = body.healthOverride ?? null;
+      updateFields["consultantProfile.healthOverrideNote"] = body.healthOverrideNote ?? null;
+      updateFields["consultantProfile.healthOverrideAt"] = body.healthOverride ? new Date() : null;
     }
 
     // Assign plan — updates subscription + mirrors limits on user doc

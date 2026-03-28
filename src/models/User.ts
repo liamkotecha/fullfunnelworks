@@ -22,6 +22,10 @@ export interface IConsultantProfile {
   roundRobinWeight: number;
   lastAssignedAt?: Date;
   totalLeadsAssigned: number;
+  // Health override — admin can manually mark a consultant as healthy
+  healthOverride?: "healthy" | null;
+  healthOverrideNote?: string;
+  healthOverrideAt?: Date;
 }
 
 export interface IUser extends Document {
@@ -34,6 +38,8 @@ export interface IUser extends Document {
   otpExpiry?: Date;
   currentChallenge?: string;
   consultantProfile?: IConsultantProfile;
+  lastLoginAt?: Date;
+  loginHistory?: Date[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -81,7 +87,12 @@ const UserSchema = new Schema<IUser>(
       roundRobinWeight: { type: Number, default: 1, min: 1, max: 5 },
       lastAssignedAt: { type: Date },
       totalLeadsAssigned: { type: Number, default: 0 },
+      healthOverride: { type: String, enum: ["healthy", null], default: null },
+      healthOverrideNote: { type: String },
+      healthOverrideAt: { type: Date },
     },
+    lastLoginAt: { type: Date },
+    loginHistory: [{ type: Date }],
   },
   { timestamps: true }
 );

@@ -18,6 +18,11 @@ import {
   Pencil,
   AlertCircle,
   Eye,
+  Activity,
+  Mail,
+  ShieldCheck,
+  Clock,
+  CreditCard as CardIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -31,17 +36,24 @@ import {
   MODULE_META,
   INVOICE_STATUS_META,
   CLIENT_STATUS_META,
+  AdminEmailDTO,
 } from "@/types";
+import {
+  computeConsultantHealth,
+  isCardExpiringSoon,
+  ConsultantHealthStatus,
+} from "@/lib/consultantHealth";
 import { useToast } from "@/components/notifications/ToastContext";
 import { Badge } from "@/components/ui/Badge";
 
-type Tab = "overview" | "clients" | "projects" | "billing";
+type Tab = "overview" | "clients" | "projects" | "billing" | "health";
 
 const TABS: { id: Tab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-  { id: "overview", label: "Overview", icon: LayoutDashboard },
-  { id: "clients", label: "Clients", icon: Users },
-  { id: "projects", label: "Projects", icon: FolderKanban },
-  { id: "billing", label: "Billing", icon: CreditCard },
+  { id: "overview",  label: "Overview",          icon: LayoutDashboard },
+  { id: "clients",   label: "Clients",           icon: Users },
+  { id: "projects",  label: "Projects",          icon: FolderKanban },
+  { id: "billing",   label: "Billing",           icon: CreditCard },
+  { id: "health",    label: "Health & Retention", icon: Activity },
 ];
 
 const SUB_STATUS_META: Record<string, { label: string; dot: string; pill: string }> = {
@@ -81,10 +93,15 @@ interface ConsultantDetail {
   name: string;
   email: string;
   createdAt: string;
+  lastLoginAt: string | null;
+  loginHistory: string[];
   profile: {
     maxActiveClients: number;
     specialisms: string[];
     totalLeadsAssigned: number;
+    healthOverride: "healthy" | null;
+    healthOverrideNote: string | null;
+    healthOverrideAt: string | null;
     plan: PlanDTO | null;
     subscription: {
       id: string;
@@ -92,7 +109,11 @@ interface ConsultantDetail {
       currentPeriodStart: string | null;
       currentPeriodEnd: string | null;
       trialEndsAt: string | null;
+      canceledAt: string | null;
       notes: string | null;
+      cardExpMonth: number | null;
+      cardExpYear: number | null;
+      stripeSubscriptionId: string | null;
     } | null;
   };
 }
@@ -117,6 +138,12 @@ export default function ConsultantDetailPage({
   const [selectedPlanId, setSelectedPlanId] = useState<string>("");
   const [editingPlan, setEditingPlan] = useState(false);
   const [viewingAs, setViewingAs] = useState(false);
+  // Health tab state
+  const [adminEmails, setAdminEmails] = useState<AdminEmailDTO[]>([]);
+  const [cardDetails, setCardDetails] = useState<{ brand: string; last4: string; expMonth: number; expYear: number } | null | undefined>(undefined);
+  const [healthOverrideNote, setHealthOverrideNote] = useState("");
+  const [savingOverride, setSavingOverride] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState<Record<string, boolean>>({});
 
   // Auth guard
   useEffect(() => {
@@ -170,7 +197,21 @@ export default function ConsultantDetailPage({
         .then((d) => { setInvoices(d.data ?? []); setLoadingTab(false); })
         .catch(() => setLoadingTab(false));
     }
-  }, [tab, consultant, params.id, clients.length, projects.length, invoices.length]);
+    if (tab === "health") {
+      // Fetch admin emails (always refresh)
+      fetch(`/api/admin/consultants/${params.id}/email`)
+        .then((r) => r.json())
+        .then((d) => setAdminEmails(d.data ?? []))
+        .catch(() => {});
+      // Fetch card details lazily (only once)
+      if (cardDetails === undefined) {
+        fetch(`/api/admin/consultants/${params.id}/card`)
+          .then((r) => r.json())
+          .then((d) => setCardDetails(d.data ?? null))
+          .catch(() => setCardDetails(null));
+      }
+    }
+  }, [tab, consultant, params.id, clients.length, projects.length, invoices.length, cardDetails]);
 
   const handleAssignPlan = useCallback(async () => {
     if (!selectedPlanId) return;
@@ -722,6 +763,260 @@ export default function ConsultantDetailPage({
           </div>
         </motion.div>
       )}
+
+      {/* ── Health & Retention Tab ───────────────────── */}
+      {tab === "health" && (() => {
+        const HEALTH_META: Record<ConsultantHealthStatus, { label: string; dot: string; pill: string }> = {
+          healthy:    { label: "Healthy",    dot: "bg-emerald-500", pill: "bg-emerald-50 text-emerald-700" },
+          at_risk:    { label: "At risk",    dot: "bg-amber-400",   pill: "bg-amber-50 text-amber-700" },
+          churn_risk: { label: "Churn risk", dot: "bg-red-500",     pill: "bg-red-50 text-red-700" },
+          new:        { label: "New",        dot: "bg-slate-400",   pill: "bg-slate-100 text-slate-600" },
+        };
+
+        const health = computeConsultantHealth({
+          createdAt: new Date(consultant.createdAt),
+          lastLoginAt: consultant.lastLoginAt ? new Date(consultant.lastLoginAt) : null,
+          activeClientCount: currentActive,
+          maxClients: maxActive,
+          subscription: consultant.profile.subscription
+            ? {
+                status: consultant.profile.subscription.status,
+                trialEnd: consultant.profile.subscription.trialEndsAt
+                  ? new Date(consultant.profile.subscription.trialEndsAt)
+                  : null,
+                cardExpMonth: consultant.profile.subscription.cardExpMonth,
+                cardExpYear: consultant.profile.subscription.cardExpYear,
+              }
+            : null,
+          healthOverride: consultant.profile.healthOverride ?? null,
+        });
+        const hmeta = HEALTH_META[health.status];
+
+        async function handleSendEmail(type: string) {
+          setSendingEmail((s) => ({ ...s, [type]: true }));
+          try {
+            const res = await fetch(`/api/admin/consultants/${params.id}/email`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ type }),
+            });
+            if (!res.ok) throw new Error();
+            const d = await res.json();
+            setAdminEmails((prev) => [d.data, ...prev]);
+            success("Email sent", "The consultant has been notified");
+          } catch {
+            toastError("Failed to send email", "Please try again");
+          } finally {
+            setSendingEmail((s) => ({ ...s, [type]: false }));
+          }
+        }
+
+        async function handleSaveOverride(override: "healthy" | null) {
+          setSavingOverride(true);
+          try {
+            await fetch(`/api/admin/consultants/${params.id}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                healthOverride: override,
+                healthOverrideNote: override ? healthOverrideNote : null,
+              }),
+            });
+            await loadConsultant();
+            success(override ? "Override saved" : "Override cleared", "");
+          } catch {
+            toastError("Failed to save", "Please try again");
+          } finally {
+            setSavingOverride(false);
+          }
+        }
+
+        const emailLabels: Record<string, string> = {
+          payment_reminder: "Send payment reminder",
+          check_in: "Send check-in",
+          upgrade_nudge: "Send upgrade nudge",
+        };
+
+        return (
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+            {/* Status + reasons */}
+            <div className="bg-white rounded-xl ring-1 ring-black/[0.06] p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-semibold text-sm text-slate-900">Health Status</h2>
+                <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium", hmeta.pill)}>
+                  <span className={cn("w-1.5 h-1.5 rounded-full", hmeta.dot)} />
+                  {hmeta.label}
+                </span>
+              </div>
+              {health.reasons.length > 0 && (
+                <ul className="space-y-1.5 mb-4">
+                  {health.reasons.map((r, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-slate-600">
+                      <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-slate-400 flex-shrink-0" />
+                      {r}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {/* Quick email actions */}
+              <div className="flex flex-wrap gap-2 pt-3 border-t border-slate-100">
+                {["payment_reminder", "check_in", "upgrade_nudge"].map((type) => (
+                  <button
+                    key={type}
+                    disabled={!!sendingEmail[type]}
+                    onClick={() => handleSendEmail(type)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 disabled:opacity-40 transition-colors"
+                  >
+                    {sendingEmail[type] ? <Loader2 className="w-3 h-3 animate-spin" /> : <Mail className="w-3 h-3" />}
+                    {emailLabels[type]}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Manual override */}
+            <div className="bg-white rounded-xl ring-1 ring-black/[0.06] p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <ShieldCheck className="w-4 h-4 text-slate-500" />
+                <h2 className="font-semibold text-sm text-slate-900">Manual Override</h2>
+              </div>
+              {consultant.profile.healthOverride ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-slate-600">
+                    Marked <span className="font-semibold text-emerald-700">Healthy</span> by admin
+                    {consultant.profile.healthOverrideAt && (
+                      <> on {formatDate(consultant.profile.healthOverrideAt)}</>
+                    )}
+                    {consultant.profile.healthOverrideNote && (
+                      <> — <em className="text-slate-500">{consultant.profile.healthOverrideNote}</em></>
+                    )}
+                  </p>
+                  <button
+                    disabled={savingOverride}
+                    onClick={() => handleSaveOverride(null)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-rose-700 bg-rose-50 hover:bg-rose-100 disabled:opacity-40 transition-colors"
+                  >
+                    {savingOverride ? <Loader2 className="w-3 h-3 animate-spin" /> : <X className="w-3 h-3" />}
+                    Clear override
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-xs text-slate-400">
+                    Use this if you&apos;ve spoken to the consultant offline and confirmed they&apos;re engaged.
+                  </p>
+                  <textarea
+                    value={healthOverrideNote}
+                    onChange={(e) => setHealthOverrideNote(e.target.value)}
+                    placeholder="Add a note (optional) — e.g. Spoke with them on 28 March, onboarding a new client next week"
+                    rows={2}
+                    className="w-full text-sm px-3 py-2 border border-slate-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-slate-300 placeholder:text-slate-400"
+                  />
+                  <button
+                    disabled={savingOverride}
+                    onClick={() => handleSaveOverride("healthy")}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-40 transition-colors"
+                  >
+                    {savingOverride ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                    Mark as healthy
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Login history */}
+              <div className="bg-white rounded-xl ring-1 ring-black/[0.06] p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <Clock className="w-4 h-4 text-slate-500" />
+                  <h2 className="font-semibold text-sm text-slate-900">Login History</h2>
+                  <span className="text-xs text-slate-400">(last 10)</span>
+                </div>
+                {consultant.loginHistory.length === 0 ? (
+                  <p className="text-sm text-slate-400">No logins recorded yet</p>
+                ) : (
+                  <ol className="space-y-1.5">
+                    {consultant.loginHistory.map((ts, i) => (
+                      <li key={i} className="flex items-center justify-between text-sm">
+                        <span className={cn("text-slate-600", i === 0 && "font-medium text-slate-900")}>
+                          {i === 0 ? "Most recent" : `#${i + 1}`}
+                        </span>
+                        <span className="text-slate-500 text-xs">{formatDate(ts)}</span>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </div>
+
+              {/* Card details */}
+              <div className="bg-white rounded-xl ring-1 ring-black/[0.06] p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <CardIcon className="w-4 h-4 text-slate-500" />
+                  <h2 className="font-semibold text-sm text-slate-900">Payment Card</h2>
+                </div>
+                {cardDetails === undefined ? (
+                  <div className="flex items-center gap-2 text-sm text-slate-400">
+                    <Loader2 className="w-4 h-4 animate-spin" /> Loading…
+                  </div>
+                ) : cardDetails === null ? (
+                  <p className="text-sm text-slate-400">No card on file</p>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-slate-500 capitalize">{cardDetails.brand}</span>
+                      <span className="text-sm font-semibold text-slate-900">•••• {cardDetails.last4}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-slate-500">Expires</span>
+                      <span className={cn(
+                        "font-medium",
+                        isCardExpiringSoon(cardDetails.expMonth, cardDetails.expYear, 0)
+                          ? "text-red-600"
+                          : isCardExpiringSoon(cardDetails.expMonth, cardDetails.expYear, 30)
+                          ? "text-amber-600"
+                          : "text-slate-900"
+                      )}>
+                        {String(cardDetails.expMonth).padStart(2, "0")}/{cardDetails.expYear}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Admin email history */}
+            <div className="bg-white rounded-xl ring-1 ring-black/[0.06] overflow-hidden">
+              <div className="flex items-center gap-2 px-5 pt-5 pb-3">
+                <Mail className="w-4 h-4 text-slate-500" />
+                <h2 className="font-semibold text-sm text-slate-900">Emails Sent</h2>
+                <span className="text-xs text-slate-400">{adminEmails.length}</span>
+              </div>
+              {adminEmails.length === 0 ? (
+                <div className="px-5 pb-5 text-sm text-slate-400">No emails sent to this consultant yet</div>
+              ) : (
+                <div className="divide-y divide-slate-50">
+                  {adminEmails.map((e) => {
+                    const typeLabels: Record<string, string> = {
+                      payment_reminder: "Payment reminder",
+                      check_in: "Check-in",
+                      upgrade_nudge: "Upgrade nudge",
+                    };
+                    return (
+                      <div key={e.id} className="flex items-center justify-between px-5 py-3">
+                        <div>
+                          <p className="text-sm font-medium text-slate-900">{typeLabels[e.emailType] ?? e.emailType}</p>
+                          <p className="text-xs text-slate-400">{e.subject}</p>
+                        </div>
+                        <span className="text-xs text-slate-400">{formatDate(e.sentAt)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        );
+      })()}
     </div>
   );
 }

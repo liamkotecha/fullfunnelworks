@@ -31,6 +31,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
     }
 
+    // Record login timestamp (non-blocking)
+    const loginTime = new Date();
+    User.updateOne(
+      { _id: u._id },
+      {
+        $set: { lastLoginAt: loginTime },
+        $push: { loginHistory: { $each: [loginTime], $slice: -10 } },
+      },
+    ).catch(() => {}); // fire-and-forget
+
     const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
     if (!secret) {
       return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
