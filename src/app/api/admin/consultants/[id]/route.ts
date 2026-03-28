@@ -91,6 +91,11 @@ export async function GET(
                 cardExpMonth: (sub.cardExpMonth as number | null) ?? null,
                 cardExpYear: (sub.cardExpYear as number | null) ?? null,
                 stripeSubscriptionId: (sub.stripeSubscriptionId as string | undefined) ?? null,
+                lastPaymentError: (() => {
+                  const lpe = sub.lastPaymentError as { code: string; message: string; failedAt: Date } | null | undefined;
+                  if (!lpe) return null;
+                  return { code: lpe.code, message: lpe.message, failedAt: lpe.failedAt instanceof Date ? lpe.failedAt.toISOString() : String(lpe.failedAt) };
+                })(),
               }
             : null,
         },

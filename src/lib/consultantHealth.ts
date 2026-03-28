@@ -98,7 +98,7 @@ export function computeConsultantHealth(
   if (loginAge !== null && loginAge >= 22)
     churnReasons.push(`No login in ${loginAge} day${loginAge === 1 ? "" : "s"}`);
   if (subStatus === "past_due")
-    churnReasons.push("Subscription payment past due");
+    churnReasons.push("Subscription payment failed");
   if (cardAlreadyExpired)
     churnReasons.push("Payment card has expired");
   if (

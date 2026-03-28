@@ -8,9 +8,11 @@ export const dynamic = "force-dynamic";
  * - invoice.voided → set status "void"
  */
 import { NextRequest, NextResponse } from "next/server";
+import type Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { connectDB } from "@/lib/db";
 import Invoice from "@/models/Invoice";
+import Subscription from "@/models/Subscription";
 import Prospect from "@/models/Prospect";
 import { getGA4Settings, trackServerEvent } from "@/lib/analytics";
 
@@ -79,13 +81,39 @@ export async function POST(req: NextRequest) {
       }
 
       case "invoice.payment_failed": {
-        const stripeInvoice = event.data.object;
+        const stripeInvoice = event.data.object as Stripe.Invoice;
+
+        // ── Client invoice: update our Invoice record ──────────
         const invoice = await Invoice.findOne({
           stripeInvoiceId: stripeInvoice.id,
         });
         if (invoice && invoice.status !== "paid") {
           invoice.status = "overdue";
           await invoice.save();
+        }
+
+        // ── Subscription invoice: capture failure reason ───────
+        // In Stripe v20 the subscription ID lives inside parent.subscription_details
+        const stripeSubId =
+          stripeInvoice.parent?.type === "subscription_details"
+            ? (typeof stripeInvoice.parent.subscription_details?.subscription === "string"
+                ? stripeInvoice.parent.subscription_details.subscription
+                : (stripeInvoice.parent.subscription_details?.subscription as Stripe.Subscription | null | undefined)?.id ?? null)
+            : null;
+
+        if (stripeSubId) {
+          const sub = await Subscription.findOne({ stripeSubscriptionId: stripeSubId });
+          if (sub) {
+            // last_finalization_error is on the Invoice directly — no extra API call needed
+            const lfe = stripeInvoice.last_finalization_error;
+            sub.status = "past_due";
+            sub.lastPaymentError = {
+              code: lfe?.decline_code ?? (lfe?.code as string | undefined) ?? "payment_failed",
+              message: lfe?.message ?? "Payment failed",
+              failedAt: new Date(),
+            };
+            await sub.save();
+          }
         }
         break;
       }

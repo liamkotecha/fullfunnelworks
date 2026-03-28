@@ -433,6 +433,11 @@ export interface ConsultantProfileDTO {
     canceledAt?: string | null;
     notes?: string | null;
     stripeSubscriptionId?: string | null;
+    lastPaymentError?: {
+      code: string;
+      message: string;
+      failedAt: string;
+    } | null;
   } | null;
   // Admin health override
   healthOverride?: "healthy" | null;

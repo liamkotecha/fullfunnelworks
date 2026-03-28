@@ -59,7 +59,7 @@ const TABS: { id: Tab; label: string; icon: React.ComponentType<{ className?: st
 const SUB_STATUS_META: Record<string, { label: string; dot: string; pill: string }> = {
   active:   { label: "Active",    dot: "bg-emerald-500", pill: "bg-emerald-50 text-emerald-700" },
   trialing: { label: "Trial",     dot: "bg-blue-500",    pill: "bg-blue-50 text-blue-700" },
-  past_due: { label: "Past due",  dot: "bg-red-500",     pill: "bg-red-50 text-red-600" },
+  past_due: { label: "Payment failed",  dot: "bg-red-500",     pill: "bg-red-50 text-red-600" },
   canceled: { label: "Canceled",  dot: "bg-slate-400",   pill: "bg-slate-100 text-slate-500" },
   paused:   { label: "Paused",    dot: "bg-amber-400",   pill: "bg-amber-50 text-amber-700" },
   none:     { label: "No plan",   dot: "bg-slate-300",   pill: "bg-slate-100 text-slate-400" },
@@ -115,6 +115,11 @@ interface ConsultantDetail {
       cardExpMonth: number | null;
       cardExpYear: number | null;
       stripeSubscriptionId: string | null;
+      lastPaymentError: {
+        code: string;
+        message: string;
+        failedAt: string;
+      } | null;
     } | null;
   };
 }
@@ -313,7 +318,10 @@ export default function ConsultantDetailPage({
 
   // Alert banner items
   const alertItems: string[] = [];
-  if (subStatus === "past_due") alertItems.push("Subscription payment is overdue");
+  if (subStatus === "past_due") {
+    const reason = consultant.profile.subscription?.lastPaymentError?.message;
+    alertItems.push(reason ? `Payment failed: ${reason}` : "Subscription payment failed");
+  }
   if (subStatus === "canceled") alertItems.push("Subscription has been canceled");
   const _expM = consultant.profile.subscription?.cardExpMonth;
   const _expY = consultant.profile.subscription?.cardExpYear;
@@ -536,6 +544,17 @@ export default function ConsultantDetailPage({
                     {consultant.profile.subscription?.notes && (
                       <div className="p-2.5 bg-amber-50 rounded-lg text-xs text-amber-700">
                         {consultant.profile.subscription.notes}
+                      </div>
+                    )}
+                    {consultant.profile.subscription?.lastPaymentError && (
+                      <div className="p-2.5 bg-red-50 rounded-lg text-xs text-red-700 space-y-0.5">
+                        <p className="font-semibold">Last payment failed</p>
+                        <p>{consultant.profile.subscription.lastPaymentError.message}</p>
+                        <p className="text-red-500">
+                          {formatDate(consultant.profile.subscription.lastPaymentError.failedAt)}
+                          {" · "}
+                          <span className="font-mono">{consultant.profile.subscription.lastPaymentError.code}</span>
+                        </p>
                       </div>
                     )}
                     <div className="flex justify-between items-center">

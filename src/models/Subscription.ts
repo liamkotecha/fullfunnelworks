@@ -20,6 +20,11 @@ export interface ISubscription extends Document {
   cardExpMonth?: number | null;
   cardExpYear?: number | null;
   notes?: string;
+  lastPaymentError?: {
+    code: string;
+    message: string;
+    failedAt: Date;
+  } | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -50,6 +55,14 @@ const SubscriptionSchema = new Schema<ISubscription>(
     cardExpMonth: { type: Number, default: null },
     cardExpYear: { type: Number, default: null },
     notes: { type: String },
+    lastPaymentError: {
+      type: {
+        code: { type: String, required: true },
+        message: { type: String, required: true },
+        failedAt: { type: Date, required: true },
+      },
+      default: null,
+    },
   },
   { timestamps: true }
 );

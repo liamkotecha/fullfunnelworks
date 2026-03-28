@@ -94,6 +94,11 @@ export async function GET() {
                 cardExpMonth: (sub.cardExpMonth as number | null) ?? null,
                 cardExpYear: (sub.cardExpYear as number | null) ?? null,
                 trialEndsAt: (sub.trialEndsAt as Date | undefined)?.toISOString() ?? null,
+                lastPaymentError: (() => {
+                  const lpe = sub.lastPaymentError as { code: string; message: string; failedAt: Date } | null | undefined;
+                  if (!lpe) return null;
+                  return { code: lpe.code as string, message: lpe.message as string, failedAt: (lpe.failedAt instanceof Date ? lpe.failedAt : new Date(lpe.failedAt as unknown as string)).toISOString() };
+                })(),
               }
             : null,
           healthOverride: ((profile.healthOverride as "healthy" | null | undefined) ?? null),

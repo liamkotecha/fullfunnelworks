@@ -59,20 +59,21 @@ function PlanBadge({ name }: { name?: string | null }) {
 
 /* ── Subscription cell ───────────────────────────────────────── */
 const SUB_META: Record<string, { label: string; cls: string }> = {
-  active:   { label: "Active",   cls: "bg-emerald-50 text-emerald-700 ring-emerald-200" },
-  trialing: { label: "Trialing", cls: "bg-sky-50 text-sky-700 ring-sky-200" },
-  past_due: { label: "Past due", cls: "bg-rose-50 text-rose-700 ring-rose-200" },
-  canceled: { label: "Canceled", cls: "bg-slate-100 text-slate-500 ring-slate-200" },
-  paused:   { label: "Paused",   cls: "bg-slate-100 text-slate-500 ring-slate-200" },
+  active:   { label: "Active",          cls: "bg-emerald-50 text-emerald-700 ring-emerald-200" },
+  trialing: { label: "Trialing",         cls: "bg-sky-50 text-sky-700 ring-sky-200" },
+  past_due: { label: "Payment failed",   cls: "bg-rose-50 text-rose-700 ring-rose-200" },
+  canceled: { label: "Canceled",         cls: "bg-slate-100 text-slate-500 ring-slate-200" },
+  paused:   { label: "Paused",           cls: "bg-slate-100 text-slate-500 ring-slate-200" },
 };
 
 function SubscriptionCell({
-  status, trialEndsAt, cardExpMonth, cardExpYear,
+  status, trialEndsAt, cardExpMonth, cardExpYear, lastPaymentError,
 }: {
   status?: string | null;
   trialEndsAt?: string | null;
   cardExpMonth?: number | null;
   cardExpYear?: number | null;
+  lastPaymentError?: { code: string; message: string; failedAt: string } | null;
 }) {
   if (!status) return <span className="text-xs text-slate-400">—</span>;
   const meta = SUB_META[status] ?? { label: status, cls: "bg-slate-50 text-slate-600 ring-slate-200" };
@@ -88,6 +89,11 @@ function SubscriptionCell({
       <span className={cn("inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ring-1", meta.cls)}>
         {subLabel}
       </span>
+      {status === "past_due" && lastPaymentError && (
+        <div className="text-[10px] font-medium text-rose-600 max-w-[160px] leading-snug">
+          {lastPaymentError.message}
+        </div>
+      )}
       {cardExpired && (
         <div className="text-[10px] font-medium text-red-600">Card expired</div>
       )}
@@ -421,6 +427,7 @@ export default function ConsultantsPage() {
                         trialEndsAt={sub?.trialEndsAt}
                         cardExpMonth={sub?.cardExpMonth}
                         cardExpYear={sub?.cardExpYear}
+                        lastPaymentError={sub?.lastPaymentError}
                       />
                     </td>
                     <td className="px-4 py-3.5">
