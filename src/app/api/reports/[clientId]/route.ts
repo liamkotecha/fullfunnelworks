@@ -57,6 +57,13 @@ export async function GET(
       }
     }
 
+    if (user.role === "consultant") {
+      const clientDoc = await Client.findById(clientId).select("assignedConsultant").lean() as Record<string, unknown> | null;
+      if (!clientDoc || String(clientDoc.assignedConsultant) !== user.id) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
+
     // Fetch all data in parallel
     const [client, project, intakeDoc, questions, notesDocs, modellerBase] =
       await Promise.all([

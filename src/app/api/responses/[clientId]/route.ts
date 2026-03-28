@@ -14,7 +14,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import IntakeResponse from "@/models/IntakeResponse";
 import { getAllFieldIds, calculateProgress } from "@/lib/framework-nav";
-import { requireAuth } from "@/lib/api-helpers";
+import { requireAuth, assertClientAccess } from "@/lib/api-helpers";
+import Client from "@/models/Client";
 
 export async function GET(
   _req: NextRequest,
@@ -28,6 +29,9 @@ export async function GET(
     const { clientId } = await params;
 
     await connectDB();
+
+    const guard = await assertClientAccess(user, clientId);
+    if (guard) return guard;
 
     const doc = (await IntakeResponse.findOne({ clientId }).lean()) as Record<string, unknown> | null;
 

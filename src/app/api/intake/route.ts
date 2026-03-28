@@ -4,7 +4,7 @@ import { z } from "zod";
 import { connectDB } from "@/lib/db";
 import IntakeResponse from "@/models/IntakeResponse";
 import Client from "@/models/Client";
-import { requireAuth } from "@/lib/api-helpers";
+import { requireAuth, assertClientAccess } from "@/lib/api-helpers";
 
 const saveSchema = z.object({
   clientId: z.string(),
@@ -27,6 +27,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "clientId required" }, { status: 400 });
     }
 
+    const guard = await assertClientAccess(userOrRes, clientId);
+    if (guard) return guard;
+
     const intake = await IntakeResponse.findOne({ clientId }).lean();
     return NextResponse.json({ data: intake ?? null }, { status: 200 });
   } catch (error) {
@@ -44,6 +47,9 @@ export async function POST(req: NextRequest) {
     const { clientId, completedBy, responses, sectionProgress, submit } = saveSchema.parse(body);
 
     await connectDB();
+
+    const guard = await assertClientAccess(userOrRes, clientId);
+    if (guard) return guard;
 
     const now = new Date();
 

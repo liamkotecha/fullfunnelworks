@@ -105,6 +105,37 @@ export function assertConsultantOwnsClient(
   return null;
 }
 
+/**
+ * assertClientAccess — checks that the calling user can access a specific clientId.
+ * - admin: always allowed
+ * - consultant: must be the assignedConsultant on that client
+ * - client: must be the userId or a teamUserId on that client
+ * Returns a 403/404 NextResponse if denied, null if allowed.
+ */
+export async function assertClientAccess(
+  user: AuthenticatedUser,
+  clientId: string
+): Promise<NextResponse | null> {
+  if (user.role === "admin") return null;
+  const { default: Client } = await import("@/models/Client");
+  const client = await Client.findById(clientId)
+    .select("userId teamUserIds assignedConsultant")
+    .lean() as Record<string, unknown> | null;
+  if (!client) return NextResponse.json({ error: "Client not found" }, { status: 404 });
+  if (user.role === "client") {
+    const isOwner =
+      String(client.userId) === user.id ||
+      ((client.teamUserIds as string[]) ?? []).some((id) => String(id) === user.id);
+    if (!isOwner) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+  if (user.role === "consultant") {
+    if (String(client.assignedConsultant) !== user.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+  }
+  return null;
+}
+
 // ── Client DTO mapping ───────────────────────────────────────
 
 /**

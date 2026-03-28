@@ -85,11 +85,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Consultant creating a client always owns them; admin can optionally specify
-    const userOrRes2 = await requireAuth();
-    const creatingUserId = userOrRes2 instanceof NextResponse ? undefined : userOrRes2;
     const resolvedConsultant =
-      creatingUserId?.role === "consultant"
-        ? creatingUserId.id
+      userOrRes.role === "consultant"
+        ? userOrRes.id
         : (assignedConsultant || undefined);
 
     // Create client record

@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import ConsultantNote from "@/models/ConsultantNote";
+import Client from "@/models/Client";
 import { requireAuth, apiError, type AuthenticatedUser } from "@/lib/api-helpers";
 
 export async function GET(
@@ -24,6 +25,13 @@ export async function GET(
 
     const { clientId } = await params;
     await connectDB();
+
+    if (user.role === "consultant") {
+      const clientDoc = await Client.findById(clientId).select("assignedConsultant").lean();
+      if (!clientDoc || String((clientDoc as Record<string, unknown>).assignedConsultant) !== user.id) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
 
     const notes = await ConsultantNote.find({ clientId })
       .select("fieldId note updatedAt")

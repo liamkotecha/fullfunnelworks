@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
     const userOrRes = await requireAuth();
     if (userOrRes instanceof NextResponse) return userOrRes;
     const user = userOrRes as AuthenticatedUser;
-    if (user.role !== "admin" && user.role !== "consultant") {
+    if (user.role !== "admin") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

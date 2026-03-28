@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import ConsultantNote from "@/models/ConsultantNote";
+import Client from "@/models/Client";
 import { requireAuth, apiError, type AuthenticatedUser } from "@/lib/api-helpers";
 import { z } from "zod";
 
@@ -27,6 +28,15 @@ export async function PUT(
     }
 
     const { clientId, fieldId } = await params;
+    await connectDB();
+
+    if (user.role === "consultant") {
+      const clientDoc = await Client.findById(clientId).select("assignedConsultant").lean();
+      if (!clientDoc || String((clientDoc as Record<string, unknown>).assignedConsultant) !== user.id) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
+
     const body = await req.json();
     const parsed = putSchema.safeParse(body);
     if (!parsed.success) {
@@ -35,8 +45,6 @@ export async function PUT(
         { status: 400 }
       );
     }
-
-    await connectDB();
 
     const doc = await ConsultantNote.findOneAndUpdate(
       { clientId, fieldId },
@@ -77,6 +85,13 @@ export async function DELETE(
 
     const { clientId, fieldId } = await params;
     await connectDB();
+
+    if (user.role === "consultant") {
+      const clientDoc = await Client.findById(clientId).select("assignedConsultant").lean();
+      if (!clientDoc || String((clientDoc as Record<string, unknown>).assignedConsultant) !== user.id) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
 
     await ConsultantNote.deleteOne({ clientId, fieldId });
 
