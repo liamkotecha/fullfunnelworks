@@ -18,7 +18,7 @@ import {
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { ConsultantDTO, SubscriptionDTO, PlanDTO, InvoiceDTO } from "@/types";
+import { ConsultantDTO, SubscriptionDTO, PlanDTO } from "@/types";
 import { formatPence } from "@/lib/format";
 import { useToast } from "@/components/notifications/ToastContext";
 import { computeConsultantHealth, isCardExpiringSoon, ConsultantHealthStatus } from "@/lib/consultantHealth";
@@ -70,7 +70,6 @@ export default function DashboardPage() {
   const [consultants, setConsultants] = useState<ConsultantDTO[]>([]);
   const [subscriptions, setSubscriptions] = useState<SubscriptionDTO[]>([]);
   const [plans, setPlans] = useState<PlanDTO[]>([]);
-  const [invoices, setInvoices] = useState<InvoiceDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [sendingEmail, setSendingEmail] = useState<Record<string, boolean>>({});
 
@@ -83,13 +82,11 @@ export default function DashboardPage() {
       fetch("/api/admin/consultants").then((r) => r.json()),
       fetch("/api/admin/subscriptions").then((r) => r.json()),
       fetch("/api/admin/plans").then((r) => r.json()),
-      fetch("/api/invoices").then((r) => r.json()),
     ])
-      .then(([c, s, p, inv]) => {
+      .then(([c, s, p]) => {
         setConsultants(c.data ?? []);
         setSubscriptions(s.data ?? []);
         setPlans(p.data ?? []);
-        setInvoices(inv.data ?? []);
       })
       .catch(() => toastError("Couldn't load dashboard", "Please refresh"))
       .finally(() => setLoading(false));
@@ -330,39 +327,46 @@ export default function DashboardPage() {
           )}
         </motion.div>
 
-        {/* Latest Transactions (1/3) */}
+        {/* Recent Subscriptions (1/3) */}
         <motion.div variants={fadeUp}>
           <div className="bg-white rounded-xl ring-1 ring-black/[0.06] overflow-hidden">
             <div className="flex items-center justify-between px-4 pt-4 pb-3">
-              <h2 className="text-sm font-semibold text-slate-900">Latest Transactions</h2>
+              <h2 className="text-sm font-semibold text-slate-900">Subscriptions</h2>
               <Link href="/admin/invoices" className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1 transition-colors">
                 All <ArrowRight className="h-3 w-3" />
               </Link>
             </div>
-            {invoices.length === 0 ? (
-              <div className="px-4 pb-5 text-center text-sm text-slate-400">No transactions yet</div>
+            {subscriptions.length === 0 ? (
+              <div className="px-4 pb-5 text-center text-sm text-slate-400">No subscriptions yet</div>
             ) : (
               <div className="divide-y divide-slate-50">
-                {invoices.slice(0, 5).map((inv) => (
-                  <div key={inv.id} className="flex items-start justify-between px-4 py-3 gap-2">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-900 truncate">{inv.title}</p>
-                      <p className="text-xs text-slate-400 truncate">{inv.clientName ?? "—"}</p>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <p className="text-sm font-semibold text-slate-900 tabular-nums">{inv.amountFormatted}</p>
-                      <span className={cn(
-                        "inline-block text-[10px] font-medium px-1.5 py-0.5 rounded-full mt-0.5",
-                        inv.status === "paid" ? "bg-emerald-50 text-emerald-700" :
-                        inv.status === "sent" ? "bg-sky-50 text-sky-700" :
-                        inv.status === "overdue" ? "bg-red-50 text-red-600" :
-                        "bg-slate-100 text-slate-500"
-                      )}>
-                        {inv.status}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                {[...subscriptions]
+                  .sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime())
+                  .slice(0, 6)
+                  .map((sub) => {
+                    const statusCfg = SUB_META[sub.status] ?? { dot: "bg-slate-300", pill: "bg-slate-100 text-slate-500", label: sub.status };
+                    return (
+                      <Link key={sub.id} href={`/admin/consultants/${sub.consultantId}`}>
+                        <div className="flex items-center justify-between px-4 py-3 hover:bg-slate-50/60 transition-colors gap-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-slate-900 truncate">{sub.consultantName}</p>
+                            <p className="text-xs text-slate-400 truncate">{sub.planName ?? "—"}</p>
+                          </div>
+                          <div className="text-right flex-shrink-0 space-y-0.5">
+                            {sub.monthlyPricePence > 0 && (
+                              <p className="text-sm font-semibold text-slate-900 tabular-nums">
+                                £{(sub.monthlyPricePence / 100).toFixed(0)}<span className="text-xs font-normal text-slate-400">/mo</span>
+                              </p>
+                            )}
+                            <span className={cn("inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full", statusCfg.pill)}>
+                              <span className={cn("w-1 h-1 rounded-full", statusCfg.dot)} />
+                              {statusCfg.label}
+                            </span>
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })}
               </div>
             )}
           </div>
