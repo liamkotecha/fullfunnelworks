@@ -93,7 +93,7 @@ export default function DashboardPage() {
   }, [toastError]);
 
   const mrrTotal = useMemo(
-    () => subscriptions.filter((s) => s.status === "active").reduce((sum, s) => sum + (s.mrrPence ?? 0), 0),
+    () => subscriptions.filter((s) => s.status === "active").reduce((sum, s) => sum + (s.mrrPence ?? s.monthlyPricePence ?? 0), 0),
     [subscriptions]
   );
   const activeSubCount = useMemo(() => subscriptions.filter((s) => s.status === "active").length, [subscriptions]);

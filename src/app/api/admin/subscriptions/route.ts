@@ -62,6 +62,7 @@ export async function GET() {
         planId: String(s.planId),
         planName: plan?.name ?? "Unknown",
         monthlyPricePence: plan?.monthlyPricePence ?? 0,
+        mrrPence: plan?.monthlyPricePence ?? 0,
         status: s.status,
         currentPeriodStart: s.currentPeriodStart?.toISOString() ?? null,
         currentPeriodEnd: s.currentPeriodEnd?.toISOString() ?? null,
