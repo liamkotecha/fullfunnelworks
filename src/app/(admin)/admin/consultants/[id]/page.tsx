@@ -97,7 +97,9 @@ interface ConsultantDetail {
   loginHistory: string[];
   profile: {
     maxActiveClients: number;
+    currentActiveClients: number;
     specialisms: string[];
+    adminNotes: Array<{ text: string; createdByName: string; createdAt: string }>;
     healthOverride: "healthy" | null;
     healthOverrideNote: string | null;
     healthOverrideAt: string | null;
@@ -143,6 +145,10 @@ export default function ConsultantDetailPage({
   const [healthOverrideNote, setHealthOverrideNote] = useState("");
   const [savingOverride, setSavingOverride] = useState(false);
   const [sendingEmail, setSendingEmail] = useState<Record<string, boolean>>({});
+  // Admin notes
+  const [adminNotes, setAdminNotes] = useState<Array<{ text: string; createdByName: string; createdAt: string }>>([]);
+  const [noteText, setNoteText] = useState("");
+  const [savingNote, setSavingNote] = useState(false);
 
   // Auth guard
   useEffect(() => {
@@ -161,6 +167,7 @@ export default function ConsultantDetailPage({
       ]);
       const [cData, pData] = await Promise.all([cRes.json(), pRes.json()]);
       setConsultant(cData.data ?? null);
+      setAdminNotes(cData.data?.profile?.adminNotes ?? []);
       setPlans(pData.data ?? []);
       setSelectedPlanId(cData.data?.profile?.plan?.id ?? "");
     } catch {
@@ -175,7 +182,7 @@ export default function ConsultantDetailPage({
   // Load tab data on demand
   useEffect(() => {
     if (!consultant) return;
-    if (tab === "clients" && clients.length === 0) {
+    if ((tab === "clients" || tab === "overview") && clients.length === 0) {
       setLoadingTab(true);
       fetch(`/api/clients?assignedConsultant=${params.id}`)
         .then((r) => r.json())
@@ -211,6 +218,39 @@ export default function ConsultantDetailPage({
       }
     }
   }, [tab, consultant, params.id, clients.length, projects.length, invoices.length, cardDetails]);
+
+  const handleAddNote = useCallback(async () => {
+    if (!noteText.trim()) return;
+    setSavingNote(true);
+    try {
+      const res = await fetch(`/api/admin/consultants/${params.id}/notes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: noteText.trim() }),
+      });
+      if (!res.ok) throw new Error();
+      const d = await res.json();
+      setAdminNotes(d.data ?? []);
+      setNoteText("");
+    } catch {
+      toastError("Failed to add note", "Please try again");
+    } finally {
+      setSavingNote(false);
+    }
+  }, [noteText, params.id, toastError]);
+
+  const handleDeleteNote = useCallback(async (index: number) => {
+    try {
+      const res = await fetch(`/api/admin/consultants/${params.id}/notes?index=${index}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error();
+      const d = await res.json();
+      setAdminNotes(d.data ?? []);
+    } catch {
+      toastError("Failed to delete note", "Please try again");
+    }
+  }, [params.id, toastError]);
 
   const handleAssignPlan = useCallback(async () => {
     if (!selectedPlanId) return;
@@ -254,11 +294,31 @@ export default function ConsultantDetailPage({
   }
 
   const subStatus = consultant.profile.subscription?.status ?? "none";
-  const currentActive = clients.filter(
-    (c) => c.status === "active" || c.status === "onboarding"
-  ).length;
+  const currentActive = consultant.profile.currentActiveClients ?? 0;
   const maxActive = consultant.profile.maxActiveClients ?? 5;
   const capacityPct = maxActive > 0 ? Math.round((currentActive / maxActive) * 100) : 0;
+
+  // Billing cycle inferred from period length
+  const billingCycle = (() => {
+    const s = consultant.profile.subscription;
+    if (!s?.currentPeriodStart || !s?.currentPeriodEnd) return null;
+    const days = (new Date(s.currentPeriodEnd).getTime() - new Date(s.currentPeriodStart).getTime()) / 86400000;
+    return days > 60 ? "Annual" : "Monthly rolling";
+  })();
+
+  // Days since last login
+  const loginDaysAgo = consultant.lastLoginAt
+    ? Math.floor((Date.now() - new Date(consultant.lastLoginAt).getTime()) / 86400000)
+    : null;
+
+  // Alert banner items
+  const alertItems: string[] = [];
+  if (subStatus === "past_due") alertItems.push("Subscription payment is overdue");
+  if (subStatus === "canceled") alertItems.push("Subscription has been canceled");
+  const _expM = consultant.profile.subscription?.cardExpMonth;
+  const _expY = consultant.profile.subscription?.cardExpYear;
+  if (_expM && _expY && isCardExpiringSoon(_expM, _expY, 30)) alertItems.push("Payment card expires soon");
+  if (loginDaysAgo !== null && loginDaysAgo > 30) alertItems.push(`No login for ${loginDaysAgo} days`);
 
   return (
     <div className="px-8 pt-8 pb-12">
@@ -331,175 +391,303 @@ export default function ConsultantDetailPage({
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+          className="space-y-5"
         >
-          {/* Plan card */}
-          <div className="bg-white rounded-xl ring-1 ring-black/[0.06] p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-sm text-slate-900">Current Plan</h2>
-              <button
-                onClick={() => setEditingPlan(!editingPlan)}
-                className="flex items-center gap-1 text-xs text-sky-600 hover:text-sky-700 transition-colors"
-              >
-                <Pencil className="w-3 h-3" />
-                Change plan
-              </button>
-            </div>
-
-            {editingPlan ? (
-              <div className="space-y-3">
-                <select
-                  value={selectedPlanId}
-                  onChange={(e) => setSelectedPlanId(e.target.value)}
-                  className="w-full text-sm px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400"
-                >
-                  <option value="">Select a plan…</option>
-                  {plans.filter((p) => p.isActive).map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name} — {formatPence(p.monthlyPricePence)}/mo
-                    </option>
+          {/* Alert banner */}
+          {alertItems.length > 0 && (
+            <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-xl">
+              <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-red-700">Needs attention</p>
+                <ul className="mt-1 space-y-0.5">
+                  {alertItems.map((item, i) => (
+                    <li key={i} className="text-sm text-red-600">{item}</li>
                   ))}
-                </select>
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleAssignPlan}
-                    disabled={savingPlan || !selectedPlanId}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-900 text-white hover:bg-slate-700 disabled:opacity-40 transition-colors"
-                  >
-                    {savingPlan && <Loader2 className="w-3 h-3 animate-spin" />}
-                    <Check className="w-3 h-3" />
-                    Assign
-                  </button>
-                  <button
-                    onClick={() => { setEditingPlan(false); setSelectedPlanId(consultant.profile.plan?.id ?? ""); }}
-                    className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:bg-slate-100 transition-colors"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
+                </ul>
               </div>
-            ) : consultant.profile.plan ? (
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <BadgeCheck className="w-4 h-4 text-sky-500" />
-                  <span className="font-semibold text-slate-900">{consultant.profile.plan.name}</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-xs text-slate-600">
-                  <div className="bg-slate-50 rounded-lg p-2.5">
-                    <p className="text-[10px] text-slate-400 uppercase font-semibold tracking-wider">Monthly</p>
-                    <p className="font-bold text-slate-900 mt-0.5">{formatPence(consultant.profile.plan.monthlyPricePence)}</p>
-                  </div>
-                  <div className="bg-slate-50 rounded-lg p-2.5">
-                    <p className="text-[10px] text-slate-400 uppercase font-semibold tracking-wider">Annual</p>
-                    <p className="font-bold text-slate-900 mt-0.5">{formatPence(consultant.profile.plan.annualPricePence)}</p>
-                  </div>
-                </div>
-                <div className="flex gap-3 text-xs text-slate-600">
-                  <span>Max {consultant.profile.plan.maxActiveClients} clients</span>
-                  <span>·</span>
-                  <span>{consultant.profile.plan.maxProjectsPerClient} project{consultant.profile.plan.maxProjectsPerClient !== 1 ? "s" : ""}/client</span>
-                  {consultant.profile.plan.trialDays > 0 && (
-                    <>
-                      <span>·</span>
-                      <span>{consultant.profile.plan.trialDays}d trial</span>
-                    </>
-                  )}
-                </div>
-                {consultant.profile.plan.allowedModules.length > 0 && (
-                  <div className="flex flex-wrap gap-1 pt-1">
-                    {consultant.profile.plan.allowedModules.map((m) => (
-                      <span
-                        key={m}
-                        className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-sky-50 text-sky-700 border border-sky-100"
-                      >
-                        {MODULE_META[m]?.label ?? m}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center py-6 text-center">
-                <AlertCircle className="w-8 h-8 text-slate-300 mb-2" />
-                <p className="text-sm text-slate-500">No plan assigned</p>
-                <p className="text-xs text-slate-400 mt-0.5">Click &quot;Change plan&quot; to assign one</p>
-              </div>
-            )}
+            </div>
+          )}
+
+          {/* Stats row */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-white rounded-xl ring-1 ring-black/[0.06] p-4">
+              <p className="text-[10px] text-slate-400 uppercase font-semibold tracking-wider mb-1">Active clients</p>
+              <p className="font-bold text-2xl text-slate-900 tabular-nums leading-none">
+                {currentActive}
+                <span className="text-base font-normal text-slate-400">/{maxActive}</span>
+              </p>
+              <div className="mt-2"><CapacityBar pct={capacityPct} /></div>
+            </div>
+            <div className="bg-white rounded-xl ring-1 ring-black/[0.06] p-4">
+              <p className="text-[10px] text-slate-400 uppercase font-semibold tracking-wider mb-1">Plan · MRR</p>
+              <p className="font-bold text-slate-900 leading-snug">{consultant.profile.plan?.name ?? "No plan"}</p>
+              {consultant.profile.plan ? (
+                <p className="text-sm text-slate-500 mt-0.5">{formatPence(consultant.profile.plan.monthlyPricePence)}/mo</p>
+              ) : (
+                <p className="text-xs text-slate-400 mt-0.5">Not assigned</p>
+              )}
+            </div>
+            <div className="bg-white rounded-xl ring-1 ring-black/[0.06] p-4">
+              <p className="text-[10px] text-slate-400 uppercase font-semibold tracking-wider mb-1">Last login</p>
+              {loginDaysAgo !== null ? (
+                <>
+                  <p className="font-bold text-slate-900 leading-snug">
+                    {loginDaysAgo === 0 ? "Today" : loginDaysAgo === 1 ? "Yesterday" : `${loginDaysAgo}d ago`}
+                  </p>
+                  <p className="text-xs text-slate-400 mt-0.5">{formatDate(consultant.lastLoginAt!)}</p>
+                </>
+              ) : (
+                <p className="font-bold text-slate-400">Never logged in</p>
+              )}
+            </div>
           </div>
 
-          {/* Subscription + stats */}
-          <div className="space-y-4">
-            {consultant.profile.subscription && (
-              <div className="bg-white rounded-xl ring-1 ring-black/[0.06] p-5">
-                <h2 className="font-semibold text-sm text-slate-900 mb-3">Subscription</h2>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Status</span>
-                    <SubBadge status={consultant.profile.subscription.status} />
-                  </div>
-                  {consultant.profile.subscription.trialEndsAt && (
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Trial ends</span>
-                      <span className="text-slate-900 font-medium">
-                        {formatDate(consultant.profile.subscription.trialEndsAt)}
-                      </span>
-                    </div>
-                  )}
-                  {consultant.profile.subscription.currentPeriodEnd && (
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Period ends</span>
-                      <span className="text-slate-900 font-medium">
-                        {formatDate(consultant.profile.subscription.currentPeriodEnd)}
-                      </span>
-                    </div>
-                  )}
-                  {consultant.profile.subscription.notes && (
-                    <div className="mt-2 p-2.5 bg-amber-50 rounded-lg text-xs text-amber-700">
-                      {consultant.profile.subscription.notes}
-                    </div>
-                  )}
-                </div>
+          {/* Plan + Billing | Admin Notes */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            {/* Plan & Billing combined */}
+            <div className="bg-white rounded-xl ring-1 ring-black/[0.06] p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-semibold text-sm text-slate-900">Plan & Billing</h2>
+                <button
+                  onClick={() => setEditingPlan(!editingPlan)}
+                  className="flex items-center gap-1 text-xs text-sky-600 hover:text-sky-700 transition-colors"
+                >
+                  <Pencil className="w-3 h-3" />
+                  Change plan
+                </button>
               </div>
-            )}
+              {editingPlan ? (
+                <div className="space-y-3">
+                  <select
+                    value={selectedPlanId}
+                    onChange={(e) => setSelectedPlanId(e.target.value)}
+                    className="w-full text-sm px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400"
+                  >
+                    <option value="">Select a plan…</option>
+                    {plans.filter((p) => p.isActive).map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name} — {formatPence(p.monthlyPricePence)}/mo
+                      </option>
+                    ))}
+                  </select>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleAssignPlan}
+                      disabled={savingPlan || !selectedPlanId}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-900 text-white hover:bg-slate-700 disabled:opacity-40 transition-colors"
+                    >
+                      {savingPlan && <Loader2 className="w-3 h-3 animate-spin" />}
+                      <Check className="w-3 h-3" />
+                      Assign
+                    </button>
+                    <button
+                      onClick={() => { setEditingPlan(false); setSelectedPlanId(consultant.profile.plan?.id ?? ""); }}
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:bg-slate-100 transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              ) : consultant.profile.plan ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <BadgeCheck className="w-4 h-4 text-sky-500" />
+                      <span className="font-semibold text-slate-900">{consultant.profile.plan.name}</span>
+                    </div>
+                    <SubBadge status={subStatus} />
+                  </div>
+                  <div className="border-t border-slate-100 pt-3 space-y-2.5 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Billing cycle</span>
+                      <span className="font-medium text-slate-900">{billingCycle ?? "—"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">{billingCycle === "Annual" ? "Annual price" : "Price"}</span>
+                      <span className="font-medium text-slate-900">
+                        {billingCycle === "Annual"
+                          ? formatPence(consultant.profile.plan.annualPricePence) + "/yr"
+                          : formatPence(consultant.profile.plan.monthlyPricePence) + "/mo"}
+                      </span>
+                    </div>
+                    {consultant.profile.subscription?.currentPeriodStart && consultant.profile.subscription.currentPeriodEnd && (
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Current period</span>
+                        <span className="font-medium text-slate-900 text-right">
+                          {formatDate(consultant.profile.subscription.currentPeriodStart)} –{" "}
+                          {formatDate(consultant.profile.subscription.currentPeriodEnd)}
+                        </span>
+                      </div>
+                    )}
+                    {consultant.profile.subscription?.cardExpMonth != null && (
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Card expires</span>
+                        <span className={cn("font-medium",
+                          isCardExpiringSoon(consultant.profile.subscription.cardExpMonth, consultant.profile.subscription.cardExpYear!, 0)
+                            ? "text-red-600"
+                            : isCardExpiringSoon(consultant.profile.subscription.cardExpMonth, consultant.profile.subscription.cardExpYear!, 30)
+                            ? "text-amber-600"
+                            : "text-slate-900"
+                        )}>
+                          {String(consultant.profile.subscription.cardExpMonth).padStart(2, "0")}/{consultant.profile.subscription.cardExpYear}
+                        </span>
+                      </div>
+                    )}
+                    {consultant.profile.subscription?.notes && (
+                      <div className="p-2.5 bg-amber-50 rounded-lg text-xs text-amber-700">
+                        {consultant.profile.subscription.notes}
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Client capacity</span>
+                      <span className="font-medium text-slate-900">
+                        {consultant.profile.plan.maxActiveClients} clients · {consultant.profile.plan.maxProjectsPerClient} proj/client
+                      </span>
+                    </div>
+                  </div>
+                  {consultant.profile.plan.allowedModules.length > 0 && (
+                    <div className="border-t border-slate-100 pt-3">
+                      <p className="text-[10px] text-slate-400 uppercase font-semibold tracking-wider mb-2">Modules</p>
+                      <div className="flex flex-wrap gap-1">
+                        {consultant.profile.plan.allowedModules.map((m) => (
+                          <span key={m} className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-sky-50 text-sky-700 border border-sky-100">
+                            {MODULE_META[m]?.label ?? m}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center py-6 text-center">
+                  <AlertCircle className="w-8 h-8 text-slate-300 mb-2" />
+                  <p className="text-sm text-slate-500">No plan assigned</p>
+                  <p className="text-xs text-slate-400 mt-0.5">Click &quot;Change plan&quot; to assign one</p>
+                </div>
+              )}
+            </div>
 
-            <div className="bg-white rounded-xl ring-1 ring-black/[0.06] p-5 space-y-3">
-              <h2 className="font-semibold text-sm text-slate-900">Stats</h2>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-500">Active clients</span>
-                  <span className="font-semibold text-slate-900">
-                    {currentActive}
-                    <span className="text-slate-400 font-normal">/{maxActive}</span>
-                  </span>
-                </div>
-                <CapacityBar pct={capacityPct} />
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Joined</span>
-                  <span className="text-slate-900">{formatDate(consultant.createdAt)}</span>
-                </div>
-                {consultant.profile.plan && (
-                  <>
-                    <div className="pt-1 border-t border-slate-100">
-                      <p className="text-[10px] text-slate-400 uppercase font-semibold tracking-wider mb-2">Plan usage</p>
+            {/* Admin Notes */}
+            <div className="bg-white rounded-xl ring-1 ring-black/[0.06] p-5 flex flex-col">
+              <div className="mb-3">
+                <h2 className="font-semibold text-sm text-slate-900">Admin Notes</h2>
+                <p className="text-xs text-slate-400 mt-0.5">Internal only — not visible to consultants</p>
+              </div>
+              <div className="flex-1 space-y-2 min-h-[80px]">
+                {adminNotes.length === 0 ? (
+                  <p className="text-sm text-slate-400 italic">No notes yet. Add one below.</p>
+                ) : (
+                  adminNotes.map((note, i) => (
+                    <div key={i} className="group relative p-3 bg-slate-50 rounded-lg">
+                      <p className="text-sm text-slate-700 pr-6">{note.text}</p>
+                      <p className="text-[10px] text-slate-400 mt-1">
+                        {note.createdByName} · {formatDate(note.createdAt)}
+                      </p>
+                      <button
+                        onClick={() => handleDeleteNote(i)}
+                        className="absolute top-2.5 right-2.5 opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-all"
+                        title="Delete note"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Active clients</span>
-                      <span className="font-semibold text-slate-900">
-                        {currentActive}
-                        <span className="text-slate-400 font-normal">/{consultant.profile.plan.maxActiveClients}</span>
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Projects / client</span>
-                      <span className="font-semibold text-slate-900">
-                        {projects.length}
-                        <span className="text-slate-400 font-normal"> used · max {consultant.profile.plan.maxProjectsPerClient}/client</span>
-                      </span>
-                    </div>
-                  </>
+                  ))
                 )}
               </div>
+              <div className="border-t border-slate-100 pt-4 mt-4">
+                <textarea
+                  value={noteText}
+                  onChange={(e) => setNoteText(e.target.value)}
+                  placeholder="Add an internal note…"
+                  rows={2}
+                  className="w-full text-sm px-3 py-2 border border-slate-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-slate-300 placeholder:text-slate-400"
+                />
+                <button
+                  disabled={savingNote || !noteText.trim()}
+                  onClick={handleAddNote}
+                  className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-900 text-white hover:bg-slate-700 disabled:opacity-40 transition-colors"
+                >
+                  {savingNote ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                  Save note
+                </button>
+              </div>
             </div>
+          </div>
+
+          {/* Clients quick view */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-semibold text-sm text-slate-900">
+                Clients
+                {clients.length > 0 && (
+                  <span className="ml-1.5 text-xs font-normal text-slate-400">{clients.length} total</span>
+                )}
+              </h2>
+              <button
+                onClick={() => setTab("clients")}
+                className="inline-flex items-center gap-1 text-xs text-sky-600 hover:text-sky-700 font-medium"
+              >
+                View all <ChevronRight className="w-3 h-3" />
+              </button>
+            </div>
+            {loadingTab && clients.length === 0 ? (
+              <div className="space-y-2">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="h-12 rounded-xl bg-slate-200/40 animate-pulse" />
+                ))}
+              </div>
+            ) : clients.length === 0 ? (
+              <div className="bg-white rounded-xl ring-1 ring-black/[0.06] p-5 text-center">
+                <Users className="w-6 h-6 text-slate-300 mx-auto mb-2" />
+                <p className="text-sm text-slate-400">No clients yet</p>
+              </div>
+            ) : (
+              <div className="bg-white rounded-xl ring-1 ring-black/[0.06] overflow-hidden">
+                <table className="w-full text-sm">
+                  <tbody className="divide-y divide-slate-50">
+                    {clients.slice(0, 5).map((c) => {
+                      const meta = CLIENT_STATUS_META?.[c.status];
+                      return (
+                        <tr key={c._id} className="hover:bg-slate-50/50">
+                          <td className="pl-5 pr-4 py-3">
+                            <p className="font-medium text-slate-900">{c.businessName}</p>
+                            <p className="text-xs text-slate-400">{c.email}</p>
+                          </td>
+                          <td className="px-4 py-3">
+                            {meta ? (
+                              <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium", meta.pill)}>
+                                <span className={cn("w-1.5 h-1.5 rounded-full", meta.dot)} />
+                                {meta.label}
+                              </span>
+                            ) : (
+                              <span className="text-slate-400 text-xs">{c.status}</span>
+                            )}
+                          </td>
+                          <td className="pr-5 py-3 text-right">
+                            <Link
+                              href={`/admin/clients/${c._id}`}
+                              className="inline-flex items-center gap-1 text-xs text-sky-600 hover:text-sky-700 font-medium"
+                            >
+                              View <ChevronRight className="w-3 h-3" />
+                            </Link>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+                {clients.length > 5 && (
+                  <div className="px-5 py-3 border-t border-slate-100">
+                    <button
+                      onClick={() => setTab("clients")}
+                      className="text-xs text-sky-600 hover:text-sky-700 font-medium"
+                    >
+                      +{clients.length - 5} more clients
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </motion.div>
       )}

@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import User from "@/models/User";
+import Client from "@/models/Client";
 import Subscription from "@/models/Subscription";
 import Plan from "@/models/Plan";
 import { requireAuth, apiError } from "@/lib/api-helpers";
@@ -29,10 +30,15 @@ export async function GET(
     const doc = user as Record<string, unknown>;
     const profile = (doc.consultantProfile as Record<string, unknown>) ?? {};
 
-    const sub = (await Subscription.findOne({
-      consultantId: new Types.ObjectId(id),
-    }).lean()) as unknown as Record<string, unknown> | null;
-    const plan = sub ? (await Plan.findById(sub.planId as string).lean()) as unknown as Record<string, unknown> | null : null;
+    const consultantObjectId = new Types.ObjectId(id);
+    const [sub, activeClientCount] = await Promise.all([
+      Subscription.findOne({ consultantId: consultantObjectId }).lean() as Promise<Record<string, unknown> | null>,
+      Client.countDocuments({
+        assignedConsultant: consultantObjectId,
+        status: { $in: ["active", "onboarding"] },
+      }),
+    ]);
+    const plan = sub ? (await Plan.findById((sub as Record<string, unknown>).planId as string).lean()) as unknown as Record<string, unknown> | null : null;
 
     const maxActive = plan
       ? (plan.maxActiveClients as number)
@@ -51,7 +57,13 @@ export async function GET(
           .reverse(),
         profile: {
           maxActiveClients: maxActive,
+          currentActiveClients: activeClientCount,
           specialisms: (profile.specialisms as string[]) ?? [],
+          adminNotes: ((profile.adminNotes as Array<Record<string, unknown>>) ?? []).map((n) => ({
+            text: n.text as string,
+            createdByName: n.createdByName as string,
+            createdAt: (n.createdAt instanceof Date ? n.createdAt : new Date(n.createdAt as string)).toISOString(),
+          })),
           healthOverride: ((profile.healthOverride as "healthy" | null | undefined) ?? null),
           healthOverrideNote: (profile.healthOverrideNote as string | undefined) ?? null,
           healthOverrideAt: (profile.healthOverrideAt as Date | undefined)?.toISOString() ?? null,

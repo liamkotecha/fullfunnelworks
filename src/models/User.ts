@@ -26,6 +26,12 @@ export interface IConsultantProfile {
   healthOverride?: "healthy" | null;
   healthOverrideNote?: string;
   healthOverrideAt?: Date;
+  // Internal admin notes (support, context, team communication)
+  adminNotes?: Array<{
+    text: string;
+    createdByName: string;
+    createdAt: Date;
+  }>;
 }
 
 export interface IUser extends Document {
@@ -90,6 +96,11 @@ const UserSchema = new Schema<IUser>(
       healthOverride: { type: String, enum: ["healthy", null], default: null },
       healthOverrideNote: { type: String },
       healthOverrideAt: { type: Date },
+      adminNotes: [{
+        text: { type: String, required: true },
+        createdByName: { type: String, required: true },
+        createdAt: { type: Date, default: Date.now },
+      }],
     },
     lastLoginAt: { type: Date },
     loginHistory: [{ type: Date }],
