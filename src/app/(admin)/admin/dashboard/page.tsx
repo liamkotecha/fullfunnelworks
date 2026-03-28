@@ -36,7 +36,7 @@ const HEALTH_META: Record<ConsultantHealthStatus, { dot: string; pill: string; l
 const SUB_META: Record<string, { dot: string; pill: string; label: string }> = {
   active:   { dot: "bg-emerald-500", pill: "bg-emerald-50 text-emerald-700", label: "Active" },
   trialing: { dot: "bg-blue-500",    pill: "bg-blue-50 text-blue-700",       label: "Trialing" },
-  past_due: { dot: "bg-red-500",     pill: "bg-red-50 text-red-600",         label: "Past due" },
+  past_due: { dot: "bg-red-500",     pill: "bg-red-50 text-red-600",         label: "Payment failed" },
   canceled: { dot: "bg-slate-400",   pill: "bg-slate-100 text-slate-500",    label: "Canceled" },
   paused:   { dot: "bg-amber-400",   pill: "bg-amber-50 text-amber-700",     label: "Paused" },
 };
