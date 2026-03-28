@@ -409,7 +409,6 @@ export interface ConsultantProfileDTO {
   currentActiveClients: number;
   capacityPercent: number;
   specialisms: string[];
-  totalLeadsAssigned: number;
   allowedModules?: ModuleId[];
   activeClientCount?: number;
   subscriptionStatus?: string | null;

@@ -52,7 +52,6 @@ export async function GET(
         profile: {
           maxActiveClients: maxActive,
           specialisms: (profile.specialisms as string[]) ?? [],
-          totalLeadsAssigned: (profile.totalLeadsAssigned as number) ?? 0,
           healthOverride: ((profile.healthOverride as "healthy" | null | undefined) ?? null),
           healthOverrideNote: (profile.healthOverrideNote as string | undefined) ?? null,
           healthOverrideAt: (profile.healthOverrideAt as Date | undefined)?.toISOString() ?? null,

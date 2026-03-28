@@ -203,14 +203,16 @@ async function seed() {
       cardExpMonth: 9,
       cardExpYear: 2027,
     },
-    // Mark — Starter · trialing (ends in 3 days — churn risk)
+    // Mark — Starter · past_due (was on trial, converted but payment failed)
     {
       consultantId: c2._id,
       planId: starterPlan._id,
-      status: "trialing",
-      trialEndsAt: daysFromNow(3),
+      status: "past_due",
+      currentPeriodStart: daysAgo(32),
+      currentPeriodEnd: daysAgo(2),
       cardExpMonth: 4,
       cardExpYear: 2026,
+      notes: "Payment failed — follow up required",
     },
     // Sarah — Growth · past_due (churn risk: expired card)
     {
@@ -223,14 +225,17 @@ async function seed() {
       cardExpYear: 2025,
       notes: "Card expired — outreach needed",
     },
-    // James — Growth · trialing (ends in 2 days — churn risk)
+    // James — Growth · canceled (was active, canceled subscription)
     {
       consultantId: c4._id,
       planId: growthPlan._id,
-      status: "trialing",
-      trialEndsAt: daysFromNow(2),
+      status: "canceled",
+      currentPeriodStart: daysAgo(90),
+      currentPeriodEnd: daysAgo(30),
+      canceledAt: daysAgo(35),
       cardExpMonth: 7,
       cardExpYear: 2026,
+      notes: "Canceled — cited cost concerns",
     },
     // Emma — Starter · active
     {
@@ -253,7 +258,7 @@ async function seed() {
       cardExpYear: 2029,
     },
   ]);
-  console.log("💳 Subscriptions seeded: 6 (active×3, trialing×2, past_due×1)\n");
+  console.log("💳 Subscriptions seeded: 6 (active×3, past_due×2, canceled×1)\n");
 
   // ── 5. CLEAN UP SINGLE-TENANT COLLECTIONS ────────────────
   const { default: Client } = await import("../src/models/Client");

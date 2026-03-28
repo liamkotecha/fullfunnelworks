@@ -98,7 +98,6 @@ interface ConsultantDetail {
   profile: {
     maxActiveClients: number;
     specialisms: string[];
-    totalLeadsAssigned: number;
     healthOverride: "healthy" | null;
     healthOverrideNote: string | null;
     healthOverrideAt: string | null;
@@ -474,10 +473,6 @@ export default function ConsultantDetailPage({
                   </span>
                 </div>
                 <CapacityBar pct={capacityPct} />
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Total leads assigned</span>
-                  <span className="font-semibold text-slate-900">{consultant.profile.totalLeadsAssigned}</span>
-                </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Joined</span>
                   <span className="text-slate-900">{formatDate(consultant.createdAt)}</span>

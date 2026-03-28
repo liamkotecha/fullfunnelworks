@@ -71,7 +71,6 @@ export async function GET() {
           currentActiveClients: currentActive,
           capacityPercent,
           specialisms: (profile.specialisms as string[]) ?? [],
-          totalLeadsAssigned: (profile.totalLeadsAssigned as number) ?? 0,
           subscriptionStatus: (sub?.status as string) ?? null,
           planName: plan ? (plan.name as string) : null,
           plan: plan
