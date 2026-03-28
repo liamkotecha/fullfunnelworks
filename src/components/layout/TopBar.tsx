@@ -18,9 +18,10 @@ interface TopBarProps {
   onMenuToggle?: () => void;
   menuOpen?: boolean;
   role?: "admin" | "consultant" | "portal";
+  topOffset?: number;
 }
 
-export function TopBar({ userName, userEmail, onMenuToggle, menuOpen, role }: TopBarProps) {
+export function TopBar({ userName, userEmail, onMenuToggle, menuOpen, role, topOffset }: TopBarProps) {
   const [userOpen, setUserOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [appsOpen, setAppsOpen] = useState(false);
@@ -54,7 +55,7 @@ export function TopBar({ userName, userEmail, onMenuToggle, menuOpen, role }: To
     : "??";
 
   return (
-    <nav className="bg-[#141414] border-b border-white/10 px-4 py-2.5 fixed left-0 md:left-64 right-0 top-0 z-50 h-16">
+    <nav className="bg-[#141414] border-b border-white/10 px-4 py-2.5 fixed left-0 md:left-64 right-0 z-50 h-16" style={{ top: topOffset ?? 0 }}>
       <div className="flex items-center h-full">
         {/* Left: hamburger + mobile logo */}
         <div className="flex items-center flex-shrink-0">

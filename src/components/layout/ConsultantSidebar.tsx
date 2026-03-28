@@ -38,9 +38,10 @@ interface ConsultantSidebarProps {
   open?: boolean;
   onClose?: () => void;
   userName?: string;
+  topOffset?: number;
 }
 
-export function ConsultantSidebar({ open = true, onClose, userName }: ConsultantSidebarProps) {
+export function ConsultantSidebar({ open = true, onClose, userName, topOffset = 0 }: ConsultantSidebarProps) {
   const pathname = usePathname();
   const [counts, setCounts] = useState<Counts>({ clients: 0, blockedProjects: 0, activeProspects: 0 });
   const [billing, setBilling] = useState<BillingInfo | null>(null);
@@ -188,12 +189,12 @@ export function ConsultantSidebar({ open = true, onClose, userName }: Consultant
       {/* Sidebar panel */}
       <aside
         className={cn(
-          "fixed top-0 left-0 z-40 w-64 h-screen flex flex-col",
+          "fixed left-0 z-40 w-64 flex flex-col",
           "transition-transform duration-300 ease-in-out",
           "md:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full"
         )}
-        style={{ backgroundColor: "#141414" }}
+        style={{ backgroundColor: "#141414", top: topOffset, height: `calc(100vh - ${topOffset}px)` }}
         aria-label="Consultant navigation"
       >
         {/* Logo */}
