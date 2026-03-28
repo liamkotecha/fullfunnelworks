@@ -538,11 +538,14 @@ export default function ConsultantDetailPage({
                         {consultant.profile.subscription.notes}
                       </div>
                     )}
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Client capacity</span>
-                      <span className="font-medium text-slate-900">
-                        {consultant.profile.plan.maxActiveClients} clients · {consultant.profile.plan.maxProjectsPerClient} proj/client
-                      </span>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-500">Plan allowance</span>
+                      <div className="text-right">
+                        <span className="font-medium text-slate-900">
+                          {currentActive}/{consultant.profile.plan.maxActiveClients} clients
+                        </span>
+                        <span className="text-slate-400"> · up to {consultant.profile.plan.maxProjectsPerClient} proj/client</span>
+                      </div>
                     </div>
                   </div>
                   {consultant.profile.plan.allowedModules.length > 0 && (

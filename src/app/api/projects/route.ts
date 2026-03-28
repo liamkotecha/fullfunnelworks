@@ -59,6 +59,14 @@ export async function GET(req: NextRequest) {
       filter.clientId = clientId ? clientId : { $in: clientIds };
     }
 
+    // Admins can filter by a specific consultant's clients (used on consultant detail page)
+    const assignedConsultantParam = searchParams.get("assignedConsultant");
+    if (userOrRes.role === "admin" && assignedConsultantParam && !clientId) {
+      const clientIds = await Client.find({ assignedConsultant: assignedConsultantParam })
+        .distinct("_id");
+      filter.clientId = { $in: clientIds };
+    }
+
     const projects = await Project.find(filter)
       .populate("clientId", "businessName")
       .populate("assignedTo", "name")
