@@ -9,6 +9,7 @@ import { blockRaisedEmail } from "@/lib/email-templates/block-raised";
 import User from "@/models/User";
 import { formatDateTime } from "@/lib/utils";
 import { requireAuth } from "@/lib/api-helpers";
+import { cookies } from "next/headers";
 
 const createSchema = z.object({
   clientId: z.string(),
@@ -53,18 +54,23 @@ export async function GET(req: NextRequest) {
     if (clientId) filter.clientId = clientId;
 
     // Consultants can only see projects belonging to their clients
+    // Also handles admin "View as consultant" impersonation
     if (userOrRes.role === "consultant") {
       const clientIds = await Client.find({ assignedConsultant: userOrRes.id })
         .distinct("_id");
       filter.clientId = clientId ? clientId : { $in: clientIds };
-    }
-
-    // Admins can filter by a specific consultant's clients (used on consultant detail page)
-    const assignedConsultantParam = searchParams.get("assignedConsultant");
-    if (userOrRes.role === "admin" && assignedConsultantParam && !clientId) {
-      const clientIds = await Client.find({ assignedConsultant: assignedConsultantParam })
-        .distinct("_id");
-      filter.clientId = { $in: clientIds };
+    } else if (userOrRes.role === "admin") {
+      const cookieStore = await cookies();
+      const viewAsId = cookieStore.get("view-as-consultant-id")?.value;
+      const assignedConsultantParam = searchParams.get("assignedConsultant");
+      if (viewAsId && !clientId) {
+        // Admin is impersonating a consultant — scope to their clients only
+        const clientIds = await Client.find({ assignedConsultant: viewAsId }).distinct("_id");
+        filter.clientId = { $in: clientIds };
+      } else if (assignedConsultantParam && !clientId) {
+        const clientIds = await Client.find({ assignedConsultant: assignedConsultantParam }).distinct("_id");
+        filter.clientId = { $in: clientIds };
+      }
     }
 
     const projects = await Project.find(filter)
