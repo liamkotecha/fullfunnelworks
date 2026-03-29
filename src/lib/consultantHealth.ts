@@ -75,11 +75,6 @@ export function computeConsultantHealth(
     return { status: "healthy", reasons: ["Manually marked healthy by admin"] };
   }
 
-  // 1. NEW — always wins if account < 14 days; don't penalise onboarding lag
-  if (accountAgeDays < 14) {
-    return { status: "new", reasons: ["Account created less than 14 days ago"] };
-  }
-
   const sub = subscription;
   const subStatus = sub?.status ?? null;
   const trialDaysLeft = daysUntil(sub?.trialEnd ?? null);
@@ -93,14 +88,26 @@ export function computeConsultantHealth(
     !cardAlreadyExpired &&
     isCardExpiringSoon(sub?.cardExpMonth ?? null, sub?.cardExpYear ?? null, 30);
 
-  // 2. CHURN_RISK
+  // Hard churn signals — checked BEFORE the "new account" guard because
+  // a canceled subscription or expired card is serious regardless of age.
+  const hardChurnReasons: string[] = [];
+  if (subStatus === "canceled")
+    hardChurnReasons.push("Subscription canceled");
+  if (subStatus === "past_due")
+    hardChurnReasons.push("Subscription payment failed");
+  if (cardAlreadyExpired)
+    hardChurnReasons.push("Payment card has expired");
+  if (hardChurnReasons.length > 0) return { status: "churn_risk", reasons: hardChurnReasons };
+
+  // 1. NEW — always wins if account < 14 days; don't penalise onboarding lag
+  if (accountAgeDays < 14) {
+    return { status: "new", reasons: ["Account created less than 14 days ago"] };
+  }
+
+  // 2. CHURN_RISK (age-gated signals)
   const churnReasons: string[] = [];
   if (loginAge !== null && loginAge >= 22)
     churnReasons.push(`No login in ${loginAge} day${loginAge === 1 ? "" : "s"}`);
-  if (subStatus === "past_due")
-    churnReasons.push("Subscription payment failed");
-  if (cardAlreadyExpired)
-    churnReasons.push("Payment card has expired");
   if (
     subStatus === "active" &&
     activeClientCount === 0 &&
