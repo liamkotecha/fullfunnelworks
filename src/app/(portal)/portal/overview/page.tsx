@@ -230,13 +230,15 @@ export default function PortalOverviewPage() {
     members: Array<{ userId: string; name: string; role: string; isComplete: boolean }>;
     allSubmitted: boolean;
   } | null>(null);
+  const [teamLoading, setTeamLoading] = useState(false);
 
   useEffect(() => {
     if (!clientId) return;
+    setTeamLoading(true);
     fetch(`/api/team/${clientId}`)
       .then((r) => r.json())
-      .then((d) => setTeamData(d))
-      .catch(() => {});
+      .then((d) => { setTeamData(d); setTeamLoading(false); })
+      .catch(() => { setTeamLoading(false); });
   }, [clientId]);
 
   // Nudge banner dismiss state (sessionStorage)
@@ -392,7 +394,27 @@ export default function PortalOverviewPage() {
       {/* All sections grid */}
       <motion.div variants={fadeUp}>
         {/* Team progress card — only when team mode is active */}
-        {teamData?.teamMode && teamData.members.length > 0 && (
+        {teamLoading && clientId ? (
+          <div className="mb-6">
+            <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm animate-pulse">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-4 h-4 bg-slate-200 rounded" />
+                <div className="h-3.5 w-40 bg-slate-200 rounded" />
+              </div>
+              <div className="space-y-2.5">
+                {[1, 2].map((i) => (
+                  <div key={i} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-slate-200" />
+                      <div className="h-3 w-28 bg-slate-200 rounded" />
+                    </div>
+                    <div className="h-3 w-16 bg-slate-200 rounded" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : teamData?.teamMode && teamData.members.length > 0 ? (
           <div className="mb-6">
             <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
               <div className="flex items-center gap-2 mb-4">
@@ -430,7 +452,7 @@ export default function PortalOverviewPage() {
               </div>
             </div>
           </div>
-        )}
+        ) : null}
 
         <p className="type-overline mb-3">Your Framework</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">

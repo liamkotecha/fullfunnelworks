@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { AlertTriangle, FolderOpen, Filter, Eye, Pencil, LayoutGrid, List, User } from "lucide-react";
+import { AlertTriangle, FolderOpen, Filter, Eye, Pencil, LayoutGrid, List, User, Search } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge, BadgeVariant } from "@/components/ui/Badge";
 import { Select } from "@/components/ui/Input";
@@ -142,6 +142,7 @@ function ProjectsContent() {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "all" | "stale">(initialStatus ?? "all");
   const [view, setView] = useState<"table" | "board">("table");
+  const [search, setSearch] = useState("");
 
   const load = useCallback(() => {
     setLoading(true);
@@ -158,9 +159,12 @@ function ProjectsContent() {
 
   const blocked = projects.filter((p) => p.status === "blocked");
 
-  const filtered = statusFilter === "stale"
+  const filtered = (statusFilter === "stale"
     ? projects.filter((p) => p.staleness === "stalled" || p.staleness === "at_risk")
-    : projects;
+    : projects
+  ).filter((p) =>
+    !search || p.title?.toLowerCase().includes(search.toLowerCase()) || p.clientName?.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -231,34 +235,46 @@ function ProjectsContent() {
         )}
       </AnimatePresence>
 
-      {/* Filters — shown in table view only */}
-      {view === "table" && (
-        <div className="flex items-center gap-3">
-          <Filter className="w-4 h-4 text-slate-400" />
-          <div className="w-40">
-            <Select
-              options={[
-                { value: "all", label: "All statuses" },
-                { value: "not_started", label: "Not started" },
-                { value: "in_progress", label: "In progress" },
-                { value: "blocked", label: "Blocked" },
-                { value: "completed", label: "Completed" },
-                { value: "stale", label: "Stale (stalled + at risk)" },
-              ]}
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as ProjectStatus | "all" | "stale")}
-            />
-          </div>
-          {statusFilter !== "all" && (
-            <button
-              onClick={() => setStatusFilter("all")}
-              className="text-xs text-slate-400 hover:text-slate-900 transition-colors"
-            >
-              Clear filter
-            </button>
-          )}
+      {/* Filters */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative flex-1 min-w-[180px] max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Search projects…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-8 pr-3 py-1.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-200"
+          />
         </div>
-      )}
+        {view === "table" && (
+          <>
+            <Filter className="w-4 h-4 text-slate-400" />
+            <div className="w-40">
+              <Select
+                options={[
+                  { value: "all", label: "All statuses" },
+                  { value: "not_started", label: "Not started" },
+                  { value: "in_progress", label: "In progress" },
+                  { value: "blocked", label: "Blocked" },
+                  { value: "completed", label: "Completed" },
+                  { value: "stale", label: "Stale (stalled + at risk)" },
+                ]}
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as ProjectStatus | "all" | "stale")}
+              />
+            </div>
+            {statusFilter !== "all" && (
+              <button
+                onClick={() => setStatusFilter("all")}
+                className="text-xs text-slate-400 hover:text-slate-900 transition-colors"
+              >
+                Clear filter
+              </button>
+            )}
+          </>
+        )}
+      </div>
 
       {/* Table / Board */}
       {loading ? (

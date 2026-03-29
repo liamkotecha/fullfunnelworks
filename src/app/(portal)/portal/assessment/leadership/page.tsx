@@ -159,15 +159,19 @@ export default function LeadershipPage() {
                       key={i}
                       onClick={() => goTo(i)}
                       aria-label={`Go to question ${i + 1}`}
-                      className={cn(
-                        "w-2 h-2 rounded-full transition-all duration-200",
-                        isCurrent
-                          ? "bg-slate-400"
-                          : answered
-                          ? "bg-brand-green"
-                          : "bg-slate-200"
-                      )}
-                    />
+                      className="p-2.5 -m-2.5 rounded-full flex items-center justify-center"
+                    >
+                      <span
+                        className={cn(
+                          "block w-2 h-2 rounded-full transition-all duration-200",
+                          isCurrent
+                            ? "bg-slate-400"
+                            : answered
+                            ? "bg-brand-green"
+                            : "bg-slate-200"
+                        )}
+                      />
+                    </button>
                   );
                 })}
                 <span className="type-meta pl-1.5">

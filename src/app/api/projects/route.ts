@@ -48,10 +48,12 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status");
     const clientId = searchParams.get("clientId");
+    const q = searchParams.get("q");
 
     const filter: Record<string, unknown> = {};
     if (status) filter.status = status;
     if (clientId) filter.clientId = clientId;
+    if (q) filter.title = { $regex: q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: "i" };
 
     // Consultants can only see projects belonging to their clients
     // Also handles admin "View as consultant" impersonation

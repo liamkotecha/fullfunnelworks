@@ -86,6 +86,7 @@ export default function BillingPage() {
   const [invoices, setInvoices] = useState<InvoiceRow[]>([]);
   const [invoicesLoading, setInvoicesLoading] = useState(false);
   const [invoicesLoaded, setInvoicesLoaded] = useState(false);
+  const [invoicesError, setInvoicesError] = useState(false);
 
   // Filters
   const [subSearch, setSubSearch] = useState("");
@@ -120,6 +121,7 @@ export default function BillingPage() {
       })
       .catch(() => {
         toastError("Failed to load invoices");
+        setInvoicesError(true);
         setInvoicesLoading(false);
       });
   }, [invoicesLoaded]);
@@ -232,6 +234,7 @@ export default function BillingPage() {
             </div>
           ) : (
             <div className="rounded-xl bg-white ring-1 ring-black/[0.06] overflow-hidden">
+              <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-slate-100">
                 <thead>
                   <tr className="bg-slate-50/70">
@@ -275,6 +278,7 @@ export default function BillingPage() {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           )}
         </motion.div>
@@ -312,10 +316,23 @@ export default function BillingPage() {
             <div className="flex items-center justify-center h-40 text-slate-400 text-sm">Loading…</div>
           ) : filteredInvoices.length === 0 ? (
             <div className="rounded-xl border border-dashed border-slate-200 p-12 text-center">
-              <p className="text-sm text-slate-400">No invoices found.</p>
+              {invoicesError ? (
+                <>
+                  <p className="text-sm font-medium text-red-500 mb-1">Failed to load invoices</p>
+                  <button
+                    onClick={() => { setInvoicesError(false); setInvoicesLoaded(false); loadInvoices(); }}
+                    className="text-xs text-slate-400 hover:text-slate-600 underline"
+                  >
+                    Try again
+                  </button>
+                </>
+              ) : (
+                <p className="text-sm text-slate-400">No invoices found.</p>
+              )}
             </div>
           ) : (
             <div className="rounded-xl bg-white ring-1 ring-black/[0.06] overflow-hidden">
+              <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-slate-100">
                 <thead>
                   <tr className="bg-slate-50/70">
@@ -362,6 +379,7 @@ export default function BillingPage() {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           )}
         </motion.div>

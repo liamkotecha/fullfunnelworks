@@ -1,21 +1,32 @@
 /**
  * GlobalSearch — Cmd+K / Ctrl+K search modal for the admin panel.
- * Searches clients server-side; only id/businessName/status are returned.
- * Nothing is fetched on mount — data is only requested when the user types.
+ * Searches clients and projects server-side. Nothing is fetched on mount —
+ * data is only requested when the user types.
  */
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, X, ArrowRight, Loader2 } from "lucide-react";
+import { Search, X, ArrowRight, Loader2, Briefcase } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface SearchResult {
+interface ClientResult {
+  type: "client";
   id: string;
   businessName: string;
   status: string;
 }
+
+interface ProjectResult {
+  type: "project";
+  id: string;
+  title: string;
+  status: string;
+  businessName?: string;
+}
+
+type SearchResult = ClientResult | ProjectResult;
 
 const STATUS_DOT: Record<string, string> = {
   active:     "bg-amber-400",
@@ -27,13 +38,17 @@ const STATUS_DOT: Record<string, string> = {
 
 export function GlobalSearch() {
   const router = useRouter();
-  const [open, setOpen]       = useState(false);
-  const [query, setQuery]     = useState("");
-  const [results, setResults] = useState<SearchResult[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [active, setActive]   = useState(0);
+  const [open, setOpen]             = useState(false);
+  const [query, setQuery]           = useState("");
+  const [clientResults, setClientResults] = useState<ClientResult[]>([]);
+  const [projectResults, setProjectResults] = useState<ProjectResult[]>([]);
+  const [loading, setLoading]       = useState(false);
+  const [active, setActive]         = useState(0);
   const inputRef  = useRef<HTMLInputElement>(null);
   const debouncer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Flat combined list for arrow-key nav
+  const results: SearchResult[] = [...clientResults, ...projectResults];
 
   /* Keyboard shortcut to open */
   useEffect(() => {
@@ -52,7 +67,8 @@ export function GlobalSearch() {
   useEffect(() => {
     if (open) {
       setQuery("");
-      setResults([]);
+      setClientResults([]);
+      setProjectResults([]);
       setActive(0);
       setTimeout(() => inputRef.current?.focus(), 50);
     }
@@ -62,23 +78,41 @@ export function GlobalSearch() {
   useEffect(() => {
     if (debouncer.current) clearTimeout(debouncer.current);
     const q = query.trim();
-    if (!q) { setResults([]); setLoading(false); return; }
+    if (!q) { setClientResults([]); setProjectResults([]); setLoading(false); return; }
 
     setLoading(true);
     debouncer.current = setTimeout(() => {
-      fetch(`/api/clients/search?q=${encodeURIComponent(q)}`)
-        .then((r) => r.json())
-        .then((d) => { setResults(d.data ?? []); setActive(0); })
-        .catch(() => setResults([]))
-        .finally(() => setLoading(false));
+      const enc = encodeURIComponent(q);
+      Promise.all([
+        fetch(`/api/clients/search?q=${enc}`).then((r) => r.json()).catch(() => ({ data: [] })),
+        fetch(`/api/projects?q=${enc}&limit=5`).then((r) => r.json()).catch(() => ({ data: [] })),
+      ]).then(([clientData, projectData]) => {
+        setClientResults(
+          (clientData.data ?? []).map((c: { id: string; businessName: string; status: string }) => ({ type: "client" as const, ...c }))
+        );
+        setProjectResults(
+          (projectData.data ?? []).slice(0, 5).map((p: { id: string; title: string; status: string; clientId?: { businessName?: string } }) => ({
+            type: "project" as const,
+            id: p.id,
+            title: p.title,
+            status: p.status,
+            businessName: p.clientId?.businessName,
+          }))
+        );
+        setActive(0);
+      }).finally(() => setLoading(false));
     }, 200);
 
     return () => { if (debouncer.current) clearTimeout(debouncer.current); };
   }, [query]);
 
-  const navigate = useCallback((client: SearchResult) => {
+  const navigate = useCallback((result: SearchResult) => {
     setOpen(false);
-    router.push(`/admin/clients/${client.id}`);
+    if (result.type === "client") {
+      router.push(`/admin/clients/${result.id}`);
+    } else {
+      router.push(`/admin/projects/${result.id}`);
+    }
   }, [router]);
 
   /* Keep refs in sync for stable arrow-key listener */
@@ -110,7 +144,7 @@ export function GlobalSearch() {
       >
         <Search className="w-4 h-4 text-slate-400 flex-shrink-0" />
         <span className="flex-1 text-left text-sm text-slate-400">
-          Search clients…
+          Search clients &amp; projects…
         </span>
         <kbd className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-white/10 border border-white/[0.15] text-[11px] font-mono text-slate-400 leading-none">
           <span className="text-[13px] leading-none">⌘</span>K
@@ -155,7 +189,7 @@ export function GlobalSearch() {
                     ref={inputRef}
                     value={query}
                     onChange={(e) => { setQuery(e.target.value); setActive(0); }}
-                    placeholder="Search clients…"
+                    placeholder="Search clients &amp; projects…"
                     className="flex-1 bg-transparent text-[15px] text-white placeholder:text-slate-500 outline-none"
                   />
                   {query ? (
@@ -173,7 +207,7 @@ export function GlobalSearch() {
                 <div className="max-h-80 overflow-y-auto py-2">
                   {!query.trim() ? (
                     <p className="text-sm text-slate-500 text-center py-10">
-                      Type to search clients…
+                      Type to search clients &amp; projects…
                     </p>
                   ) : results.length === 0 && !loading ? (
                     <div className="text-center py-10">
@@ -181,39 +215,76 @@ export function GlobalSearch() {
                     </div>
                   ) : (
                     <div>
-                      {results.length > 0 && (
-                        <p className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
-                          Clients
-                        </p>
+                      {clientResults.length > 0 && (
+                        <>
+                          <p className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+                            Clients
+                          </p>
+                          {clientResults.map((client, i) => (
+                            <button
+                              key={client.id}
+                              onClick={() => navigate(client)}
+                              onMouseEnter={() => setActive(i)}
+                              className={cn(
+                                "w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors",
+                                i === active ? "bg-white/[0.08]" : "hover:bg-white/[0.04]"
+                              )}
+                            >
+                              <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0 ring-1 ring-white/[0.08]">
+                                <span className="text-xs font-semibold text-white">
+                                  {client.businessName.charAt(0).toUpperCase()}
+                                </span>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-white truncate">{client.businessName}</p>
+                                <div className="flex items-center gap-1.5 mt-0.5">
+                                  <div className={cn("w-1.5 h-1.5 rounded-full", STATUS_DOT[client.status] ?? "bg-slate-600")} />
+                                  <span className="text-xs text-slate-500 capitalize">{client.status}</span>
+                                </div>
+                              </div>
+                              <ArrowRight className={cn(
+                                "w-3.5 h-3.5 flex-shrink-0 transition-colors",
+                                i === active ? "text-slate-300" : "text-slate-600"
+                              )} />
+                            </button>
+                          ))}
+                        </>
                       )}
-                      {results.map((client, i) => (
-                        <button
-                          key={client.id}
-                          onClick={() => navigate(client)}
-                          onMouseEnter={() => setActive(i)}
-                          className={cn(
-                            "w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors",
-                            i === active ? "bg-white/[0.08]" : "hover:bg-white/[0.04]"
-                          )}
-                        >
-                          <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0 ring-1 ring-white/[0.08]">
-                            <span className="text-xs font-semibold text-white">
-                              {client.businessName.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-white truncate">{client.businessName}</p>
-                            <div className="flex items-center gap-1.5 mt-0.5">
-                              <div className={cn("w-1.5 h-1.5 rounded-full", STATUS_DOT[client.status] ?? "bg-slate-600")} />
-                              <span className="text-xs text-slate-500 capitalize">{client.status}</span>
-                            </div>
-                          </div>
-                          <ArrowRight className={cn(
-                            "w-3.5 h-3.5 flex-shrink-0 transition-colors",
-                            i === active ? "text-slate-300" : "text-slate-600"
-                          )} />
-                        </button>
-                      ))}
+                      {projectResults.length > 0 && (
+                        <>
+                          <p className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-500 mt-1">
+                            Projects
+                          </p>
+                          {projectResults.map((project) => {
+                            const flatIdx = clientResults.length + projectResults.indexOf(project);
+                            return (
+                              <button
+                                key={project.id}
+                                onClick={() => navigate(project)}
+                                onMouseEnter={() => setActive(flatIdx)}
+                                className={cn(
+                                  "w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors",
+                                  flatIdx === active ? "bg-white/[0.08]" : "hover:bg-white/[0.04]"
+                                )}
+                              >
+                                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0 ring-1 ring-white/[0.08]">
+                                  <Briefcase className="w-3.5 h-3.5 text-slate-400" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-white truncate">{project.title}</p>
+                                  {project.businessName && (
+                                    <p className="text-xs text-slate-500 truncate">{project.businessName}</p>
+                                  )}
+                                </div>
+                                <ArrowRight className={cn(
+                                  "w-3.5 h-3.5 flex-shrink-0 transition-colors",
+                                  flatIdx === active ? "text-slate-300" : "text-slate-600"
+                                )} />
+                              </button>
+                            );
+                          })}
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
