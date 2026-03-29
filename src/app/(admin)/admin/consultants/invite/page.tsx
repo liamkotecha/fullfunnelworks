@@ -52,7 +52,7 @@ export default function InviteConsultantPage() {
           <h2 className="text-xl font-semibold text-slate-900">Invitation sent</h2>
           <p className="text-sm text-slate-500">
             <span className="font-medium text-slate-800">{success.name}</span> ({success.email}) has been
-            invited. They'll receive a welcome email with a sign-in link.
+            invited. They&apos;ll receive a welcome email with a sign-in link.
           </p>
           <div className="flex gap-3 justify-center pt-2">
             <button
