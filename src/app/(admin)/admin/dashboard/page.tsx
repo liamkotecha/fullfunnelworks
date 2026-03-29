@@ -225,7 +225,7 @@ export default function DashboardPage() {
               icon: Receipt,
               iconBg: pastDueCount > 0 ? "bg-red-500/10" : "bg-slate-100",
               iconColor: pastDueCount > 0 ? "text-red-500" : "text-slate-400",
-              label: "Past due",
+              label: "Payment failed",
               value: String(pastDueCount),
               sub: pastDueCount > 0 ? "Needs attention" : "All subscriptions healthy",
             },
