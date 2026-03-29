@@ -29,14 +29,24 @@ interface LeanIntakeResponse {
   [key: string]: unknown;
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const userOrRes = await requireAuth();
     if (userOrRes instanceof NextResponse) return userOrRes;
 
     await connectDB();
 
-    const clients = await Client.find(await consultantFilter(userOrRes))
+    const { searchParams } = new URL(req.url);
+    const assignedConsultantParam = searchParams.get("assignedConsultant");
+
+    let filter = await consultantFilter(userOrRes);
+
+    // Admin viewing a specific consultant's clients (consultant detail page)
+    if (userOrRes.role === "admin" && assignedConsultantParam && !Object.keys(filter).length) {
+      filter = { assignedConsultant: assignedConsultantParam };
+    }
+
+    const clients = await Client.find(filter)
       .populate("userId", "email name")
       .populate("assignedConsultant", "name email")
       .sort({ createdAt: -1 })
