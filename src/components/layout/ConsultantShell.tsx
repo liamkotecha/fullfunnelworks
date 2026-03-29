@@ -53,8 +53,9 @@ export function ConsultantShell({ children, userName, userEmail }: ConsultantShe
   const handleExit = useCallback(async () => {
     setExiting(true);
     await fetch("/api/admin/view-as-consultant", { method: "DELETE" });
-    router.push(viewAs?.id ? `/admin/consultants/${viewAs.id}` : "/admin/consultants");
-  }, [viewAs, router]);
+    // Hard navigation required — crossing (consultant) → (admin) layout boundary
+    window.location.href = viewAs?.id ? `/admin/consultants/${viewAs.id}` : "/admin/consultants";
+  }, [viewAs]);
 
   const handleSaveNote = useCallback(async () => {
     if (!noteText.trim() || !viewAs) return;
