@@ -12,6 +12,7 @@ interface PortalClientData {
   status: string;
   plan: string;
   activeModules: string[];
+  isViewAs: boolean;
 }
 
 interface UsePortalClientReturn {
@@ -19,6 +20,7 @@ interface UsePortalClientReturn {
   businessName: string | null;
   plan: string;
   activeModules: string[];
+  isViewAs: boolean;
   loading: boolean;
   error: string | null;
   refetch: () => void;
@@ -56,6 +58,7 @@ export function usePortalClient(): UsePortalClientReturn {
     businessName: data?.businessName ?? null,
     plan: data?.plan ?? "standard",
     activeModules: data?.activeModules ?? [],
+    isViewAs: data?.isViewAs ?? false,
     loading,
     error,
     refetch: fetch_,

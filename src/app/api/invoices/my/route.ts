@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 /**
  * GET /api/invoices/my — list invoices for the logged-in client
  */
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { requireAuth, apiError } from "@/lib/api-helpers";
 import Invoice from "@/models/Invoice";
@@ -35,11 +35,16 @@ function toDTO(doc: Record<string, unknown>) {
   };
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const userOrRes = await requireAuth();
     if (userOrRes instanceof NextResponse) return userOrRes;
     const user = userOrRes;
+
+    // Block access in view-as mode — consultants should not see client payment data
+    if (req.cookies.get("view-as-client-id")?.value) {
+      return NextResponse.json({ invoices: [] });
+    }
 
     await connectDB();
 

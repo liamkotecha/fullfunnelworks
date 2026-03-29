@@ -139,7 +139,7 @@ function PortalShellInner({
   const toggleNotes = useCallback(() => setNotesOpen((v) => !v), []);
   const closeNotes = useCallback(() => setNotesOpen(false), []);
   const { staleness, project, readOnly } = useProjectContext();
-  const { clientId } = usePortalClient();
+  const { clientId, isViewAs } = usePortalClient();
 
   // Terminated — full-page end state, no sidebar
   if (staleness === "terminated") {
@@ -159,6 +159,7 @@ function PortalShellInner({
       <FrameworkSidebar
         open={sidebarOpen}
         onClose={closeSidebar}
+        isViewAs={isViewAs}
       />
       <StaleBanner />
       <SessionExpiryWarning />

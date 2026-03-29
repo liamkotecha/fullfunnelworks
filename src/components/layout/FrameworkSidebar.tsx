@@ -475,9 +475,11 @@ const SectionGroup = memo(function SectionGroup({
 function FrameworkSidebarInner({
   open = true,
   onClose,
+  isViewAs = false,
 }: {
   open?: boolean;
   onClose?: () => void;
+  isViewAs?: boolean;
 }) {
   const pathname = usePathname();
   const { progress: progressData, refreshAll } = useProgress();
@@ -659,7 +661,7 @@ function FrameworkSidebarInner({
           style={{ height: "calc(100vh - 4rem)" }}
         >
           <nav className="space-y-1 flex-1">
-            {FRAMEWORK_NAV.map((section) => {
+            {FRAMEWORK_NAV.filter((section) => !(isViewAs && section.id === "invoices")).map((section) => {
               const isActive =
                 section.href
                   ? pathname === section.href || pathname.startsWith(section.href + "/")
@@ -700,6 +702,7 @@ function FrameworkSidebarInner({
 interface FrameworkSidebarProps {
   open?: boolean;
   onClose?: () => void;
+  isViewAs?: boolean;
 }
 
 export function FrameworkSidebar(props: FrameworkSidebarProps) {
