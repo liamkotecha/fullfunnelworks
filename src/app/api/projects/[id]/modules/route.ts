@@ -7,6 +7,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { connectDB } from "@/lib/db";
 import Project from "@/models/Project";
+import Client from "@/models/Client";
+import User from "@/models/User";
 import { requireAuth, apiError, type AuthenticatedUser } from "@/lib/api-helpers";
 
 const VALID_MODULES = [
@@ -84,7 +86,38 @@ export async function PUT(
 
     await connectDB();
 
-    const project = await Project.findByIdAndUpdate(
+    // For consultants: verify ownership and enforce plan-allowed modules
+    if (user.role === "consultant") {
+      // 1. Ownership: project must belong to one of their clients
+      const project = await Project.findById(id).select("clientId").lean() as { clientId: unknown } | null;
+      if (!project) {
+        return NextResponse.json({ error: "Project not found" }, { status: 404 });
+      }
+      const clientDoc = await Client.findById(project.clientId)
+        .select("assignedConsultant")
+        .lean() as { assignedConsultant: unknown } | null;
+      if (!clientDoc || String(clientDoc.assignedConsultant) !== user.id) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+
+      // 2. Plan enforcement: consultants may only enable modules in their allowedModules
+      const userDoc = await User.findById(user.id)
+        .select("consultantProfile.allowedModules")
+        .lean() as { consultantProfile?: { allowedModules?: string[] } } | null;
+      const allowedModules: string[] = userDoc?.consultantProfile?.allowedModules ?? [];
+
+      const disallowed = parsed.data.activeModules.filter(
+        (m) => m !== "assessment" && !allowedModules.includes(m)
+      );
+      if (disallowed.length > 0) {
+        return NextResponse.json(
+          { error: `Modules not in your plan: ${disallowed.join(", ")}` },
+          { status: 403 }
+        );
+      }
+    }
+
+    const updated = await Project.findByIdAndUpdate(
       id,
       { $set: { activeModules: parsed.data.activeModules } },
       { new: true }
@@ -92,13 +125,13 @@ export async function PUT(
       .select("activeModules")
       .lean() as { _id: unknown; activeModules?: string[] } | null;
 
-    if (!project) {
+    if (!updated) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
     return NextResponse.json({
-      id: String(project._id),
-      activeModules: project.activeModules,
+      id: String(updated._id),
+      activeModules: updated.activeModules,
     });
   } catch (err) {
     return apiError("PROJECT_MODULES_PUT", err);
