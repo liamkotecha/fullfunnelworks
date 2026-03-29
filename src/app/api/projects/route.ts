@@ -181,6 +181,16 @@ export async function PATCH(req: NextRequest) {
     const data = updateSchema.parse(updateData);
     await connectDB();
 
+    // Consultants may only update projects for their own clients
+    if (userOrRes.role === "consultant") {
+      const project = await Project.findById(id).select("clientId").lean() as Record<string, unknown> | null;
+      if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
+      const clientDoc = await Client.findById(project.clientId).select("assignedConsultant").lean() as Record<string, unknown> | null;
+      if (!clientDoc || String(clientDoc.assignedConsultant) !== userOrRes.id) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
+
     const project = await Project.findByIdAndUpdate(id, data, { new: true }).lean();
     if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
 

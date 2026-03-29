@@ -63,6 +63,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Client not found" }, { status: 404 });
     }
 
+    // Consultants can only invite to their own clients
+    if (admin.role === "consultant" && String(client.assignedConsultant) !== admin.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     // 3. Add to Client.teamUserIds (idempotent)
     const alreadyLinked = client.teamUserIds?.some(
       (uid: { toString: () => string }) => uid.toString() === teamUser!._id.toString()

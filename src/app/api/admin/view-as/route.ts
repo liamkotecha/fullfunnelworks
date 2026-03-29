@@ -36,10 +36,15 @@ export async function POST(req: NextRequest) {
 
     // Verify the client exists
     const client = await Client.findById(parsed.data.clientId)
-      .select("_id businessName")
-      .lean();
+      .select("_id businessName assignedConsultant")
+      .lean() as Record<string, unknown> | null;
     if (!client) {
       return NextResponse.json({ error: "Client not found" }, { status: 404 });
+    }
+
+    // Consultants may only view-as their own clients
+    if (user.role === "consultant" && String(client.assignedConsultant) !== user.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const res = NextResponse.json({ ok: true, clientId: parsed.data.clientId });

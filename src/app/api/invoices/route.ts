@@ -71,6 +71,9 @@ export async function GET(req: NextRequest) {
       filter.clientId = clientId ? clientId : { $in: clientIds };
     }
 
+    // When a consultant creates an invoice, verify they own the target client
+    // (enforcement is in POST below)
+
     const invoices = await Invoice.find(filter)
       .sort({ createdAt: -1 })
       .populate("clientId", "businessName")
@@ -128,6 +131,14 @@ export async function POST(req: NextRequest) {
     }
 
     await connectDB();
+
+    // Consultants may only create invoices for their own clients
+    if (user.role === "consultant") {
+      const clientDoc = await Client.findById(data.clientId).select("assignedConsultant").lean();
+      if (!clientDoc || String((clientDoc as Record<string, unknown>).assignedConsultant) !== user.id) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
 
     // Create invoice document
     const invoice = await Invoice.create({

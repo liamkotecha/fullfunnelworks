@@ -80,6 +80,14 @@ export async function GET(
       return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
     }
 
+    // Consultants may only access invoices for their own clients
+    if (user.role === "consultant") {
+      const clientDoc = await Client.findById(invoice.clientId).select("assignedConsultant").lean();
+      if (!clientDoc || String((clientDoc as Record<string, unknown>).assignedConsultant) !== user.id) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
+
     const client = await Client.findById(invoice.clientId).lean<Record<string, unknown>>();
 
     return NextResponse.json({ data: toDTO(invoice, client) });
@@ -120,6 +128,14 @@ export async function PATCH(
     const invoice = await Invoice.findById(params.id);
     if (!invoice) {
       return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
+    }
+
+    // Consultants may only modify invoices for their own clients
+    if (user.role === "consultant") {
+      const clientDoc = await Client.findById(invoice.clientId).select("assignedConsultant").lean();
+      if (!clientDoc || String((clientDoc as Record<string, unknown>).assignedConsultant) !== user.id) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
     }
 
     const { action } = parsed.data;

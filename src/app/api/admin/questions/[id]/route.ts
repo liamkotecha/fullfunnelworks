@@ -29,6 +29,9 @@ export async function GET(
   try {
     const userOrRes = await requireAuth();
     if (userOrRes instanceof NextResponse) return userOrRes;
+    if (userOrRes.role !== "admin") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     const { id } = await params;
     await connectDB();
@@ -50,6 +53,9 @@ export async function PATCH(
   try {
     const userOrRes = await requireAuth();
     if (userOrRes instanceof NextResponse) return userOrRes;
+    if (userOrRes.role !== "admin") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     const { id } = await params;
     const body = await req.json();
@@ -82,6 +88,9 @@ export async function DELETE(
   try {
     const userOrRes = await requireAuth();
     if (userOrRes instanceof NextResponse) return userOrRes;
+    if (userOrRes.role !== "admin") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     const { id } = await params;
     await connectDB();

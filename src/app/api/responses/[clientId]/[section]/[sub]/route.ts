@@ -11,7 +11,7 @@ import { connectDB } from "@/lib/db";
 import IntakeResponse from "@/models/IntakeResponse";
 import { getSubSectionFieldIds, isFieldAnswered, calculateProgress } from "@/lib/framework-nav";
 import { z } from "zod";
-import { requireAuth } from "@/lib/api-helpers";
+import { requireAuth, assertClientAccess } from "@/lib/api-helpers";
 
 const bodySchema = z.object({
   fieldId: z.string().min(1),
@@ -48,6 +48,9 @@ export async function PATCH(
     const user = userOrRes;
 
     await connectDB();
+
+    const guard = await assertClientAccess(user, clientId);
+    if (guard) return guard;
 
     // Check if team mode + assessment section → save to individualResponses
     const now = new Date();

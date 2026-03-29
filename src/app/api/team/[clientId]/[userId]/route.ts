@@ -25,6 +25,13 @@ export async function DELETE(
 
     await connectDB();
 
+    if (admin.role === "consultant") {
+      const clientDoc = await Client.findById(clientId).select("assignedConsultant").lean();
+      if (!clientDoc || String((clientDoc as Record<string, unknown>).assignedConsultant) !== admin.id) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
+
     // Remove from Client.teamUserIds
     await Client.updateOne(
       { _id: clientId },

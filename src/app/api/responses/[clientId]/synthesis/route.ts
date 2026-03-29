@@ -6,6 +6,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { requireAuth } from "@/lib/api-helpers";
+import Client from "@/models/Client";
 import IntakeResponse from "@/models/IntakeResponse";
 import FrameworkQuestion from "@/models/FrameworkQuestion";
 import { calculateDivergence } from "@/lib/divergence";
@@ -27,6 +28,13 @@ export async function GET(
     const { clientId } = await params;
 
     await connectDB();
+
+    if (user.role === "consultant") {
+      const clientDoc = await Client.findById(clientId).select("assignedConsultant").lean();
+      if (!clientDoc || String((clientDoc as Record<string, unknown>).assignedConsultant) !== user.id) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
 
     const doc = await IntakeResponse.findOne({ clientId }).lean() as Record<string, unknown> | null;
     if (!doc) {
@@ -114,6 +122,16 @@ export async function POST(
     }
 
     const { clientId } = await params;
+
+    await connectDB();
+
+    if (user.role === "consultant") {
+      const clientDoc = await Client.findById(clientId).select("assignedConsultant").lean();
+      if (!clientDoc || String((clientDoc as Record<string, unknown>).assignedConsultant) !== user.id) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
+
     const body = await req.json();
     const parsed = synthesisBodySchema.safeParse(body);
     if (!parsed.success) {

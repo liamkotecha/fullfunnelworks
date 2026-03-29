@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
  */
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
-import { requireAuth } from "@/lib/api-helpers";
+import { requireAuth, assertClientAccess } from "@/lib/api-helpers";
 import IntakeResponse from "@/models/IntakeResponse";
 
 export async function GET(
@@ -18,6 +18,9 @@ export async function GET(
     const { clientId } = await params;
 
     await connectDB();
+
+    const guard = await assertClientAccess(userOrRes, clientId);
+    if (guard) return guard;
 
     const doc = await IntakeResponse.findOne({ clientId }).lean() as Record<string, unknown> | null;
 
