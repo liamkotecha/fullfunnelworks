@@ -32,7 +32,7 @@ export function TopBar({ userName, userEmail, onMenuToggle, menuOpen, role, topO
   const pathname = usePathname();
   const router = useRouter();
   const isAdmin = pathname.startsWith("/admin");
-  const homeHref = isAdmin ? "/admin/dashboard" : "/portal/overview";
+  const homeHref = role === "admin" ? "/admin/dashboard" : role === "consultant" ? "/consultant/dashboard" : "/portal/overview";
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -91,7 +91,7 @@ export function TopBar({ userName, userEmail, onMenuToggle, menuOpen, role, topO
 
         {/* Centre: search */}
         <div className="flex-1 flex justify-center">
-          {isAdmin ? <GlobalSearch /> : <PortalSearch />}
+          {(role === "admin" || role === "consultant") ? <GlobalSearch /> : <PortalSearch />}
         </div>
 
         {/* Right: mobile search + notifications + apps + dev toggle + user */}

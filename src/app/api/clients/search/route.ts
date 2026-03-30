@@ -21,13 +21,24 @@ export async function GET(req: NextRequest) {
     const userOrRes = await requireAuth();
     if (userOrRes instanceof NextResponse) return userOrRes;
 
+    // Only admins and consultants should hit this endpoint
+    if (userOrRes.role !== "admin" && userOrRes.role !== "consultant") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const q = req.nextUrl.searchParams.get("q")?.trim() ?? "";
     if (!q) return NextResponse.json({ data: [] });
 
     await connectDB();
 
+    const nameFilter = { businessName: { $regex: escapeRegex(q), $options: "i" } };
+    // Consultants can only search within their own assigned clients
+    const scopeFilter = userOrRes.role === "consultant"
+      ? { assignedConsultant: userOrRes.id }
+      : {};
+
     const clients = await Client.find(
-      { businessName: { $regex: escapeRegex(q), $options: "i" } },
+      { ...nameFilter, ...scopeFilter },
       { _id: 1, businessName: 1, status: 1 }   // projection — nothing else
     )
       .limit(8)

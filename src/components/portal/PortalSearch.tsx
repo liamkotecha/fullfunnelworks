@@ -23,6 +23,7 @@ import {
   ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { usePortalClient } from "@/hooks/usePortalClient";
 
 interface SearchItem {
   label: string;
@@ -30,38 +31,40 @@ interface SearchItem {
   section: string;
   keywords: string[];
   icon: React.ReactNode;
+  /** null = always visible; string = only show when this moduleId is active */
+  moduleId: string | null;
 }
 
 const SEARCH_ITEMS: SearchItem[] = [
-  // Overview
-  { label: "Overview", href: "/portal/overview", section: "Navigation", keywords: ["home", "dashboard", "summary", "progress"], icon: <LayoutDashboard className="w-3.5 h-3.5" /> },
+  // Overview — always visible
+  { label: "Overview", href: "/portal/overview", section: "Navigation", keywords: ["home", "dashboard", "summary", "progress"], icon: <LayoutDashboard className="w-3.5 h-3.5" />, moduleId: null },
+  // Intake — always visible
+  { label: "Intake Form", href: "/portal/intake", section: "Navigation", keywords: ["intake", "onboarding", "form", "questionnaire"], icon: <FileText className="w-3.5 h-3.5" />, moduleId: null },
   // Assessment
-  { label: "Assessment Checklist", href: "/portal/assessment/checklist", section: "Assessment", keywords: ["checklist", "audit", "review"], icon: <ClipboardList className="w-3.5 h-3.5" /> },
-  { label: "SWOT Analysis", href: "/portal/assessment/swot", section: "Assessment", keywords: ["strengths", "weaknesses", "opportunities", "threats", "swot"], icon: <Search className="w-3.5 h-3.5" /> },
-  { label: "MOST Analysis", href: "/portal/assessment/most", section: "Assessment", keywords: ["mission", "objectives", "strategy", "tactics", "most"], icon: <Search className="w-3.5 h-3.5" /> },
-  { label: "Gap Analysis", href: "/portal/assessment/gap", section: "Assessment", keywords: ["gap", "current", "desired", "analysis"], icon: <Search className="w-3.5 h-3.5" /> },
-  { label: "Leadership Questions", href: "/portal/assessment/leadership", section: "Assessment", keywords: ["leadership", "questions", "management"], icon: <Search className="w-3.5 h-3.5" /> },
+  { label: "Assessment Checklist", href: "/portal/assessment/checklist", section: "Assessment", keywords: ["checklist", "audit", "review"], icon: <ClipboardList className="w-3.5 h-3.5" />, moduleId: "assessment" },
+  { label: "SWOT Analysis", href: "/portal/assessment/swot", section: "Assessment", keywords: ["strengths", "weaknesses", "opportunities", "threats", "swot"], icon: <Search className="w-3.5 h-3.5" />, moduleId: "assessment" },
+  { label: "MOST Analysis", href: "/portal/assessment/most", section: "Assessment", keywords: ["mission", "objectives", "strategy", "tactics", "most"], icon: <Search className="w-3.5 h-3.5" />, moduleId: "assessment" },
+  { label: "Gap Analysis", href: "/portal/assessment/gap", section: "Assessment", keywords: ["gap", "current", "desired", "analysis"], icon: <Search className="w-3.5 h-3.5" />, moduleId: "assessment" },
+  { label: "Leadership Questions", href: "/portal/assessment/leadership", section: "Assessment", keywords: ["leadership", "questions", "management"], icon: <Search className="w-3.5 h-3.5" />, moduleId: "assessment" },
   // People
-  { label: "Team Members", href: "/portal/people/team", section: "People", keywords: ["team", "members", "staff", "employees"], icon: <Users className="w-3.5 h-3.5" /> },
-  { label: "Company Structure", href: "/portal/people/structure", section: "People", keywords: ["structure", "org", "organisation", "hierarchy"], icon: <Users className="w-3.5 h-3.5" /> },
-  { label: "Challenges & Strategy", href: "/portal/people/challenges", section: "People", keywords: ["challenges", "strategy", "people", "hr"], icon: <Users className="w-3.5 h-3.5" /> },
-  { label: "Team Capability Tracker", href: "/portal/people/methodology", section: "People", keywords: ["capability", "tracker", "skills", "training"], icon: <Users className="w-3.5 h-3.5" /> },
+  { label: "Team Members", href: "/portal/people/team", section: "People", keywords: ["team", "members", "staff", "employees"], icon: <Users className="w-3.5 h-3.5" />, moduleId: "people" },
+  { label: "Company Structure", href: "/portal/people/structure", section: "People", keywords: ["structure", "org", "organisation", "hierarchy"], icon: <Users className="w-3.5 h-3.5" />, moduleId: "people" },
+  { label: "Challenges & Strategy", href: "/portal/people/challenges", section: "People", keywords: ["challenges", "strategy", "people", "hr"], icon: <Users className="w-3.5 h-3.5" />, moduleId: "people" },
+  { label: "Team Capability Tracker", href: "/portal/people/methodology", section: "People", keywords: ["capability", "tracker", "skills", "training"], icon: <Users className="w-3.5 h-3.5" />, moduleId: "people" },
   // Product
-  { label: "Product Challenges", href: "/portal/product/challenges", section: "Product", keywords: ["product", "challenges", "issues"], icon: <Target className="w-3.5 h-3.5" /> },
-  { label: "Outcome Mapper", href: "/portal/product/outcomes", section: "Product", keywords: ["outcome", "mapper", "results", "product"], icon: <Target className="w-3.5 h-3.5" /> },
+  { label: "Product Challenges", href: "/portal/product/challenges", section: "Product", keywords: ["product", "challenges", "issues"], icon: <Target className="w-3.5 h-3.5" />, moduleId: "product" },
+  { label: "Outcome Mapper", href: "/portal/product/outcomes", section: "Product", keywords: ["outcome", "mapper", "results", "product"], icon: <Target className="w-3.5 h-3.5" />, moduleId: "product" },
   // Process
-  { label: "Process Checklist", href: "/portal/process/checklist", section: "Process", keywords: ["process", "checklist", "workflow"], icon: <Settings className="w-3.5 h-3.5" /> },
-  { label: "Sales Methodology", href: "/portal/process/methodology", section: "Process", keywords: ["sales", "methodology", "approach"], icon: <Settings className="w-3.5 h-3.5" /> },
-  { label: "Sales Process Builder", href: "/portal/process/builder", section: "Process", keywords: ["builder", "sales", "process", "pipeline"], icon: <Settings className="w-3.5 h-3.5" /> },
+  { label: "Process Checklist", href: "/portal/process/checklist", section: "Process", keywords: ["process", "checklist", "workflow"], icon: <Settings className="w-3.5 h-3.5" />, moduleId: "process" },
+  { label: "Sales Methodology", href: "/portal/process/methodology", section: "Process", keywords: ["sales", "methodology", "approach"], icon: <Settings className="w-3.5 h-3.5" />, moduleId: "process" },
+  { label: "Sales Process Builder", href: "/portal/process/builder", section: "Process", keywords: ["builder", "sales", "process", "pipeline"], icon: <Settings className="w-3.5 h-3.5" />, moduleId: "process" },
   // Roadmap
-  { label: "Roadmap", href: "/portal/roadmap", section: "Navigation", keywords: ["roadmap", "plan", "timeline", "milestones"], icon: <MapPin className="w-3.5 h-3.5" /> },
+  { label: "Roadmap", href: "/portal/roadmap", section: "Roadmap", keywords: ["roadmap", "plan", "timeline", "milestones"], icon: <MapPin className="w-3.5 h-3.5" />, moduleId: "roadmap" },
   // KPIs
-  { label: "KPIs", href: "/portal/kpis", section: "Navigation", keywords: ["kpis", "metrics", "performance", "indicators"], icon: <BarChart3 className="w-3.5 h-3.5" /> },
+  { label: "KPIs", href: "/portal/kpis", section: "KPIs", keywords: ["kpis", "metrics", "performance", "indicators"], icon: <BarChart3 className="w-3.5 h-3.5" />, moduleId: "kpis" },
   // GTM
-  { label: "Market Intelligence", href: "/portal/gtm/market", section: "GTM Playbook", keywords: ["market", "intelligence", "research", "gtm"], icon: <Map className="w-3.5 h-3.5" /> },
-  { label: "Competition", href: "/portal/gtm/competition", section: "GTM Playbook", keywords: ["competition", "competitors", "competitive", "gtm"], icon: <Map className="w-3.5 h-3.5" /> },
-  // Intake
-  { label: "Intake Form", href: "/portal/intake", section: "Navigation", keywords: ["intake", "onboarding", "form", "questionnaire"], icon: <FileText className="w-3.5 h-3.5" /> },
+  { label: "Market Intelligence", href: "/portal/gtm/market", section: "GTM Playbook", keywords: ["market", "intelligence", "research", "gtm"], icon: <Map className="w-3.5 h-3.5" />, moduleId: "gtm" },
+  { label: "Competition", href: "/portal/gtm/competition", section: "GTM Playbook", keywords: ["competition", "competitors", "competitive", "gtm"], icon: <Map className="w-3.5 h-3.5" />, moduleId: "gtm" },
 ];
 
 export function PortalSearch() {
@@ -70,6 +73,15 @@ export function PortalSearch() {
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { activeModules, loading: modulesLoading } = usePortalClient();
+
+  /* Only show items for active modules (or items that are always visible) */
+  const availableItems = useMemo(() => {
+    if (modulesLoading) return SEARCH_ITEMS; // show all while loading to avoid flicker
+    return SEARCH_ITEMS.filter(
+      (item) => item.moduleId === null || activeModules.includes(item.moduleId)
+    );
+  }, [activeModules, modulesLoading]);
 
   /* Keyboard shortcut */
   useEffect(() => {
@@ -96,14 +108,14 @@ export function PortalSearch() {
   /* Filtered results */
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return SEARCH_ITEMS;
-    return SEARCH_ITEMS.filter(
+    if (!q) return availableItems;
+    return availableItems.filter(
       (item) =>
         item.label.toLowerCase().includes(q) ||
         item.section.toLowerCase().includes(q) ||
         item.keywords.some((kw) => kw.includes(q))
     );
-  }, [query]);
+  }, [query, availableItems]);
 
   const navigate = useCallback(
     (item: SearchItem) => {
