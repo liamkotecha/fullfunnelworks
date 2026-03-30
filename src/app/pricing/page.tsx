@@ -31,12 +31,12 @@ import {
 // ─── Static data ─────────────────────────────────────────────────────────────
 
 const PILLARS = [
-  { icon: BarChart3,  n: "01", name: "Assessment & Diagnosis",   desc: "Deep-dive diagnostic across revenue, positioning, and market fit — so you and your client know exactly where the business stands before strategy is set." },
+  { icon: BarChart3,  n: "01", name: "Assessment & Diagnosis",   desc: "Deep-dive diagnostic across revenue, positioning, and market fit. You and your client know exactly where the business stands before strategy is set." },
   { icon: Users,      n: "02", name: "People & Organisation",    desc: "Org design, team capability mapping, and leadership alignment. Build on the right foundations before you scale." },
   { icon: Target,     n: "03", name: "Product & Market Fit",     desc: "ICP clarity, positioning sharpness, and product-market alignment that turns strategy into sustainable, profitable traction." },
   { icon: Layers,     n: "04", name: "Process & Operations",     desc: "Revenue workflows, CRM hygiene, and pipeline discipline that remove friction from your client's growth engine." },
   { icon: TrendingUp, n: "05", name: "GTM & Revenue Execution",  desc: "Go-to-market strategy, sales motion design, and channel optimisation that drives predictable, repeatable revenue." },
-  { icon: Zap,        n: "06", name: "Execution Planning",       desc: "90-day accountability sprints, OKRs, and structured delivery so every strategy becomes measurable action — every quarter." },
+  { icon: Zap,        n: "06", name: "Execution Planning",       desc: "90-day accountability sprints, OKRs, and structured delivery so every strategy becomes measurable action. Every quarter." },
 ] as const;
 
 const TESTIMONIALS = [
@@ -108,9 +108,9 @@ const PLANS = [
 ] as const;
 
 const FAQS = [
-  { q: "What is the Full Funnel Growth Framework?", a: "It's Jonathan Hebbes' proven consulting methodology covering 6 pillars: Assessment & Diagnosis, People & Organisation, Product & Market Fit, Process & Operations, GTM & Revenue Execution, and Execution Planning — each broken into guided sub-modules that help you diagnose, strategise, and execute with clients consistently." },
-  { q: "Do my clients need to pay separately?", a: "No. Your subscription covers all client portal logins. Clients access their dedicated portal with a view of the work you've done together — at no extra cost to them." },
-  { q: "Is there a free trial?", a: "Yes — all plans include a 14-day free trial with full feature access. No credit card required to start." },
+  { q: "What is the Full Funnel Growth Framework?", a: "It's a proven consulting methodology covering 6 pillars: Assessment & Diagnosis, People & Organisation, Product & Market Fit, Process & Operations, GTM & Revenue Execution, and Execution Planning. Each pillar is broken into guided sub-modules that help you diagnose, strategise, and execute with clients consistently." },
+  { q: "Do my clients need to pay separately?", a: "No. Your subscription covers all client portal logins. Clients access their dedicated portal with a view of the work you've done together, at no extra cost to them." },
+  { q: "Is there a free trial?", a: "Yes. All plans include a 14-day free trial with full feature access. No credit card required to start." },
   { q: "Can I switch plans?", a: "You can upgrade or downgrade at any time. Changes take effect at the start of your next billing cycle." },
   { q: "What happens to my data if I cancel?", a: "You'll have 30 days to export your data after cancellation. We retain it securely for that period and delete it on request." },
   { q: "Is Full Funnel right for in-house strategy teams?", a: "Yes. The Enterprise plan is used by internal GTM, growth, and strategy leadership teams who want a structured operating framework for execution and accountability." },
@@ -269,13 +269,13 @@ export default function PricingPage() {
           <FadeUp className="text-center mb-16">
             <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#6CC2FF] mb-4">The platform</p>
             <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tighter text-navy mb-5">Structured consulting, delivered consistently.</h2>
-            <p className="text-lg text-slate-500 max-w-2xl mx-auto leading-relaxed">Stop rebuilding from a blank page on every engagement. Full Funnel gives you the platform, the framework, and the client portal to deliver professional, measurable outcomes — every time.</p>
+            <p className="text-lg text-slate-500 max-w-2xl mx-auto leading-relaxed">Stop rebuilding from a blank page on every engagement. Full Funnel gives you the platform, the framework, and the client portal to deliver professional, measurable outcomes. Every time.</p>
           </FadeUp>
           <div className="grid md:grid-cols-3 gap-5">
             {[
-              { icon: Globe,     title: "Client portals",         desc: "Every client gets their own branded portal. They see the work — strategy, progress, next actions — without you explaining everything twice.", accent: "#6CC2FF" },
-              { icon: FileText,  title: "Built-in methodology",   desc: "6 framework modules with guided prompts, structured worksheets, and consultant notes — so you never start from a blank page again.", accent: "#6CC2FF" },
-              { icon: LineChart, title: "Financial intelligence",  desc: "Hiring plans, OKRs, scenario models, and 90-day sprints — the quantitative rigour that turns strategic advice into board-ready deliverables.", accent: "#6CC2FF" },
+              { icon: Globe,     title: "Client portals",         desc: "Every client gets their own branded portal. They see strategy, progress, and next actions without you explaining everything twice.", accent: "#6CC2FF" },
+              { icon: FileText,  title: "Built-in methodology",   desc: "6 framework modules with guided prompts, structured worksheets, and consultant notes. You never start from a blank page again.", accent: "#6CC2FF" },
+              { icon: LineChart, title: "Financial intelligence",  desc: "Hiring plans, OKRs, scenario models, and 90-day sprints. The quantitative rigour that turns strategic advice into board-ready deliverables.", accent: "#6CC2FF" },
             ].map((c, i) => (
               <FadeUp key={c.title} delay={i * 0.1}>
                 <div className="group rounded-2xl border border-slate-200 bg-white p-8 hover:border-slate-300 hover:shadow-card-hover transition-all duration-300">
@@ -325,9 +325,9 @@ export default function PricingPage() {
           <div className="space-y-28">
             {(
               [
-                { tag: "Client experience",     title: "Portals your clients will actually use.",          desc: "Each client gets a private, branded portal with their own login. They review framework outputs, track progress, and download deliverables — without you explaining everything again.",   points: ["Branded portal per client","Real-time progress visibility","Secure document access","No client licence fee"],        flip: false, accent: "#6CC2FF", glow: "rgba(108,194,255,0.12)" },
-                { tag: "Framework delivery",    title: "A methodology that delivers every time.",           desc: "Stop rebuilding from scratch on every engagement. Every module follows the Full Funnel Growth Framework — People \u00b7 Product \u00b7 Process \u00b7 GTM — with guided prompts and best-practice templates baked in from day one.", points: ["6 built-in framework modules","Guided section prompts","Consultant notes per section","PDF export ready"],              flip: true,  accent: "#6CC2FF", glow: "rgba(108,194,255,0.10)" },
-                { tag: "Financial intelligence", title: "Back every recommendation with numbers.",          desc: "Go beyond strategy slides. Build hiring plans, revenue forecasts, and scenario models that give your work a commercial edge — and justify every recommendation you make to the board.",                   points: ["Revenue scenario modelling","Headcount & hiring plans","OKR & 90-day goals","Export-ready outputs"],                      flip: false, accent: "#6CC2FF", glow: "rgba(108,194,255,0.10)" },
+                { tag: "Client experience",     title: "Portals your clients will actually use.",          desc: "Each client gets a private, branded portal with their own login. They review framework outputs, track progress, and download deliverables without you explaining everything again.",   points: ["Branded portal per client","Real-time progress visibility","Secure document access","No client licence fee"],        flip: false, accent: "#6CC2FF", glow: "rgba(108,194,255,0.12)" },
+                { tag: "Framework delivery",    title: "A methodology that delivers every time.",           desc: "Stop rebuilding from scratch on every engagement. Every module follows the Full Funnel Growth Framework: People, Product, Process, and GTM, with guided prompts and best-practice templates baked in from day one.", points: ["6 built-in framework modules","Guided section prompts","Consultant notes per section","PDF export ready"],              flip: true,  accent: "#6CC2FF", glow: "rgba(108,194,255,0.10)" },
+                { tag: "Financial intelligence", title: "Back every recommendation with numbers.",          desc: "Go beyond strategy slides. Build hiring plans, revenue forecasts, and scenario models that give your work a commercial edge and justify every recommendation you make to the board.",                   points: ["Revenue scenario modelling","Headcount & hiring plans","OKR & 90-day goals","Export-ready outputs"],                      flip: false, accent: "#6CC2FF", glow: "rgba(108,194,255,0.10)" },
               ] as const
             ).map((f) => (
               <div key={f.tag} className={`flex flex-col ${f.flip ? "lg:flex-row-reverse" : "lg:flex-row"} items-center gap-12 lg:gap-20`}>
@@ -415,9 +415,9 @@ export default function PricingPage() {
           <div className="grid md:grid-cols-3 gap-6 relative">
             <div className="hidden md:block absolute h-px bg-slate-200" style={{ top: "27px", left: "calc(33.33% + 32px)", right: "calc(33.33% + 32px)" }} />
             {[
-              { step: "01", title: "Choose your plan",      desc: "Start a 14-day free trial — no card required. Sign up in under two minutes and you're ready to go." },
-              { step: "02", title: "Add your first client", desc: "Invite your client to their portal. They see your framework, progress, and deliverables — live." },
-              { step: "03", title: "Deliver the framework", desc: "Work through the 6 pillars together. Generate insights, models, and board-ready reports — all in one place." },
+              { step: "01", title: "Choose your plan",      desc: "Start a 14-day free trial with no card required. Sign up in under two minutes and you're ready to go." },
+              { step: "02", title: "Add your first client", desc: "Invite your client to their portal. They see your framework, progress, and deliverables in real time." },
+              { step: "03", title: "Deliver the framework", desc: "Work through the 6 pillars together. Generate insights, models, and board-ready reports, all in one place." },
             ].map((s, i) => (
               <motion.div key={s.step} initial={{ opacity: 0, y: 28 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-40px" }} transition={{ duration: 0.6, delay: i * 0.12 }}>
                 <div className="w-14 h-14 rounded-2xl bg-[#6CC2FF]/10 border border-[#6CC2FF]/20 flex items-center justify-center mb-6 font-mono text-[#6CC2FF] font-extrabold text-sm">{s.step}</div>
@@ -485,7 +485,7 @@ export default function PricingPage() {
                   <AnimatePresence>
                     {annual && (
                       <motion.p initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className={`text-xs mt-1 mb-2 ${plan.highlight ? "text-slate-500" : "text-slate-400"}`}>
-                        {`£${plan.annual}/yr — save £${plan.annualSaving}`}
+                        {`£${plan.annual}/yr (save £${plan.annualSaving})`}
                       </motion.p>
                     )}
                   </AnimatePresence>
@@ -522,7 +522,7 @@ export default function PricingPage() {
               {[
                 "Built on Jonathan's proven consulting methodology",
                 "Trusted by CEOs at AVC, Acin & Elgin Scott Partners",
-                "Cancel anytime — no lock-in",
+                "Cancel anytime, no lock-in",
                 "14-day free trial on every plan",
               ].map((label) => (
                 <div key={label} className="flex items-center gap-2.5 text-[13px] text-slate-500">
@@ -578,7 +578,7 @@ export default function PricingPage() {
               <div className="relative z-10">
                 <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#6CC2FF] mb-6">Get started today</p>
                 <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tighter text-white mb-5">Ready to structure your practice?</h2>
-                <p className="text-lg text-slate-400 mb-11 max-w-xl mx-auto leading-relaxed">Set up your first client portal in minutes. 14-day free trial on every plan — no credit card required.</p>
+                <p className="text-lg text-slate-400 mb-11 max-w-xl mx-auto leading-relaxed">Set up your first client portal in minutes. 14-day free trial on every plan, no credit card required.</p>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                   <Link href="/register?role=consultant" className="group inline-flex items-center gap-2.5 px-9 py-4 rounded-2xl bg-[#6CC2FF] text-[#141414] font-bold text-sm transition-all hover:bg-[#6CC2FF] hover:shadow-[0_0_40px_rgba(108,194,255,0.4)] hover:scale-[1.025] active:scale-[0.98]">
                     Start free trial
