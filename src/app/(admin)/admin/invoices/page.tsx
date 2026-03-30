@@ -177,7 +177,7 @@ export default function BillingPage() {
       {/* KPI row — subscriptions only */}
       <motion.div variants={fadeUp} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard label="Monthly MRR" value={formatPence(totalMrr)} icon={TrendingUp} colour="bg-emerald-50 text-emerald-600" />
-        <KpiCard label="Active" value={String(activeCount)} sub="subscriptions" icon={Users} colour="bg-sky-50 text-sky-600" />
+        <KpiCard label="Active" value={String(activeCount)} sub="subscriptions" icon={Users} colour="bg-brand-blue/10 text-brand-blue" />
         <KpiCard label="Trialing" value={String(trialingCount)} sub="consultants" icon={Clock} colour="bg-amber-50 text-amber-600" />
         <KpiCard label="Past due" value={String(pastDueCount)} sub="need attention" icon={AlertCircle} colour="bg-rose-50 text-rose-600" />
       </motion.div>
@@ -369,7 +369,7 @@ export default function BillingPage() {
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
-                            className="inline-flex items-center gap-1 text-xs text-sky-600 hover:text-sky-700"
+                            className="inline-flex items-center gap-1 text-xs text-[#141414] hover:text-[#141414]/70"
                           >
                             Stripe <ExternalLink className="w-3 h-3" />
                           </a>

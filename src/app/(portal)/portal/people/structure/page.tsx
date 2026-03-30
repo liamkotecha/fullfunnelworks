@@ -250,7 +250,7 @@ function MemberCard({
       style={{ position: "absolute", top: 0, left: 0, width: CARD_W, cursor: "grab" }}
       whileDrag={{ cursor: "grabbing", scale: 1.03, zIndex: 50, boxShadow: "0 16px 40px rgba(0,0,0,0.16)" }}
       className={cn(
-        "rounded-xl border shadow-sm select-none bg-white",
+        "rounded-lg border shadow-sm select-none bg-white",
         isRoot ? "border-[#141414] ring-2 ring-[#141414]" : "border-gray-200",
       )}
     >
@@ -478,7 +478,7 @@ export default function CompanyStructurePage() {
     return (
       <div>
         <SectionProgressHeader title="Company Structure" answeredCount={0} totalCount={1} lastSavedAt={null} />
-        <div className="mt-8 flex flex-col items-center justify-center py-16 px-6 rounded-xl border-2 border-dashed border-gray-200 text-center">
+        <div className="mt-8 flex flex-col items-center justify-center py-16 px-6 rounded-lg border-2 border-dashed border-gray-200 text-center">
           <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
             <Users className="w-6 h-6 text-gray-400" />
           </div>
@@ -529,7 +529,7 @@ export default function CompanyStructurePage() {
 
       {/* Board canvas */}
       <div
-        className="rounded-xl border border-gray-200 shadow-sm overflow-auto bg-[#f9fafb]"
+        className="rounded-lg border border-gray-200 shadow-sm overflow-auto bg-[#f9fafb]"
         style={{ maxHeight: "65vh" }}
       >
         <div

@@ -82,7 +82,7 @@ function CapabilityCard({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -4 }}
       transition={{ duration: 0.25 }}
-      className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
+      className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden"
     >
       {/* Header */}
       <div className="bg-[#141414] px-5 py-4 flex items-center gap-3">
@@ -244,7 +244,7 @@ export default function TeamCapabilityPage() {
 
       {members.length === 0 ? (
         /* ── Empty state ── */
-        <div className="mt-8 bg-white rounded-xl border border-dashed border-gray-300 p-12 text-center">
+        <div className="mt-8 bg-white rounded-lg border border-dashed border-gray-300 p-12 text-center">
           <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
             <Users className="w-6 h-6 text-gray-400" />
           </div>

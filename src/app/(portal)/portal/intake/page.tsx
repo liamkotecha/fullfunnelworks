@@ -178,7 +178,7 @@ export default function IntakePage() {
                     const g = ASSESSMENT_SECTION.swot[group];
                     const cls: Record<string,string> = { strengths:"bg-brand-green/5 border-brand-green/20", weaknesses:"bg-brand-pink/5 border-brand-pink/20", opportunities:"bg-brand-blue/5 border-brand-blue/20", threats:"bg-red-50 border-red-200" };
                     return (
-                      <div key={group} className={cn("rounded-2xl border p-5 space-y-4 mb-4", cls[group])}>
+                      <div key={group} className={cn("rounded-lg border p-5 space-y-4 mb-4", cls[group])}>
                         <div><h4 className="font-bold text-sm uppercase tracking-wide">{g.label}</h4><p className="text-xs text-slate-500">{g.subtitle}</p></div>
                         {g.questions.map((q) => (
                           <div key={q.id} className="space-y-1.5">
@@ -207,7 +207,7 @@ export default function IntakePage() {
                     const section = ASSESSMENT_SECTION.most[key];
                     const colors: Record<string,string> = { mission:"bg-slate-50 border-brand-blue/20", objectives:"bg-brand-blue/5 border-brand-blue/20", strategy:"bg-brand-green/5 border-brand-green/20", tactics:"bg-slate-50 border-slate-200" };
                     return (
-                      <div key={key} className={cn("rounded-2xl border p-5 space-y-4 mb-4", colors[key])}>
+                      <div key={key} className={cn("rounded-lg border p-5 space-y-4 mb-4", colors[key])}>
                         <div>
                           <h4 className="font-bold text-sm uppercase tracking-wide">{section.label}</h4>
                           <p className="text-xs text-slate-500">{section.intro}</p>
@@ -224,7 +224,7 @@ export default function IntakePage() {
                   <p className="text-xs text-slate-500 mb-4">{ASSESSMENT_SECTION.leadershipQuestions.intro}</p>
                   <div className="space-y-4">
                     {ASSESSMENT_SECTION.leadershipQuestions.questions.map((q, i) => (
-                      <div key={q.id} className="border border-gray-100 rounded-2xl p-5 space-y-3">
+                      <div key={q.id} className="border border-gray-100 rounded-lg p-5 space-y-3">
                         <div className="flex items-start gap-3">
                           <div className="w-7 h-7 rounded-full bg-[#141414] text-white flex items-center justify-center text-xs font-bold flex-shrink-0">{i + 1}</div>
                           <div>
@@ -308,7 +308,7 @@ export default function IntakePage() {
                   <h3 className="font-semibold text-[#141414] text-sm mb-1">{PROCESS_SECTION.salesCapabilityMethodology.heading}</h3>
                   <p className="text-xs text-slate-500 mb-4">{PROCESS_SECTION.salesCapabilityMethodology.intro}</p>
                   {PROCESS_SECTION.salesCapabilityMethodology.phases.map((phase) => (
-                    <div key={phase.number} className="border border-gray-100 rounded-2xl p-5 mb-4 space-y-4">
+                    <div key={phase.number} className="border border-gray-100 rounded-lg p-5 mb-4 space-y-4">
                       <div className="flex items-start gap-3">
                         <div className="w-8 h-8 rounded-full bg-[#141414] text-white flex items-center justify-center text-sm font-bold flex-shrink-0">{phase.number}</div>
                         <div><h4 className="font-semibold text-[#141414] text-sm">{phase.title}</h4><p className="text-xs text-slate-500">{phase.objective}</p></div>
@@ -324,7 +324,7 @@ export default function IntakePage() {
                 <div>
                   <h3 className="font-semibold text-[#141414] text-sm mb-3">{PROCESS_SECTION.salesProcessBuilder.heading}</h3>
                   {PROCESS_SECTION.salesProcessBuilder.stages.map((stage) => (
-                    <div key={stage.id} className="bg-gray-50 rounded-2xl p-4 mb-3 space-y-3">
+                    <div key={stage.id} className="bg-gray-50 rounded-lg p-4 mb-3 space-y-3">
                       <h4 className="font-bold text-xs text-[#141414] uppercase tracking-widest">{stage.heading}</h4>
                       {stage.fields.map((f) => (
                         <Textarea key={f.label} label={f.label} value={(responses[`proc_stage_${stage.id}_${f.label}`] as string) ?? ""} onChange={(e) => set(`proc_stage_${stage.id}_${f.label}`, e.target.value)} placeholder={f.placeholder} rows={2} />
@@ -339,7 +339,7 @@ export default function IntakePage() {
               <div className="space-y-5">
                 <p className="text-sm text-slate-600">{ROADMAP_SECTION.intro}</p>
                 {ROADMAP_SECTION.phases.map((phase) => (
-                  <div key={phase.number} className="border border-gray-100 rounded-2xl p-5 space-y-4">
+                  <div key={phase.number} className="border border-gray-100 rounded-lg p-5 space-y-4">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full bg-[#141414] text-white flex items-center justify-center text-sm font-bold flex-shrink-0">{phase.number}</div>
                       <div><h3 className="font-semibold text-[#141414] text-sm">{phase.title}</h3><p className="text-xs text-slate-400">{phase.duration}</p></div>

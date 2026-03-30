@@ -446,7 +446,7 @@ export default function KpisPage() {
 
       {/* Kanban */}
       {filledCount === 0 && (
-        <div className="mb-5 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center">
+        <div className="mb-5 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center">
           <p className="text-sm font-semibold text-slate-600 mb-1">No KPIs added yet</p>
           <p className="text-xs text-slate-400 max-w-sm mx-auto">
             Click <strong>Add new KPI</strong> in any column below to define your company and department metrics.

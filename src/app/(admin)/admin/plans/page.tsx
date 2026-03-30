@@ -152,7 +152,7 @@ function PlanForm({ initial, onClose, onSaved }: PlanFormProps) {
               value={form.name}
               onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
               placeholder="e.g. Starter, Pro, Enterprise"
-              className="w-full text-sm px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400"
+              className="w-full text-sm px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue/40 focus:border-brand-blue"
             />
           </div>
 
@@ -166,7 +166,7 @@ function PlanForm({ initial, onClose, onSaved }: PlanFormProps) {
               onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
               rows={2}
               placeholder="Brief description for internal reference"
-              className="w-full text-sm px-3 py-2 border border-slate-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400"
+              className="w-full text-sm px-3 py-2 border border-slate-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-brand-blue/40 focus:border-brand-blue"
             />
           </div>
 
@@ -185,7 +185,7 @@ function PlanForm({ initial, onClose, onSaved }: PlanFormProps) {
                   value={form.monthlyPrice}
                   onChange={(e) => setForm((p) => ({ ...p, monthlyPrice: e.target.value }))}
                   placeholder="0.00"
-                  className="w-full text-sm pl-7 pr-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400"
+                  className="w-full text-sm pl-7 pr-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue/40 focus:border-brand-blue"
                 />
               </div>
             </div>
@@ -202,7 +202,7 @@ function PlanForm({ initial, onClose, onSaved }: PlanFormProps) {
                   value={form.annualPrice}
                   onChange={(e) => setForm((p) => ({ ...p, annualPrice: e.target.value }))}
                   placeholder="0.00"
-                  className="w-full text-sm pl-7 pr-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400"
+                  className="w-full text-sm pl-7 pr-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue/40 focus:border-brand-blue"
                 />
               </div>
             </div>
@@ -221,7 +221,7 @@ function PlanForm({ initial, onClose, onSaved }: PlanFormProps) {
                   max={50}
                   value={form.maxActiveClients}
                   onChange={(e) => setForm((p) => ({ ...p, maxActiveClients: Number(e.target.value) }))}
-                  className="flex-1 accent-sky-500"
+                  className="flex-1 accent-[#6CC2FF]"
                 />
                 <span className="text-base font-bold text-slate-900 w-6 text-right tabular-nums">
                   {form.maxActiveClients}
@@ -239,7 +239,7 @@ function PlanForm({ initial, onClose, onSaved }: PlanFormProps) {
                   max={10}
                   value={form.maxProjectsPerClient}
                   onChange={(e) => setForm((p) => ({ ...p, maxProjectsPerClient: Number(e.target.value) }))}
-                  className="flex-1 accent-sky-500"
+                  className="flex-1 accent-[#6CC2FF]"
                 />
                 <span className="text-base font-bold text-slate-900 w-6 text-right tabular-nums">
                   {form.maxProjectsPerClient}
@@ -261,7 +261,7 @@ function PlanForm({ initial, onClose, onSaved }: PlanFormProps) {
                 step={7}
                 value={form.trialDays}
                 onChange={(e) => setForm((p) => ({ ...p, trialDays: Number(e.target.value) }))}
-                className="flex-1 accent-sky-500"
+                className="flex-1 accent-[#6CC2FF]"
               />
               <span className="text-base font-bold text-slate-900 w-8 text-right tabular-nums">
                 {form.trialDays === 0 ? "Off" : `${form.trialDays}d`}
@@ -278,7 +278,7 @@ function PlanForm({ initial, onClose, onSaved }: PlanFormProps) {
               <div className="flex gap-2">
                 <button
                   onClick={() => setForm((p) => ({ ...p, allowedModules: new Set(ALL_MODULES.map(([id]) => id)) }))}
-                  className="text-xs text-sky-600 hover:text-sky-700 underline underline-offset-2"
+                  className="text-xs text-[#141414] hover:text-[#141414]/70 underline underline-offset-2"
                 >
                   All
                 </button>
@@ -301,12 +301,12 @@ function PlanForm({ initial, onClose, onSaved }: PlanFormProps) {
                     className={cn(
                       "flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border transition-colors text-left",
                       active
-                        ? "border-sky-300 bg-sky-50 text-sky-800"
+                        ? "border-brand-blue/40 bg-brand-blue/10 text-[#141414]"
                         : "border-slate-200 text-slate-500 hover:border-slate-300"
                     )}
                   >
                     {active ? (
-                      <Check className="w-3 h-3 flex-shrink-0 text-sky-600" />
+                      <Check className="w-3 h-3 flex-shrink-0 text-brand-blue" />
                     ) : (
                       <span className="w-3 h-3 flex-shrink-0" />
                     )}
@@ -325,7 +325,7 @@ function PlanForm({ initial, onClose, onSaved }: PlanFormProps) {
               onClick={() => setForm((p) => ({ ...p, isActive: !p.isActive }))}
               className={cn(
                 "relative inline-flex h-5 w-9 items-center rounded-full transition-colors",
-                form.isActive ? "bg-sky-500" : "bg-slate-200"
+                form.isActive ? "bg-brand-blue" : "bg-slate-200"
               )}
             >
               <span
@@ -457,7 +457,7 @@ function PlanCard({
           {plan.allowedModules.map((m) => (
             <span
               key={m}
-              className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-sky-50 text-sky-700 border border-sky-100"
+              className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-brand-blue/10 text-[#141414] border border-brand-blue/20"
             >
               {MODULE_META[m]?.label ?? m}
             </span>

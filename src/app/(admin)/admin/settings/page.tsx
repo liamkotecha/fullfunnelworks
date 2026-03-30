@@ -255,7 +255,7 @@ function BrandingTab() {
 
       <div>
         <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-3">Client portal preview</p>
-        <div className="rounded-2xl ring-1 ring-black/[0.06] overflow-hidden">
+        <div className="rounded-xl ring-1 ring-black/[0.06] overflow-hidden">
           <div className="h-8 flex items-center px-4 gap-2" style={{ background: "#141414" }}>
             <div className="w-20 h-2 rounded bg-white/20" />
           </div>

@@ -285,7 +285,7 @@ export default function TeamMembersPage() {
       </div>
 
       {isEmpty && (
-        <div className="mb-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center">
+        <div className="mb-4 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center">
           <Users className="w-8 h-8 text-slate-300 mx-auto mb-3" />
           <p className="text-sm font-semibold text-slate-600 mb-1">No team members yet</p>
           <p className="text-xs text-slate-400">
@@ -294,7 +294,7 @@ export default function TeamMembersPage() {
         </div>
       )}
 
-      <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm">
+      <div className="overflow-hidden rounded-lg border border-gray-200 shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left text-gray-500">
             <thead className="text-xs bg-gray-50 border-b border-gray-200">

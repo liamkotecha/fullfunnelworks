@@ -199,8 +199,8 @@ export default function DashboardPage() {
           {[
             {
               icon: Users,
-              iconBg: "bg-sky-500/10",
-              iconColor: "text-sky-500",
+              iconBg: "bg-brand-blue/10",
+              iconColor: "text-brand-blue",
               label: "Consultants",
               value: String(consultants.length),
               sub: `${activeSubCount} with active plans`,
@@ -318,7 +318,7 @@ export default function DashboardPage() {
               </div>
               {attentionItems.length > 6 && (
                 <div className="px-5 py-3 border-t border-slate-100">
-                  <Link href="/admin/consultants?filter=churn_risk" className="text-xs text-sky-600 hover:text-sky-700 font-medium">
+                  <Link href="/admin/consultants?filter=churn_risk" className="text-xs text-[#141414] hover:text-[#141414]/70 font-medium">
                     +{attentionItems.length - 6} more consultants need attention
                   </Link>
                 </div>
@@ -407,7 +407,7 @@ export default function DashboardPage() {
                       </td>
                       <td className="px-4 py-3 text-xs">
                         {c.profile.plan?.name
-                          ? <span className="px-2 py-0.5 rounded-md bg-sky-50 text-sky-700 border border-sky-100 font-medium">{c.profile.plan.name}</span>
+                          ? <span className="px-2 py-0.5 rounded-md bg-brand-blue/10 text-[#141414] border border-brand-blue/20 font-medium">{c.profile.plan.name}</span>
                           : <span className="text-slate-400">No plan</span>}
                       </td>
                       <td className="px-4 py-3">

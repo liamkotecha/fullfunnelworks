@@ -48,7 +48,7 @@ function PlanBadge({ name }: { name?: string | null }) {
   const cls = lower.includes("enterprise")
     ? "bg-purple-50 text-purple-700 ring-purple-200"
     : lower.includes("growth")
-    ? "bg-sky-50 text-sky-700 ring-sky-200"
+    "bg-brand-blue/10 text-[#141414] ring-brand-blue/30"
     : "bg-slate-100 text-slate-600 ring-slate-200";
   return (
     <span className={cn("inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ring-1", cls)}>
@@ -60,7 +60,7 @@ function PlanBadge({ name }: { name?: string | null }) {
 /* ── Subscription cell ───────────────────────────────────────── */
 const SUB_META: Record<string, { label: string; cls: string }> = {
   active:   { label: "Active",          cls: "bg-emerald-50 text-emerald-700 ring-emerald-200" },
-  trialing: { label: "Trialing",         cls: "bg-sky-50 text-sky-700 ring-sky-200" },
+  trialing: { label: "Trialing",         cls: "bg-brand-blue/10 text-[#141414] ring-brand-blue/30" },
   past_due: { label: "Payment failed",   cls: "bg-rose-50 text-rose-700 ring-rose-200" },
   canceled: { label: "Canceled",         cls: "bg-slate-100 text-slate-500 ring-slate-200" },
   paused:   { label: "Paused",           cls: "bg-slate-100 text-slate-500 ring-slate-200" },

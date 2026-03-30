@@ -458,7 +458,7 @@ export default function ConsultantDetailPage({
                 <h2 className="font-semibold text-sm text-slate-900">Plan & Billing</h2>
                 <button
                   onClick={() => setEditingPlan(!editingPlan)}
-                  className="flex items-center gap-1 text-xs text-sky-600 hover:text-sky-700 transition-colors"
+                  className="flex items-center gap-1 text-xs text-[#141414] hover:text-[#141414]/70 transition-colors"
                 >
                   <Pencil className="w-3 h-3" />
                   Change plan
@@ -469,7 +469,7 @@ export default function ConsultantDetailPage({
                   <select
                     value={selectedPlanId}
                     onChange={(e) => setSelectedPlanId(e.target.value)}
-                    className="w-full text-sm px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400"
+                    className="w-full text-sm px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue/40 focus:border-brand-blue"
                   >
                     <option value="">Select a plan…</option>
                     {plans.filter((p) => p.isActive).map((p) => (
@@ -500,7 +500,7 @@ export default function ConsultantDetailPage({
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <BadgeCheck className="w-4 h-4 text-sky-500" />
+                      <BadgeCheck className="w-4 h-4 text-brand-blue" />
                       <span className="font-semibold text-slate-900">{consultant.profile.plan.name}</span>
                     </div>
                     <SubBadge status={subStatus} />
@@ -572,7 +572,7 @@ export default function ConsultantDetailPage({
                       <p className="text-[10px] text-slate-400 uppercase font-semibold tracking-wider mb-2">Modules</p>
                       <div className="flex flex-wrap gap-1">
                         {consultant.profile.plan.allowedModules.map((m) => (
-                          <span key={m} className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-sky-50 text-sky-700 border border-sky-100">
+                          <span key={m} className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-brand-blue/10 text-[#141414] border border-brand-blue/20">
                             {MODULE_META[m]?.label ?? m}
                           </span>
                         ))}
@@ -647,7 +647,7 @@ export default function ConsultantDetailPage({
               </h2>
               <button
                 onClick={() => setTab("clients")}
-                className="inline-flex items-center gap-1 text-xs text-sky-600 hover:text-sky-700 font-medium"
+                className="inline-flex items-center gap-1 text-xs text-[#141414] hover:text-[#141414]/70 font-medium"
               >
                 View all <ChevronRight className="w-3 h-3" />
               </button>
@@ -688,7 +688,7 @@ export default function ConsultantDetailPage({
                           <td className="pr-5 py-3 text-right">
                             <Link
                               href={`/admin/clients/${c._id}`}
-                              className="inline-flex items-center gap-1 text-xs text-sky-600 hover:text-sky-700 font-medium"
+                              className="inline-flex items-center gap-1 text-xs text-[#141414] hover:text-[#141414]/70 font-medium"
                             >
                               View <ChevronRight className="w-3 h-3" />
                             </Link>
@@ -702,7 +702,7 @@ export default function ConsultantDetailPage({
                   <div className="px-5 py-3 border-t border-slate-100">
                     <button
                       onClick={() => setTab("clients")}
-                      className="text-xs text-sky-600 hover:text-sky-700 font-medium"
+                      className="text-xs text-[#141414] hover:text-[#141414]/70 font-medium"
                     >
                       +{clients.length - 5} more clients
                     </button>
@@ -768,7 +768,7 @@ export default function ConsultantDetailPage({
                         <td className="pr-5 py-3.5 text-right">
                           <Link
                             href={`/admin/clients/${c._id}`}
-                            className="inline-flex items-center gap-1 text-xs text-sky-600 hover:text-sky-700 font-medium"
+                            className="inline-flex items-center gap-1 text-xs text-[#141414] hover:text-[#141414]/70 font-medium"
                           >
                             View
                             <ChevronRight className="w-3 h-3" />
@@ -835,7 +835,7 @@ export default function ConsultantDetailPage({
                         <td className="px-4 py-3.5">
                           <Link
                             href={`/admin/clients/${clientId}`}
-                            className="text-sky-600 hover:text-sky-700 text-xs font-medium"
+                            className="text-[#141414] hover:text-[#141414]/70 text-xs font-medium"
                           >
                             {clientName}
                           </Link>
@@ -853,7 +853,7 @@ export default function ConsultantDetailPage({
                         <td className="pr-5 py-3.5 text-right">
                           <Link
                             href={`/admin/projects/${p._id}`}
-                            className="inline-flex items-center gap-1 text-xs text-sky-600 hover:text-sky-700 font-medium"
+                            className="inline-flex items-center gap-1 text-xs text-[#141414] hover:text-[#141414]/70 font-medium"
                           >
                             View
                             <ChevronRight className="w-3 h-3" />
@@ -952,7 +952,7 @@ export default function ConsultantDetailPage({
                           <td className="pr-5 py-3 text-right">
                             <Link
                               href={`/admin/invoices/${inv.id}`}
-                              className="inline-flex items-center gap-1 text-xs text-sky-600 hover:text-sky-700 font-medium"
+                              className="inline-flex items-center gap-1 text-xs text-[#141414] hover:text-[#141414]/70 font-medium"
                             >
                               View
                               <ChevronRight className="w-3 h-3" />
