@@ -11,7 +11,6 @@ import {
   CheckCircle2,
   ArrowRight,
   DollarSign,
-  Lock,
   Sparkles,
 } from "lucide-react";
 import Link from "next/link";
@@ -254,78 +253,39 @@ export default function ConsultantDashboardPage() {
         />
       </motion.div>
 
-      {/* Pipeline stage breakdown — gated to Growth/Enterprise */}
-      <motion.div variants={fadeUp}>
-        {hasPipelineAccess ? (
-          <div className="card space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <KanbanSquare className="w-4 h-4 text-slate-400" />
-                <h2 className="font-semibold text-slate-900">Sales Pipeline</h2>
-              </div>
-              <Link href="/consultant/crm/pipeline" className="text-xs text-slate-400 hover:text-slate-700 transition-colors">
-                View board →
-              </Link>
+      {/* Pipeline stage breakdown — only shown when user has access */}
+      {hasPipelineAccess && (
+        <motion.div variants={fadeUp} className="card space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <KanbanSquare className="w-4 h-4 text-slate-400" />
+              <h2 className="font-semibold text-slate-900">Sales Pipeline</h2>
             </div>
-            <div className="grid grid-cols-5 gap-2">
-              {PIPELINE_STAGES.map(({ key, label }) => {
-                const stageProspects = prospects.filter((p) => p.stage === key);
-                const stageValue = stageProspects.reduce((s, p) => s + (p.dealValue ?? 0), 0);
-                return (
-                  <Link
-                    key={key}
-                    href="/consultant/crm/pipeline"
-                    className="p-3 rounded-lg border border-slate-100 hover:border-slate-200 hover:bg-slate-50 transition-colors text-center"
-                  >
-                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-1.5">{label}</p>
-                    <p className="text-xl font-bold text-slate-900 tabular-nums">{stageProspects.length}</p>
-                    <p className="text-xs text-slate-400 tabular-nums mt-0.5">{formatPence(stageValue)}</p>
-                  </Link>
-                );
-              })}
-            </div>
+            <Link href="/consultant/crm/pipeline" className="text-xs text-slate-400 hover:text-slate-700 transition-colors">
+              View board →
+            </Link>
           </div>
-        ) : (
-          <div className="card relative overflow-hidden">
-            {/* Blurred preview */}
-            <div className="select-none pointer-events-none opacity-30 blur-[2px] space-y-4">
-              <div className="flex items-center gap-2">
-                <KanbanSquare className="w-4 h-4 text-slate-400" />
-                <h2 className="font-semibold text-slate-900">Sales Pipeline</h2>
-              </div>
-              <div className="grid grid-cols-5 gap-2">
-                {PIPELINE_STAGES.map(({ key, label }) => (
-                  <div key={key} className="p-3 rounded-lg border border-slate-100 text-center">
-                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-1.5">{label}</p>
-                    <p className="text-xl font-bold text-slate-900">—</p>
-                    <p className="text-xs text-slate-400 mt-0.5">£0</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-            {/* Upsell overlay */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 backdrop-blur-[1px] rounded-lg">
-              <div className="flex flex-col items-center text-center max-w-xs px-4">
-                <div className="w-10 h-10 rounded-xl bg-brand-blue/10 flex items-center justify-center mb-3">
-                  <Lock className="w-5 h-5 text-brand-blue" />
-                </div>
-                <p className="font-semibold text-slate-900 text-sm mb-1">Sales Pipeline &amp; CRM</p>
-                <p className="text-xs text-slate-500 mb-4 leading-relaxed">
-                  Track prospects, manage your pipeline, and forecast revenue. Available on the <span className="font-semibold text-slate-700">Growth</span> plan and above.
-                </p>
+          <div className="grid grid-cols-5 gap-2">
+            {PIPELINE_STAGES.map(({ key, label }) => {
+              const stageProspects = prospects.filter((p) => p.stage === key);
+              const stageValue = stageProspects.reduce((s, p) => s + (p.dealValue ?? 0), 0);
+              return (
                 <Link
-                  href="/consultant/billing"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-brand-blue text-[#141414] text-xs font-bold hover:bg-brand-blue/90 hover:shadow-[0_0_18px_rgba(108,194,255,0.35)] transition-all"
+                  key={key}
+                  href="/consultant/crm/pipeline"
+                  className="p-3 rounded-lg border border-slate-100 hover:border-slate-200 hover:bg-slate-50 transition-colors text-center"
                 >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  Upgrade plan
+                  <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-1.5">{label}</p>
+                  <p className="text-xl font-bold text-slate-900 tabular-nums">{stageProspects.length}</p>
+                  <p className="text-xs text-slate-400 tabular-nums mt-0.5">{formatPence(stageValue)}</p>
                 </Link>
-              </div>
-            </div>
+              );
+            })}
           </div>
-        )}
-      </motion.div>
+        </motion.div>
+      )}
 
+      {/* Clients + Projects — the user's active work, serves their immediate needs first */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Needs Attention */}
         {(needsAttentionProjects.length > 0 || overdueInvoices.length > 0) && (
@@ -452,6 +412,99 @@ export default function ConsultantDashboardPage() {
           )}
         </motion.div>
       </div>
+
+      {/* Pipeline upsell — appears after their active work, not interrupting their flow */}
+      {!hasPipelineAccess && (
+        <motion.div variants={fadeUp}>
+          <Link
+            href="/consultant/billing"
+            className="group block rounded-2xl overflow-hidden"
+          >
+            {/* Dark premium card */}
+            <div className="relative bg-[#0C0C0C] rounded-2xl p-6 md:p-8 overflow-hidden">
+              {/* Decorative glows */}
+              <div className="absolute -top-16 -right-16 w-64 h-64 bg-brand-blue/20 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute bottom-0 left-1/3 w-48 h-32 bg-brand-blue/5 rounded-full blur-2xl pointer-events-none" />
+
+              <div className="relative flex flex-col md:flex-row items-start gap-8 md:gap-12">
+                {/* Left: value prop */}
+                <div className="flex-1 space-y-5">
+                  {/* Badge */}
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-brand-blue/30 bg-brand-blue/10 text-brand-blue text-[11px] font-semibold uppercase tracking-wider">
+                    <Sparkles className="w-3 h-3" />
+                    Growth Plan feature
+                  </div>
+
+                  {/* Headline */}
+                  <div>
+                    <h2 className="text-white text-xl font-bold leading-snug mb-2">
+                      Know exactly what's in<br className="hidden md:block" />your pipeline at all times
+                    </h2>
+                    <p className="text-white/45 text-sm leading-relaxed max-w-sm">
+                      Track every prospect from first touch to signed contract. See deal values, forecast revenue, and never let an opportunity go cold.
+                    </p>
+                  </div>
+
+                  {/* Feature list */}
+                  <ul className="space-y-2.5">
+                    {[
+                      "Visual kanban board — MQL through to Closed Won",
+                      "Deal value tracking and revenue forecasting",
+                      "Full prospect history and activity timeline",
+                    ].map((feat) => (
+                      <li key={feat} className="flex items-start gap-2.5 text-sm text-white/60">
+                        <span className="mt-0.5 flex-shrink-0 w-4 h-4 rounded-full bg-brand-blue/20 inline-flex items-center justify-center">
+                          <svg className="w-2.5 h-2.5 text-brand-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </span>
+                        {feat}
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* CTA */}
+                  <div className="pt-1">
+                    <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-blue text-[#0C0C0C] text-sm font-bold group-hover:shadow-[0_0_32px_rgba(108,194,255,0.5)] group-hover:scale-[1.02] transition-all duration-200">
+                      <Sparkles className="w-4 h-4" />
+                      Upgrade to Growth
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                    </span>
+                  </div>
+                </div>
+
+                {/* Right: illustrative pipeline preview */}
+                <div className="w-full md:w-52 flex-shrink-0 space-y-1.5 select-none">
+                  <p className="text-white/20 text-[10px] font-semibold uppercase tracking-widest mb-3 px-1">
+                    Example pipeline
+                  </p>
+                  {[
+                    { label: "MQL",         count: 8,  value: "£18k" },
+                    { label: "Discovery",   count: 5,  value: "£42k" },
+                    { label: "Proposal",    count: 3,  value: "£38k" },
+                    { label: "Negotiating", count: 2,  value: "£29k" },
+                    { label: "Closed Won",  count: 1,  value: "£15k" },
+                  ].map(({ label, count, value }) => (
+                    <div
+                      key={label}
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.07]"
+                    >
+                      <div className="w-1.5 h-1.5 rounded-full bg-brand-blue/50 flex-shrink-0" />
+                      <span className="text-white/40 text-xs flex-1">{label}</span>
+                      <span className="text-white/25 text-[11px] tabular-nums">{count} deals</span>
+                      <span className="text-white/60 text-xs font-semibold tabular-nums">{value}</span>
+                    </div>
+                  ))}
+                  <div className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-brand-blue/10 border border-brand-blue/20 mt-1">
+                    <span className="text-brand-blue/60 text-xs">Total pipeline</span>
+                    <span className="text-brand-blue text-sm font-bold tabular-nums">£142k</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Link>
+        </motion.div>
+      )}
     </motion.div>
   );
 }
