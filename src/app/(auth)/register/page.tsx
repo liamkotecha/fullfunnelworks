@@ -1,5 +1,5 @@
 "use client";
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -69,15 +69,15 @@ function PasswordStrength({ password }: { password: string }) {
 
 function RegisterContent() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  // Step 1
+  // Step 1 — plan selection
+  const [plans, setPlans] = useState<PlanOption[]>([]);
+  const [plansLoading, setPlansLoading] = useState(true);
+  const [selectedPlanId, setSelectedPlanId] = useState<string>("");
+  // Step 2 — account details
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
-  // Step 2
-  const [plans, setPlans] = useState<PlanOption[]>([]);
-  const [plansLoading, setPlansLoading] = useState(false);
-  const [selectedPlanId, setSelectedPlanId] = useState<string>("");
   // Loading / errors
   const [loading, setLoading] = useState(false);
   const { error: toastError } = useToast();
@@ -85,53 +85,53 @@ function RegisterContent() {
   const isConsultantFlow = searchParams.get("role") === "consultant";
   const callbackUrl = searchParams.get("callbackUrl") ?? "/admin/dashboard";
 
-  /* Step 1 → 2: register account then load plans */
-  const handleStep1 = async () => {
-    if (!name.trim() || !email || password.length < 8) return;
-    if (!isConsultantFlow) {
-      // Original single-step admin flow
-      setLoading(true);
-      try {
-        const res = await fetch("/api/auth/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ name: name.trim(), email, password }),
-        });
-        const data = await res.json();
-        if (!res.ok) { toastError("Registration failed", data.error || "Something went wrong"); return; }
-        window.location.href = callbackUrl;
-      } catch {
-        toastError("Registration failed", "Something went wrong");
-      } finally {
-        setLoading(false);
-      }
-      return;
-    }
-    // Consultant flow: go to plan selection
-    setPlansLoading(true);
+  // Fetch active plans for the plan selection step (no auth required)
+  useEffect(() => {
+    if (!isConsultantFlow) { setPlansLoading(false); return; }
+    fetch("/api/plans")
+      .then((r) => r.json())
+      .then((d) => setPlans(d.data ?? []))
+      .catch(() => {})
+      .finally(() => setPlansLoading(false));
+  }, [isConsultantFlow]);
+
+  /* Consultant step 1 → 2: plan chosen */
+  const handleStep1 = () => {
+    if (!selectedPlanId) return;
     setStep(2);
-    try {
-      const res = await fetch("/api/admin/plans");
-      const data = await res.json();
-      setPlans((data.data ?? []).filter((p: PlanOption) => p.isActive));
-    } catch {
-      toastError("Couldn't load plans", "Please refresh and try again");
-    } finally {
-      setPlansLoading(false);
-    }
   };
 
-  /* Step 2 → 3: validate + register account */
-  const handleStep2 = async () => {
-    if (!selectedPlanId) return;
+  /* Non-consultant flow: single-step account creation */
+  const handleAdminRegister = async () => {
+    if (!name.trim() || !email || password.length < 8) return;
     setLoading(true);
     try {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ name: name.trim(), email, password, role: "consultant" }),
+        body: JSON.stringify({ name: name.trim(), email, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) { toastError("Registration failed", data.error || "Something went wrong"); return; }
+      window.location.href = callbackUrl;
+    } catch {
+      toastError("Registration failed", "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* Step 2 → 3: create account with planId */
+  const handleStep2 = async () => {
+    if (!name.trim() || !email || password.length < 8) return;
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ name: name.trim(), email, password, planId: selectedPlanId }),
       });
       const data = await res.json();
       if (!res.ok) { toastError("Registration failed", data.error || "Something went wrong"); setLoading(false); return; }
@@ -198,18 +198,12 @@ function RegisterContent() {
         )}
 
         <AnimatePresence mode="wait">
-          {/* ── STEP 1 ── Account details */}
-          {step === 1 && (
-            <motion.div key="step1" {...fadeSlide} className="card space-y-5">
+          {/* ── STEP 1 ── Plan selection (consultant) / Account (admin) */}
+          {step === 1 && !isConsultantFlow && (
+            <motion.div key="step1-admin" {...fadeSlide} className="card space-y-5">
               <div>
-                <h2 className="font-bold text-navy text-lg mb-1">
-                  {isConsultantFlow ? "Create your account" : "Create admin account"}
-                </h2>
-                <p className="text-sm text-slate-500">
-                  {isConsultantFlow
-                    ? "You'll choose your plan in the next step."
-                    : "Start managing your clients on the Full Funnel framework."}
-                </p>
+                <h2 className="font-bold text-navy text-lg mb-1">Create admin account</h2>
+                <p className="text-sm text-slate-500">Start managing your clients on the Full Funnel framework.</p>
               </div>
 
               <Input label="Full name" type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Sarah Johnson" leftIcon={<User className="w-4 h-4" />} />
@@ -223,47 +217,40 @@ function RegisterContent() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Min. 8 characters"
-                    onKeyDown={(e) => e.key === "Enter" && handleStep1()}
+                    onKeyDown={(e) => e.key === "Enter" && handleAdminRegister()}
                     leftIcon={<Lock className="w-4 h-4" />}
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPw(!showPw)}
-                    className="absolute right-3 top-[38px] text-slate-400 hover:text-slate-600 transition-colors"
-                    tabIndex={-1}
-                  >
+                  <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-[38px] text-slate-400 hover:text-slate-600 transition-colors" tabIndex={-1}>
                     {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
                 <PasswordStrength password={password} />
               </div>
 
-              <Button className="w-full" isLoading={loading} onClick={handleStep1} disabled={!name.trim() || !email || password.length < 8} rightIcon={<ArrowRight className="w-4 h-4" />}>
-                {isConsultantFlow ? "Continue to plan selection" : "Create account"}
+              <Button className="w-full" isLoading={loading} onClick={handleAdminRegister} disabled={!name.trim() || !email || password.length < 8} rightIcon={<ArrowRight className="w-4 h-4" />}>
+                Create account
               </Button>
 
-              {!isConsultantFlow && (
-                <div className="border-t border-slate-100 pt-4">
-                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">What you get</p>
-                  <ul className="space-y-2">
-                    {["Client portal with 11 framework modules", "Pipeline, invoicing and project management", "PDF report generation"].map((item) => (
-                      <li key={item} className="flex items-center gap-2 text-xs text-slate-600">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              <div className="border-t border-slate-100 pt-4">
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">What you get</p>
+                <ul className="space-y-2">
+                  {["Client portal with 11 framework modules", "Pipeline, invoicing and project management", "PDF report generation"].map((item) => (
+                    <li key={item} className="flex items-center gap-2 text-xs text-slate-600">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </motion.div>
           )}
 
-          {/* ── STEP 2 ── Plan selection */}
-          {step === 2 && (
-            <motion.div key="step2" {...fadeSlide} className="card space-y-5">
+          {/* ── STEP 1 (consultant) ── Plan selection with pricing */}
+          {step === 1 && isConsultantFlow && (
+            <motion.div key="step1-plan" {...fadeSlide} className="card space-y-5">
               <div>
                 <h2 className="font-bold text-navy text-lg mb-1">Choose your plan</h2>
-                <p className="text-sm text-slate-500">Select the plan that fits your consultancy.</p>
+                <p className="text-sm text-slate-500">Select the subscription that fits your consultancy. You can change any time.</p>
               </div>
 
               {plansLoading ? (
@@ -302,7 +289,7 @@ function RegisterContent() {
                         <span className="text-xs text-slate-500">Up to {plan.maxActiveClients} clients</span>
                         {plan.trialDays > 0 && (
                           <span className="text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-medium">
-                            {plan.trialDays}-day trial
+                            {plan.trialDays}-day free trial
                           </span>
                         )}
                       </div>
@@ -311,19 +298,54 @@ function RegisterContent() {
                 </div>
               )}
 
+              <Button className="w-full" disabled={!selectedPlanId} onClick={handleStep1} rightIcon={<ArrowRight className="w-4 h-4" />}>
+                Continue
+              </Button>
+            </motion.div>
+          )}
+
+          {/* ── STEP 2 ── Account details */}
+          {step === 2 && (
+            <motion.div key="step2" {...fadeSlide} className="card space-y-5">
+              <div>
+                <h2 className="font-bold text-navy text-lg mb-1">Create your account</h2>
+                <p className="text-sm text-slate-500">Set up your login credentials.</p>
+              </div>
+
+              <Input label="Full name" type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Sarah Johnson" leftIcon={<User className="w-4 h-4" />} />
+              <Input label="Work email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" leftIcon={<Mail className="w-4 h-4" />} />
+
+              <div className="space-y-1.5">
+                <div className="relative">
+                  <Input
+                    label="Password"
+                    type={showPw ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Min. 8 characters"
+                    onKeyDown={(e) => e.key === "Enter" && handleStep2()}
+                    leftIcon={<Lock className="w-4 h-4" />}
+                  />
+                  <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-[38px] text-slate-400 hover:text-slate-600 transition-colors" tabIndex={-1}>
+                    {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                <PasswordStrength password={password} />
+              </div>
+
               <div className="flex gap-3 pt-1">
                 <button onClick={() => setStep(1)} className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">
                   <ArrowLeft className="w-3.5 h-3.5" />
                   Back
                 </button>
-                <Button className="flex-1" isLoading={loading} disabled={!selectedPlanId} onClick={handleStep2} rightIcon={<ArrowRight className="w-4 h-4" />}>
+                <Button className="flex-1" isLoading={loading} disabled={!name.trim() || !email || password.length < 8} onClick={handleStep2} rightIcon={<ArrowRight className="w-4 h-4" />}>
                   Continue to checkout
                 </Button>
               </div>
             </motion.div>
           )}
 
-          {/* ── STEP 3 ── Checkout confirmation */}
+          {/* ── CONSULTANT STEP 3 ── Checkout confirmation */}
           {step === 3 && (
             <motion.div key="step3" {...fadeSlide} className="card space-y-5">
               <div>

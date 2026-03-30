@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
     subscription_data: {
       metadata: { planId: plan._id.toString(), consultantEmail: email },
     },
-    success_url: `${baseUrl}/verify?checkout=success`,
+    success_url: `${baseUrl}/register/setup-passkey`,
     cancel_url: `${baseUrl}/register?role=consultant&cancelled=true`,
   });
 

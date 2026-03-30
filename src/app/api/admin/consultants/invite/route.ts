@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import User from "@/models/User";
+import Plan from "@/models/Plan";
 import { requireAuth, apiError } from "@/lib/api-helpers";
 import { generateAndStoreOTP } from "@/lib/otp";
 import { sendEmail } from "@/lib/sendgrid";
@@ -18,6 +19,7 @@ import { z } from "zod";
 const bodySchema = z.object({
   email: z.string().email(),
   name: z.string().min(1),
+  planId: z.string().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -37,7 +39,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { email, name } = parsed.data;
+    const { email, name, planId } = parsed.data;
     const normEmail = email.toLowerCase();
 
     await connectDB();
@@ -51,14 +53,41 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Resolve plan limits when a planId is supplied
+    let maxActiveClients = 5;
+    let allowedModules: string[] = [];
+    let resolvedPlanId: unknown = undefined;
+    let trialEndsAt: Date | undefined = undefined;
+
+    if (planId) {
+      const plan = await Plan.findById(planId).lean() as {
+        _id: unknown;
+        maxActiveClients?: number;
+        allowedModules?: string[];
+        trialDays?: number;
+      } | null;
+      if (plan) {
+        maxActiveClients = plan.maxActiveClients ?? 5;
+        allowedModules = (plan.allowedModules ?? []) as string[];
+        resolvedPlanId = plan._id;
+        if ((plan.trialDays ?? 0) > 0) {
+          const d = new Date();
+          d.setDate(d.getDate() + plan.trialDays!);
+          trialEndsAt = d;
+        }
+      }
+    }
+
     // Create consultant account
     const consultant = await User.create({
       email: normEmail,
       name,
       role: "consultant",
       consultantProfile: {
-        maxActiveClients: 5,
-        allowedModules: [],
+        planId: resolvedPlanId,
+        maxActiveClients,
+        allowedModules,
+        trialEndsAt,
         availabilityStatus: "available",
         specialisms: [],
         roundRobinWeight: 1,

@@ -58,6 +58,13 @@ export async function POST(req: NextRequest) {
       maxAge: 30 * 24 * 60 * 60,
     });
 
+    // Determine if this consultant needs first-login onboarding
+    // (invited accounts have no password and no passkeys set)
+    const needsOnboarding =
+      u.role === "consultant" &&
+      !u.password &&
+      !(u.passkeyCredentials as unknown[])?.length;
+
     const response = NextResponse.json({
       ok: true,
       user: {
@@ -65,6 +72,7 @@ export async function POST(req: NextRequest) {
         email: u.email,
         name: u.name,
         role: u.role,
+        needsOnboarding,
       },
     });
 

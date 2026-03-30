@@ -1,8 +1,9 @@
 "use client";
-import { useState, Suspense, ClipboardEvent } from "react";
+import { useState, useEffect, Suspense, ClipboardEvent } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { Lock, Mail, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { Lock, Mail, ArrowRight, Eye, EyeOff, Fingerprint } from "lucide-react";
+import { startAuthentication } from "@simplewebauthn/browser";
 import { useToast } from "@/components/notifications/ToastContext";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
@@ -19,9 +20,15 @@ function LoginContent() {
   const [otpStep, setOtpStep] = useState<"email" | "code">("email");
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
+  const [passkeyLoading, setPasskeyLoading] = useState(false);
+  const [passkeySupported, setPasskeySupported] = useState(false);
   const { success, error: toastError } = useToast();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/portal/overview";
+
+  useEffect(() => {
+    setPasskeySupported(!!window.PublicKeyCredential);
+  }, []);
 
   function redirectAfterLogin(role: string) {
     if (role === "admin") return "/admin/dashboard";
@@ -50,6 +57,51 @@ function LoginContent() {
     } catch {
       toastError("Sign in failed", "Something went wrong");
       setLoading(false);
+    }
+  };
+
+  const handlePasskeyLogin = async () => {
+    setPasskeyLoading(true);
+    try {
+      // 1. Get authentication options from server
+      const optRes = await fetch("/api/auth/passkey/authenticate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email || undefined }),
+      });
+      const { options } = await optRes.json();
+      if (!optRes.ok) throw new Error("Failed to get options");
+
+      // 2. Prompt the user's authenticator
+      const credential = await startAuthentication(options);
+
+      // 3. Verify with server
+      const verifyRes = await fetch("/api/auth/passkey/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "authenticate", email, response: credential, challenge: options.challenge }),
+      });
+      const verifyData = await verifyRes.json();
+      if (!verifyRes.ok || !verifyData.success) throw new Error(verifyData.error ?? "Passkey authentication failed");
+
+      // 4. Issue session cookie
+      const loginRes = await fetch("/api/auth/login-by-id", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ userId: verifyData.userId }),
+      });
+      const loginData = await loginRes.json();
+      if (!loginRes.ok) throw new Error(loginData.error ?? "Session error");
+
+      window.location.href = redirectAfterLogin(loginData.user?.role ?? "");
+    } catch (e) {
+      const msg = (e as Error).message;
+      if (msg !== "The operation either timed out or was not allowed.") {
+        toastError("Passkey sign-in failed", msg || "Please try another method");
+      }
+    } finally {
+      setPasskeyLoading(false);
     }
   };
 
@@ -93,7 +145,10 @@ function LoginContent() {
       if (!loginRes.ok) {
         toastError("Invalid code", loginData.error);
       } else {
-        window.location.href = redirectAfterLogin(loginData.user?.role ?? "");
+        const dest = loginData.user?.needsOnboarding
+          ? "/onboarding"
+          : redirectAfterLogin(loginData.user?.role ?? "");
+        window.location.href = dest;
       }
     } catch (e) {
       toastError("Invalid code", (e as Error).message);
@@ -307,6 +362,21 @@ function LoginContent() {
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Passkey sign-in — shown when browser supports it */}
+          {passkeySupported && (
+            <div className="mt-5 pt-5 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={handlePasskeyLogin}
+                disabled={passkeyLoading}
+                className="w-full flex items-center justify-center gap-2.5 py-2.5 px-4 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all disabled:opacity-50"
+              >
+                <Fingerprint className="w-4 h-4 text-slate-500" />
+                {passkeyLoading ? "Verifying…" : "Sign in with passkey"}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Demo quick-login — only visible in development */}
