@@ -261,7 +261,7 @@ function MemberCard({
       )}>
         <GripHorizontal className={cn("w-3.5 h-3.5 flex-shrink-0", isRoot ? "text-white/30" : "text-gray-300")} />
         {isRoot
-          ? <Crown className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+          ? <Crown className="w-3.5 h-3.5 text-brand-blue flex-shrink-0" />
           : <Users className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
         }
         <div className="flex-1 min-w-0">

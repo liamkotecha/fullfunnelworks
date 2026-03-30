@@ -71,8 +71,8 @@ const SECTION_DEFS: SectionDef[] = [
   {
     id: "process", label: "Process", href: "/portal/process/checklist",
     desc: "Checklist · Methodology · Builder", icon: Settings,
-    iconColor: "text-amber-600", iconBg: "bg-amber-50",
-    labelColor: "text-amber-600", barColor: "bg-amber-500",
+    iconColor: "text-brand-blue", iconBg: "bg-brand-blue/10",
+    labelColor: "text-brand-blue", barColor: "bg-brand-blue",
     subs: [
       { key: "process-checklist",   label: "Process Checklist",  href: "/portal/process/checklist" },
       { key: "process-methodology", label: "Sales Methodology",  href: "/portal/process/methodology" },
@@ -82,22 +82,22 @@ const SECTION_DEFS: SectionDef[] = [
   {
     id: "roadmap", label: "Roadmap", href: "/portal/roadmap",
     desc: "5-phase growth plan", icon: MapPin,
-    iconColor: "text-purple-600", iconBg: "bg-purple-50",
-    labelColor: "text-purple-600", barColor: "bg-purple-500",
+    iconColor: "text-brand-pink", iconBg: "bg-brand-pink/10",
+    labelColor: "text-brand-pink", barColor: "bg-brand-pink",
     subs: [{ key: "roadmap-roadmap", label: "Roadmap", href: "/portal/roadmap" }],
   },
   {
     id: "kpis", label: "KPIs", href: "/portal/kpis",
     desc: "Company & department metrics", icon: BarChart3,
-    iconColor: "text-teal-600", iconBg: "bg-teal-50",
-    labelColor: "text-teal-600", barColor: "bg-teal-500",
+    iconColor: "text-brand-green", iconBg: "bg-brand-green/10",
+    labelColor: "text-brand-green", barColor: "bg-brand-green",
     subs: [{ key: "kpis-kpis", label: "KPIs", href: "/portal/kpis" }],
   },
   {
     id: "gtm", label: "GTM Playbook", href: "/portal/gtm/market",
     desc: "Market Intelligence · Competition", icon: Map,
-    iconColor: "text-indigo-600", iconBg: "bg-indigo-50",
-    labelColor: "text-indigo-600", barColor: "bg-indigo-500",
+    iconColor: "text-brand-blue", iconBg: "bg-brand-blue/10",
+    labelColor: "text-brand-blue", barColor: "bg-brand-blue",
     subs: [
       { key: "gtm-market",      label: "Market Intelligence", href: "/portal/gtm/market" },
       { key: "gtm-competition", label: "Competition",         href: "/portal/gtm/competition" },
@@ -149,8 +149,8 @@ function RagBadge({ percent, hasSubs }: { percent: number; hasSubs: boolean }) {
   }
   if (percent >= 33) {
     return (
-      <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-1.5 py-0.5 flex-shrink-0">
-        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />
+      <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#141414] bg-brand-blue/10 border border-brand-blue/20 rounded-md px-1.5 py-0.5 flex-shrink-0">
+        <span className="w-1.5 h-1.5 rounded-full bg-brand-blue flex-shrink-0" />
         In progress
       </span>
     );
@@ -314,7 +314,7 @@ export default function PortalOverviewPage() {
       {/* Nudge banner — warm re-engagement (7–13 days inactive) */}
       {staleness === "nudge" && !nudgeDismissed && resumeTarget && (
         <motion.div variants={fadeUp}>
-          <div className="relative bg-navy/5 border border-brand-blue/30 rounded-lg px-5 py-4 flex items-center gap-4">
+          <div className="relative bg-[#141414]/5 border border-brand-blue/30 rounded-lg px-5 py-4 flex items-center gap-4">
             <span className="text-lg flex-shrink-0">👋</span>
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-slate-800 text-sm">
@@ -439,7 +439,7 @@ export default function PortalOverviewPage() {
                           <Check className="w-3 h-3" /> Submitted
                         </span>
                       ) : (
-                        <span className="flex items-center gap-1 text-xs font-medium text-amber-600">
+                        <span className="flex items-center gap-1 text-xs font-medium text-[#141414]">
                           <Clock className="w-3 h-3" /> In progress
                         </span>
                       )}

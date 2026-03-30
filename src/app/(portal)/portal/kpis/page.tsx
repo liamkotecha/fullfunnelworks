@@ -44,8 +44,8 @@ const COLUMNS: { id: KpiStatus; label: string }[] = [
 ];
 
 const CAT_PILL: Record<KpiCategory, string> = {
-  company:    "bg-blue-50 text-blue-700 ring-1 ring-blue-100",
-  department: "bg-purple-50 text-purple-700 ring-1 ring-purple-100",
+  company:    "bg-brand-blue/10 text-[#141414] ring-1 ring-brand-blue/20",
+  department: "bg-[#141414]/5 text-[#141414] ring-1 ring-[#141414]/10",
 };
 const CAT_LABEL: Record<KpiCategory, string> = { company: "Company KPI", department: "Department KPI" };
 
@@ -256,7 +256,7 @@ function KpiModal({
                 className={cn(
                   "px-3 py-1.5 rounded text-xs font-semibold transition-all",
                   form.category === cat
-                    ? cat === "company" ? "bg-blue-600 text-white" : "bg-purple-600 text-white"
+                    ? cat === "company" ? "bg-brand-blue text-[#141414]" : "bg-[#141414] text-white"
                     : "bg-slate-100 text-slate-500 hover:bg-slate-200"
                 )}
               >
@@ -275,7 +275,7 @@ function KpiModal({
             value={form.title}
             onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
             placeholder="e.g. Monthly Revenue Growth"
-            className="w-full border border-gray-200 rounded px-3 py-2 text-sm text-[#1C1C1E] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/30 transition-all"
+            className="w-full border border-gray-200 rounded px-3 py-2 text-sm text-[#1C1C1E] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#141414]/20 focus:border-[#141414]/30 transition-all"
           />
         </div>
 
@@ -287,7 +287,7 @@ function KpiModal({
             onChange={(e) => setForm((f) => ({ ...f, outcome: e.target.value }))}
             placeholder="e.g. Increase by 15% QoQ — tracked via GA4"
             rows={3}
-            className="w-full border border-gray-200 rounded px-3 py-2 text-sm text-[#1C1C1E] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy/30 transition-all resize-none"
+            className="w-full border border-gray-200 rounded px-3 py-2 text-sm text-[#1C1C1E] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#141414]/20 focus:border-[#141414]/30 transition-all resize-none"
           />
         </div>
 

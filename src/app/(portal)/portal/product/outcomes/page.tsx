@@ -30,10 +30,10 @@ const COLUMNS: {
   placeholder: string;
   pill: string;
 }[] = [
-  { key: "feature", label: "Feature", placeholder: "e.g. Real-time reporting dashboard",      pill: "text-blue-700 bg-blue-50 ring-1 ring-blue-100"         },
-  { key: "problem", label: "Problem", placeholder: "e.g. Managers can't see pipeline status", pill: "text-amber-700 bg-amber-50 ring-1 ring-amber-100"       },
-  { key: "outcome", label: "Outcome", placeholder: "e.g. Daily visibility into deal health",  pill: "text-emerald-700 bg-emerald-50 ring-1 ring-emerald-100" },
-  { key: "impact",  label: "Impact",  placeholder: "e.g. 15% reduction in stalled deals",     pill: "text-purple-700 bg-purple-50 ring-1 ring-purple-100"   },
+  { key: "feature", label: "Feature", placeholder: "e.g. Real-time reporting dashboard",      pill: "text-[#141414] bg-brand-blue/10 ring-1 ring-brand-blue/20"          },
+  { key: "problem", label: "Problem", placeholder: "e.g. Managers can't see pipeline status", pill: "text-[#141414] bg-brand-pink/10 ring-1 ring-brand-pink/20"          },
+  { key: "outcome", label: "Outcome", placeholder: "e.g. Daily visibility into deal health",  pill: "text-[#141414] bg-brand-green/10 ring-1 ring-brand-green/20"         },
+  { key: "impact",  label: "Impact",  placeholder: "e.g. 15% reduction in stalled deals",     pill: "text-[#141414] bg-[#141414]/5 ring-1 ring-[#141414]/10"              },
 ];
 
 function newRow(): OutcomeRow {

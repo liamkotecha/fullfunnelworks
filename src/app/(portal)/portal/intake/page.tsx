@@ -42,9 +42,9 @@ function ChecklistField({ items, values, onChange }: {
       {items.map((item) => (
         <label key={item} className={cn(
           "flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all",
-          values[item] ? "border-navy bg-navy/5" : "border-gray-100 hover:border-gray-200"
+          values[item] ? "border-[#141414] bg-[#141414]/5" : "border-gray-100 hover:border-gray-200"
         )}>
-          <input type="checkbox" checked={!!values[item]} onChange={(e) => onChange(item, e.target.checked)} className="mt-0.5 rounded accent-[#0F1F3D]" />
+          <input type="checkbox" checked={!!values[item]} onChange={(e) => onChange(item, e.target.checked)} className="mt-0.5 rounded accent-[#141414]" />
           <span className="text-sm text-slate-700 leading-snug">{item}</span>
         </label>
       ))}
@@ -126,7 +126,7 @@ export default function IntakePage() {
         {sections.map((s, i) => (
           <button key={s.id} onClick={() => goTo(i)} className={cn(
             "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all",
-            i === sectionIndex ? "bg-navy text-white shadow-sm" :
+            i === sectionIndex ? "bg-[#141414] text-white shadow-sm" :
             sectionProgress[s.id] ? "bg-brand-green/10 text-brand-green border border-brand-green/30" :
             "bg-gray-100 text-slate-500 hover:bg-gray-200"
           )}>
@@ -145,7 +145,7 @@ export default function IntakePage() {
                 <Badge variant="neutral">{sectionIndex + 1} / {sections.length}</Badge>
                 {sectionProgress[current.id] && <Badge variant="success" dot>Saved</Badge>}
               </div>
-              <h2 className="text-lg font-serif text-navy">{current.label}</h2>
+              <h2 className="text-lg font-serif text-[#141414]">{current.label}</h2>
             </div>
 
             {current.id === "overview" && (
@@ -163,7 +163,7 @@ export default function IntakePage() {
               <div className="space-y-6">
                 <p className="text-sm text-slate-600">{ASSESSMENT_SECTION.intro}</p>
                 <div>
-                  <h3 className="font-semibold text-navy text-sm mb-3">{ASSESSMENT_SECTION.checklistHeading}</h3>
+                  <h3 className="font-semibold text-[#141414] text-sm mb-3">{ASSESSMENT_SECTION.checklistHeading}</h3>
                   <ChecklistField
                     items={ASSESSMENT_SECTION.checklist}
                     values={(responses["assessment_checklist"] as Record<string, boolean>) ?? {}}
@@ -171,12 +171,12 @@ export default function IntakePage() {
                   />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-navy text-sm mb-1">{ASSESSMENT_SECTION.swot.heading}</h3>
+                  <h3 className="font-semibold text-[#141414] text-sm mb-1">{ASSESSMENT_SECTION.swot.heading}</h3>
                   <p className="text-xs text-slate-500 mb-4">{ASSESSMENT_SECTION.swot.intro}</p>
-                  <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-4">{ASSESSMENT_SECTION.swot.weightingNote}</p>
+                  <p className="text-xs text-[#141414] bg-brand-blue/5 border border-brand-blue/20 rounded-lg px-3 py-2 mb-4">{ASSESSMENT_SECTION.swot.weightingNote}</p>
                   {(["strengths","weaknesses","opportunities","threats"] as const).map((group) => {
                     const g = ASSESSMENT_SECTION.swot[group];
-                    const cls: Record<string,string> = { strengths:"bg-emerald-50 border-emerald-200", weaknesses:"bg-orange-50 border-orange-200", opportunities:"bg-blue-50 border-blue-200", threats:"bg-red-50 border-red-200" };
+                    const cls: Record<string,string> = { strengths:"bg-brand-green/5 border-brand-green/20", weaknesses:"bg-brand-pink/5 border-brand-pink/20", opportunities:"bg-brand-blue/5 border-brand-blue/20", threats:"bg-red-50 border-red-200" };
                     return (
                       <div key={group} className={cn("rounded-2xl border p-5 space-y-4 mb-4", cls[group])}>
                         <div><h4 className="font-bold text-sm uppercase tracking-wide">{g.label}</h4><p className="text-xs text-slate-500">{g.subtitle}</p></div>
@@ -201,11 +201,11 @@ export default function IntakePage() {
                   })}
                 </div>
                 <div>
-                  <h3 className="font-semibold text-navy text-sm mb-1">{ASSESSMENT_SECTION.most.heading}</h3>
+                  <h3 className="font-semibold text-[#141414] text-sm mb-1">{ASSESSMENT_SECTION.most.heading}</h3>
                   <p className="text-xs text-slate-500 mb-4">{ASSESSMENT_SECTION.most.intro}</p>
                   {(["mission","objectives","strategy","tactics"] as const).map((key) => {
                     const section = ASSESSMENT_SECTION.most[key];
-                    const colors: Record<string,string> = { mission:"bg-slate-50 border-brand-blue/20", objectives:"bg-blue-50 border-blue-200", strategy:"bg-brand-green/5 border-brand-green/20", tactics:"bg-amber-50 border-amber-200" };
+                    const colors: Record<string,string> = { mission:"bg-slate-50 border-brand-blue/20", objectives:"bg-brand-blue/5 border-brand-blue/20", strategy:"bg-brand-green/5 border-brand-green/20", tactics:"bg-slate-50 border-slate-200" };
                     return (
                       <div key={key} className={cn("rounded-2xl border p-5 space-y-4 mb-4", colors[key])}>
                         <div>
@@ -220,15 +220,15 @@ export default function IntakePage() {
                   })}
                 </div>
                 <div>
-                  <h3 className="font-semibold text-navy text-sm mb-1">{ASSESSMENT_SECTION.leadershipQuestions.heading}</h3>
+                  <h3 className="font-semibold text-[#141414] text-sm mb-1">{ASSESSMENT_SECTION.leadershipQuestions.heading}</h3>
                   <p className="text-xs text-slate-500 mb-4">{ASSESSMENT_SECTION.leadershipQuestions.intro}</p>
                   <div className="space-y-4">
                     {ASSESSMENT_SECTION.leadershipQuestions.questions.map((q, i) => (
                       <div key={q.id} className="border border-gray-100 rounded-2xl p-5 space-y-3">
                         <div className="flex items-start gap-3">
-                          <div className="w-7 h-7 rounded-full bg-navy text-white flex items-center justify-center text-xs font-bold flex-shrink-0">{i + 1}</div>
+                          <div className="w-7 h-7 rounded-full bg-[#141414] text-white flex items-center justify-center text-xs font-bold flex-shrink-0">{i + 1}</div>
                           <div>
-                            <p className="font-semibold text-navy text-sm">{q.question}</p>
+                            <p className="font-semibold text-[#141414] text-sm">{q.question}</p>
                             <p className="text-xs text-slate-500 italic mt-1">{q.subPrompt}</p>
                           </div>
                         </div>
@@ -242,20 +242,20 @@ export default function IntakePage() {
 
             {current.id === "people" && (
               <div className="space-y-6">
-                <div className="bg-orange-50 border border-orange-100 rounded-lg p-4">
-                  <h3 className="font-semibold text-orange-800 text-sm mb-2">{PEOPLE_SECTION.currentChallenges.heading}</h3>
-                  <ul className="list-disc list-inside text-xs text-orange-700 space-y-0.5">{PEOPLE_SECTION.currentChallenges.items.map((item) => <li key={item}>{item}</li>)}</ul>
+                <div className="bg-brand-pink/5 border border-brand-pink/20 rounded-lg p-4">
+                  <h3 className="font-semibold text-[#141414] text-sm mb-2">{PEOPLE_SECTION.currentChallenges.heading}</h3>
+                  <ul className="list-disc list-inside text-xs text-[#141414]/70 space-y-0.5">{PEOPLE_SECTION.currentChallenges.items.map((item) => <li key={item}>{item}</li>)}</ul>
                 </div>
-                <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
-                  <h3 className="font-semibold text-blue-800 text-sm mb-2">{PEOPLE_SECTION.strategicDirection.heading}</h3>
-                  <ul className="list-disc list-inside text-xs text-blue-700 space-y-0.5">{PEOPLE_SECTION.strategicDirection.items.map((item) => <li key={item}>{item}</li>)}</ul>
+                <div className="bg-brand-blue/5 border border-brand-blue/20 rounded-lg p-4">
+                  <h3 className="font-semibold text-[#141414] text-sm mb-2">{PEOPLE_SECTION.strategicDirection.heading}</h3>
+                  <ul className="list-disc list-inside text-xs text-[#141414]/70 space-y-0.5">{PEOPLE_SECTION.strategicDirection.items.map((item) => <li key={item}>{item}</li>)}</ul>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-navy text-sm mb-3">{PEOPLE_SECTION.checklistHeading}</h3>
+                  <h3 className="font-semibold text-[#141414] text-sm mb-3">{PEOPLE_SECTION.checklistHeading}</h3>
                   <ChecklistField items={PEOPLE_SECTION.checklist} values={(responses["people_checklist"] as Record<string, boolean>) ?? {}} onChange={(k, v) => set("people_checklist", { ...((responses["people_checklist"] as Record<string, boolean>) ?? {}), [k]: v })} />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-navy text-sm mb-3">{PEOPLE_SECTION.teamCapabilityTracker.heading}</h3>
+                  <h3 className="font-semibold text-[#141414] text-sm mb-3">{PEOPLE_SECTION.teamCapabilityTracker.heading}</h3>
                   <div className="space-y-3">
                     {PEOPLE_SECTION.teamCapabilityTracker.fields.map((field) => (
                       field.type === "textarea" ? (
@@ -264,8 +264,8 @@ export default function IntakePage() {
                         <div key={field.id} className="space-y-1.5">
                           <label className="block type-label">{field.label}</label>
                           <div className="flex items-center gap-3">
-                            <input type="range" min={(field as { min?: number }).min} max={(field as { max?: number }).max} value={(responses[field.id] as number) ?? (field as { defaultValue?: number }).defaultValue ?? 50} onChange={(e) => set(field.id, Number(e.target.value))} className="flex-1 accent-[#0F1F3D]" />
-                            <span className="text-sm font-semibold text-navy w-8 text-right">{(responses[field.id] as number) ?? (field as { defaultValue?: number }).defaultValue ?? 50}</span>
+                            <input type="range" min={(field as { min?: number }).min} max={(field as { max?: number }).max} value={(responses[field.id] as number) ?? (field as { defaultValue?: number }).defaultValue ?? 50} onChange={(e) => set(field.id, Number(e.target.value))} className="flex-1 accent-[#141414]" />
+                            <span className="text-sm font-semibold text-[#141414] w-8 text-right">{(responses[field.id] as number) ?? (field as { defaultValue?: number }).defaultValue ?? 50}</span>
                           </div>
                         </div>
                       ) : (
@@ -280,16 +280,16 @@ export default function IntakePage() {
             {current.id === "product" && (
               <div className="space-y-6">
                 <div>
-                  <h3 className="font-semibold text-navy text-sm mb-3">{PRODUCT_SECTION.checklistHeading}</h3>
+                  <h3 className="font-semibold text-[#141414] text-sm mb-3">{PRODUCT_SECTION.checklistHeading}</h3>
                   <ChecklistField items={PRODUCT_SECTION.checklist} values={(responses["product_checklist"] as Record<string, boolean>) ?? {}} onChange={(k, v) => set("product_checklist", { ...((responses["product_checklist"] as Record<string, boolean>) ?? {}), [k]: v })} />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-navy text-sm mb-1">{PRODUCT_SECTION.outcomeMapper.heading}</h3>
+                  <h3 className="font-semibold text-[#141414] text-sm mb-1">{PRODUCT_SECTION.outcomeMapper.heading}</h3>
                   <p className="text-xs text-slate-500 mb-4">{PRODUCT_SECTION.outcomeMapper.intro}</p>
                   <div className="grid sm:grid-cols-2 gap-4">
                     {PRODUCT_SECTION.outcomeMapper.columns.map((col) => (
                       <div key={col.id} className="bg-gray-50 rounded-lg p-4">
-                        <h4 className="text-xs font-bold text-gold uppercase tracking-widest mb-2">{col.label}</h4>
+                        <h4 className="text-xs font-bold text-[#141414] uppercase tracking-widest mb-2">{col.label}</h4>
                         <Textarea label="" value={(responses[col.id] as string) ?? ""} onChange={(e) => set(col.id, e.target.value)} placeholder={col.placeholder} rows={3} />
                       </div>
                     ))}
@@ -301,17 +301,17 @@ export default function IntakePage() {
             {current.id === "process" && (
               <div className="space-y-6">
                 <div>
-                  <h3 className="font-semibold text-navy text-sm mb-3">{PROCESS_SECTION.checklistHeading}</h3>
+                  <h3 className="font-semibold text-[#141414] text-sm mb-3">{PROCESS_SECTION.checklistHeading}</h3>
                   <ChecklistField items={PROCESS_SECTION.checklist} values={(responses["process_checklist"] as Record<string, boolean>) ?? {}} onChange={(k, v) => set("process_checklist", { ...((responses["process_checklist"] as Record<string, boolean>) ?? {}), [k]: v })} />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-navy text-sm mb-1">{PROCESS_SECTION.salesCapabilityMethodology.heading}</h3>
+                  <h3 className="font-semibold text-[#141414] text-sm mb-1">{PROCESS_SECTION.salesCapabilityMethodology.heading}</h3>
                   <p className="text-xs text-slate-500 mb-4">{PROCESS_SECTION.salesCapabilityMethodology.intro}</p>
                   {PROCESS_SECTION.salesCapabilityMethodology.phases.map((phase) => (
                     <div key={phase.number} className="border border-gray-100 rounded-2xl p-5 mb-4 space-y-4">
                       <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-full bg-navy text-white flex items-center justify-center text-sm font-bold flex-shrink-0">{phase.number}</div>
-                        <div><h4 className="font-semibold text-navy text-sm">{phase.title}</h4><p className="text-xs text-slate-500">{phase.objective}</p></div>
+                        <div className="w-8 h-8 rounded-full bg-[#141414] text-white flex items-center justify-center text-sm font-bold flex-shrink-0">{phase.number}</div>
+                        <div><h4 className="font-semibold text-[#141414] text-sm">{phase.title}</h4><p className="text-xs text-slate-500">{phase.objective}</p></div>
                       </div>
                       <div className="space-y-3">
                         {phase.questions.map((q) => (
@@ -322,10 +322,10 @@ export default function IntakePage() {
                   ))}
                 </div>
                 <div>
-                  <h3 className="font-semibold text-navy text-sm mb-3">{PROCESS_SECTION.salesProcessBuilder.heading}</h3>
+                  <h3 className="font-semibold text-[#141414] text-sm mb-3">{PROCESS_SECTION.salesProcessBuilder.heading}</h3>
                   {PROCESS_SECTION.salesProcessBuilder.stages.map((stage) => (
                     <div key={stage.id} className="bg-gray-50 rounded-2xl p-4 mb-3 space-y-3">
-                      <h4 className="font-bold text-xs text-gold uppercase tracking-widest">{stage.heading}</h4>
+                      <h4 className="font-bold text-xs text-[#141414] uppercase tracking-widest">{stage.heading}</h4>
                       {stage.fields.map((f) => (
                         <Textarea key={f.label} label={f.label} value={(responses[`proc_stage_${stage.id}_${f.label}`] as string) ?? ""} onChange={(e) => set(`proc_stage_${stage.id}_${f.label}`, e.target.value)} placeholder={f.placeholder} rows={2} />
                       ))}
@@ -341,11 +341,11 @@ export default function IntakePage() {
                 {ROADMAP_SECTION.phases.map((phase) => (
                   <div key={phase.number} className="border border-gray-100 rounded-2xl p-5 space-y-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-navy text-white flex items-center justify-center text-sm font-bold flex-shrink-0">{phase.number}</div>
-                      <div><h3 className="font-semibold text-navy text-sm">{phase.title}</h3><p className="text-xs text-slate-400">{phase.duration}</p></div>
+                      <div className="w-9 h-9 rounded-full bg-[#141414] text-white flex items-center justify-center text-sm font-bold flex-shrink-0">{phase.number}</div>
+                      <div><h3 className="font-semibold text-[#141414] text-sm">{phase.title}</h3><p className="text-xs text-slate-400">{phase.duration}</p></div>
                     </div>
                     <div className="grid grid-cols-2 gap-1 text-xs text-slate-500">
-                      {phase.items.map((item) => <div key={item} className="flex items-start gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-gold mt-1.5 flex-shrink-0" />{item}</div>)}
+                      {phase.items.map((item) => <div key={item} className="flex items-start gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-brand-blue mt-1.5 flex-shrink-0" />{item}</div>)}
                     </div>
                     <Textarea label="Your notes / actions for this phase" value={(responses[`roadmap_notes_${phase.number}`] as string) ?? ""} onChange={(e) => set(`roadmap_notes_${phase.number}`, e.target.value)} rows={3} placeholder="What specifically will you do in this phase?" />
                   </div>
@@ -357,7 +357,7 @@ export default function IntakePage() {
               <div className="space-y-6">
                 <p className="text-sm text-slate-600">{KPIS_SECTION.intro}</p>
                 <div>
-                  <h3 className="font-semibold text-navy text-sm mb-3">{KPIS_SECTION.companyKPIsHeading}</h3>
+                  <h3 className="font-semibold text-[#141414] text-sm mb-3">{KPIS_SECTION.companyKPIsHeading}</h3>
                   <div className="space-y-3">
                     {KPIS_SECTION.companyKPIPlaceholders.map((kpi, i) => (
                       <div key={i} className="grid sm:grid-cols-2 gap-3 p-4 bg-gray-50 rounded-lg">
@@ -368,7 +368,7 @@ export default function IntakePage() {
                   </div>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-navy text-sm mb-3">{KPIS_SECTION.departmentKPIsHeading}</h3>
+                  <h3 className="font-semibold text-[#141414] text-sm mb-3">{KPIS_SECTION.departmentKPIsHeading}</h3>
                   <div className="space-y-3">
                     {KPIS_SECTION.deptKPIPlaceholders.map((kpi, i) => (
                       <div key={i} className="grid sm:grid-cols-2 gap-3 p-4 bg-gray-50 rounded-lg">

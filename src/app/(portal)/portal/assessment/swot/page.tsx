@@ -267,7 +267,7 @@ export default function SwotPage() {
                     <span
                       className={cn(
                         "relative z-10 ml-1 text-xs",
-                        count > 0 ? "text-amber-400" : "text-white/25"
+                        count > 0 ? "text-brand-blue" : "text-white/25"
                       )}
                     >
                       {count}/{qBound.count}

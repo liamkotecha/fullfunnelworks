@@ -113,19 +113,19 @@ function CapabilityCard({
         <SkillSlider
           label="Sales"
           value={cap.sales}
-          accent="bg-blue-50 text-blue-700"
+          accent="bg-brand-blue/10 text-[#141414]"
           onChange={(v) => onChange({ ...cap, sales: v })}
         />
         <SkillSlider
           label="Digital"
           value={cap.digital}
-          accent="bg-emerald-50 text-emerald-700"
+          accent="bg-brand-green/10 text-[#141414]"
           onChange={(v) => onChange({ ...cap, digital: v })}
         />
         <SkillSlider
           label="Leadership"
           value={cap.leadership}
-          accent="bg-amber-50 text-amber-700"
+          accent="bg-brand-pink/10 text-[#141414]"
           onChange={(v) => onChange({ ...cap, leadership: v })}
         />
       </div>

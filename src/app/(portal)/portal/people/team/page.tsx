@@ -32,10 +32,10 @@ const COLUMNS: {
   pill: string;
   width: string;
 }[] = [
-  { key: "name",       label: "Name",       placeholder: "e.g. Sarah Johnson",      pill: "text-blue-700 bg-blue-50 ring-1 ring-blue-100",     width: "min-w-[160px]" },
-  { key: "title",      label: "Job Title",  placeholder: "e.g. Account Executive",  pill: "text-purple-700 bg-purple-50 ring-1 ring-purple-100", width: "min-w-[160px]" },
-  { key: "department", label: "Department", placeholder: "e.g. Sales",              pill: "text-amber-700 bg-amber-50 ring-1 ring-amber-100",  width: "min-w-[140px]" },
-  { key: "email",      label: "Email",      placeholder: "e.g. sarah@company.com",  pill: "text-emerald-700 bg-emerald-50 ring-1 ring-emerald-100", width: "min-w-[200px]" },
+  { key: "name",       label: "Name",       placeholder: "e.g. Sarah Johnson",      pill: "text-[#141414] bg-brand-blue/10 ring-1 ring-brand-blue/20",    width: "min-w-[160px]" },
+  { key: "title",      label: "Job Title",  placeholder: "e.g. Account Executive",  pill: "text-[#141414] bg-brand-pink/10 ring-1 ring-brand-pink/20",   width: "min-w-[160px]" },
+  { key: "department", label: "Department", placeholder: "e.g. Sales",              pill: "text-[#141414] bg-[#141414]/5 ring-1 ring-[#141414]/10",      width: "min-w-[140px]" },
+  { key: "email",      label: "Email",      placeholder: "e.g. sarah@company.com",  pill: "text-[#141414] bg-brand-green/10 ring-1 ring-brand-green/20", width: "min-w-[200px]" },
 ];
 
 function newMember(): TeamMember {

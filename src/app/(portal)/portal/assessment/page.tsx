@@ -110,7 +110,7 @@ export default function AssessmentPage() {
                     status === "complete"
                       ? "bg-brand-green/10 text-brand-green"
                       : status === "in_progress"
-                        ? "bg-amber-50 text-amber-600"
+                        ? "bg-brand-blue/10 text-[#141414]"
                         : "bg-slate-100 text-slate-400"
                   )}
                 >
@@ -131,7 +131,7 @@ export default function AssessmentPage() {
                       Complete
                     </span>
                   ) : status === "in_progress" ? (
-                    <span className="text-xs font-medium text-amber-600">
+                    <span className="text-xs font-medium text-[#141414]">
                       {percent}%
                     </span>
                   ) : (

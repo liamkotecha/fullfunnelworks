@@ -32,11 +32,11 @@ const WEEK_W       = 52;   // px per week column
 const LEFT_W       = 340;  // px for the label column
 
 const PHASE_COLOURS = [
-  { barRaw: "rgb(108,194,255)",  text: "text-[rgb(50,130,190)]" },
-  { barRaw: "rgb(167,139,250)",  text: "text-purple-600"         },
-  { barRaw: "rgb(251,191,36)",   text: "text-amber-600"          },
-  { barRaw: "rgb(112,255,162)",  text: "text-emerald-600"        },
-  { barRaw: "rgb(148,163,184)",  text: "text-slate-500"          },
+  { barRaw: "rgb(108,194,255)",  text: "text-[rgb(50,130,190)]"  },
+  { barRaw: "rgb(255,118,184)",  text: "text-[rgb(190,40,100)]"  },
+  { barRaw: "rgb(147,210,255)",  text: "text-[rgb(50,130,190)]"  },
+  { barRaw: "rgb(112,255,162)",  text: "text-[rgb(0,140,70)]"    },
+  { barRaw: "rgb(148,163,184)",  text: "text-slate-500"           },
 ];
 
 // Task rows per phase — maps each phase item to a portal sub-section for live progress
@@ -80,8 +80,8 @@ function TaskStatusIcon({ pct }: { pct: number }) {
     </span>
   );
   if (pct > 0) return (
-    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full border-2 border-amber-400 flex-shrink-0">
-      <span className="w-2 h-2 rounded-full bg-amber-400" />
+    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full border-2 border-brand-blue flex-shrink-0">
+      <span className="w-2 h-2 rounded-full bg-brand-blue" />
     </span>
   );
   return <Circle className="w-5 h-5 text-slate-200 flex-shrink-0" />;
@@ -391,7 +391,7 @@ export default function RoadmapPage() {
                         {pct > 0 && (
                           <span
                             style={{ position: "absolute", top: "50%", transform: "translateY(-50%)", left: pxLeft + (completedW !== null ? completedW : pxWidth) + 6 }}
-                            className={cn("text-[10px] font-bold tabular-nums whitespace-nowrap pointer-events-none select-none", isComplete ? col.text : "text-amber-500")}
+                            className={cn("text-[10px] font-bold tabular-nums whitespace-nowrap pointer-events-none select-none", isComplete ? col.text : "text-[rgb(50,130,190)]")}
                           >
                             {pct}%
                           </span>

@@ -78,14 +78,14 @@ function NoteItem({
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             rows={3}
-            className="w-full text-xs text-white bg-white/5 border border-white/10 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-amber-400 resize-none"
+            className="w-full text-xs text-white bg-white/5 border border-white/10 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-brand-blue resize-none"
             autoFocus
           />
           <div className="flex gap-2 mt-1 items-center">
             <button
               onClick={save}
               disabled={saving || !draft.trim()}
-              className="text-[10px] text-amber-400 hover:text-amber-300 font-semibold disabled:opacity-50"
+              className="text-[10px] text-brand-blue hover:text-brand-blue/70 font-semibold disabled:opacity-50"
             >
               Save
             </button>
@@ -98,7 +98,7 @@ function NoteItem({
             >
               Cancel
             </button>
-            {saving && <Loader2 className="w-2.5 h-2.5 animate-spin text-amber-400" />}
+            {saving && <Loader2 className="w-2.5 h-2.5 animate-spin text-brand-blue" />}
           </div>
         </>
       ) : (
@@ -107,7 +107,7 @@ function NoteItem({
           <div className="flex gap-2 mt-1">
             <button
               onClick={() => setEditing(true)}
-              className="text-[10px] text-white/40 hover:text-amber-400 font-medium flex items-center gap-0.5"
+              className="text-[10px] text-white/40 hover:text-brand-blue font-medium flex items-center gap-0.5"
             >
               <Pencil className="w-2.5 h-2.5" /> Edit
             </button>
@@ -165,7 +165,7 @@ export function NotesPanel({ open, onClose, clientId }: NotesPanelProps) {
         >
           <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-white/10" style={{ background: "#141414" }}>
             <div className="flex items-center gap-2">
-              <StickyNote className="w-4 h-4 text-amber-400" />
+              <StickyNote className="w-4 h-4 text-brand-blue" />
               <h3 className="text-sm font-semibold text-white">Consultant Notes</h3>
             </div>
             <button
