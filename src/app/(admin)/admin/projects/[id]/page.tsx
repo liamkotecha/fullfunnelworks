@@ -225,6 +225,7 @@ export default function ProjectDetailPage() {
   };
 
   if (loading) return (
+    <div className="space-y-4">
       <SkeletonCard lines={5} />
       <SkeletonCard lines={3} />
     </div>
