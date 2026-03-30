@@ -427,7 +427,7 @@ export default function ConsultantDashboardPage() {
               <div className="absolute -top-16 -right-16 w-64 h-64 bg-brand-blue/20 rounded-full blur-3xl pointer-events-none" />
               <div className="absolute bottom-0 left-1/3 w-48 h-32 bg-brand-blue/5 rounded-full blur-2xl pointer-events-none" />
 
-              <div className="relative flex flex-col md:flex-row items-start gap-6 md:gap-10">
+              <div className="relative flex flex-col md:flex-row items-center gap-6 md:gap-10">
                 {/* Left: value prop */}
                 <div className="flex-1 space-y-4">
                   {/* Badge */}
@@ -467,7 +467,7 @@ export default function ConsultantDashboardPage() {
                 </div>
 
                 {/* Right: illustrative pipeline preview */}
-                <div className="w-full md:w-52 flex-shrink-0 space-y-1.5 select-none">
+                <div className="w-full md:w-72 flex-shrink-0 space-y-1.5 select-none">
                   <p className="text-white/20 text-[10px] font-semibold uppercase tracking-widest mb-3 px-1">
                     Example pipeline
                   </p>
