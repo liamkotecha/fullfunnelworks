@@ -24,8 +24,9 @@ export async function middleware(req: NextRequest) {
   // DEV BYPASS — remove before production
   if (process.env.NODE_ENV === "development") return NextResponse.next();
 
-  // If no session, redirect to login
+  // If no session — root goes to the public site, everything else to login
   if (!token) {
+    if (pathname === "/") return NextResponse.redirect(new URL("/pricing", req.url));
     const loginUrl = new URL("/login", req.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
