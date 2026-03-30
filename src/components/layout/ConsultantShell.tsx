@@ -168,7 +168,7 @@ export function ConsultantShell({ children, userName, userEmail }: ConsultantShe
       <SessionExpiryWarning />
       <main
         className="md:ml-64 min-h-screen px-4 pb-4 md:px-6 md:pb-6"
-        style={{ paddingTop: 64 + topOffset }}
+        style={{ paddingTop: 64 + topOffset + 24 }}
       >
         {children}
       </main>
