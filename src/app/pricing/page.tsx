@@ -298,7 +298,7 @@ export default function PricingPage() {
           <FadeUp className="text-center mb-16">
             <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#C9A84C] mb-4">Methodology</p>
             <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tighter text-white mb-5">Six pillars. One platform.</h2>
-            <p className="text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">Jonathan's proven consulting framework — People, Product, Process, GTM, and Execution — structured into a platform that delivers consistent, measurable results for every client.</p>
+            <p className="text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">{"Jonathan's proven consulting framework — People, Product, Process, GTM, and Execution — structured into a platform that delivers consistent, measurable results for every client."}</p>
           </FadeUp>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {PILLARS.map((p, i) => (
