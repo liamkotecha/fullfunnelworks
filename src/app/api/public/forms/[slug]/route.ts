@@ -1,7 +1,10 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
-import LeadForm from "@/models/LeadForm";
+import LeadForm, { type ILeadForm } from "@/models/LeadForm";
+import type { FlattenMaps } from "mongoose";
+
+type LeanForm = FlattenMaps<ILeadForm> & { _id: unknown };
 
 /**
  * GET /api/public/forms/[slug]
@@ -17,7 +20,7 @@ export async function GET(
     await connectDB();
     const form = await LeadForm.findOne({ slug, active: true })
       .select("name fields primaryColor successMessage redirectUrl")
-      .lean();
+      .lean() as LeanForm | null;
 
     if (!form) return NextResponse.json({ error: "Form not found" }, { status: 404 });
 
