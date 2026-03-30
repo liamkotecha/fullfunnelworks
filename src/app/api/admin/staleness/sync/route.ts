@@ -8,6 +8,7 @@ import Notification from "@/models/Notification";
 import { calculateStaleness } from "@/lib/staleness";
 import { sendEmail } from "@/lib/sendgrid";
 import { projectStalledEmail } from "@/lib/email-templates/project-stalled";
+import { sponsorStalledEmail } from "@/lib/email-templates/sponsor-stalled";
 import { requireAuth } from "@/lib/api-helpers";
 import type { StalenessStatus } from "@/lib/staleness";
 
@@ -54,6 +55,21 @@ export async function POST() {
         });
         updated++;
 
+        // Extract shared doc references for notification blocks
+        const clientDoc = project.clientId as unknown as {
+          _id: unknown;
+          businessName?: string;
+          contactEmail?: string;
+          contactName?: string;
+        };
+        const assignedDoc = project.assignedTo as unknown as {
+          _id: unknown;
+          name?: string;
+          email?: string;
+        } | null;
+        const clientName = clientDoc?.businessName ?? "Unknown";
+        const projectTitle = project.title;
+
         // 2c. If should notify consultant and this is a stalled/at_risk transition
         if (
           result.shouldNotifyConsultant &&
@@ -61,21 +77,6 @@ export async function POST() {
         ) {
           // Check no notification sent in last 24h for this project
           const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-
-          const clientDoc = project.clientId as unknown as {
-            _id: unknown;
-            businessName?: string;
-            contactEmail?: string;
-            contactName?: string;
-          };
-          const assignedDoc = project.assignedTo as unknown as {
-            _id: unknown;
-            name?: string;
-            email?: string;
-          } | null;
-
-          const clientName = clientDoc?.businessName ?? "Unknown";
-          const projectTitle = project.title;
 
           // Determine notification recipients
           const recipientIds: string[] = [];
@@ -148,6 +149,72 @@ export async function POST() {
             }
 
             notified++;
+          }
+        }
+
+        // 2d. If should notify sponsor and project has a sponsorId
+        if (
+          result.shouldNotifySponsor &&
+          (result.status === "stalled" || result.status === "at_risk") &&
+          (project as Record<string, unknown>).sponsorId
+        ) {
+          const sponsor = await User.findById(
+            (project as Record<string, unknown>).sponsorId
+          ).select("name email").lean();
+
+          const sponsorEmail = (sponsor as { email?: string } | null)?.email;
+          const sponsorName = (sponsor as { name?: string } | null)?.name;
+
+          if (sponsorEmail) {
+            // Check no sponsor notification sent in last 24h for this project
+            const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+            const recentSponsorNotif = await Notification.findOne({
+              userId: String((project as Record<string, unknown>).sponsorId),
+              title: { $in: ["Project stalled", "Project at risk"] },
+              message: { $regex: projectTitle },
+              createdAt: { $gte: oneDayAgo },
+            }).lean();
+
+            if (!recentSponsorNotif) {
+              const sponsorNotifTitle =
+                result.status === "at_risk" ? "Project at risk" : "Project stalled";
+              const sponsorNotifMessage =
+                result.status === "at_risk"
+                  ? `${clientName} — ${projectTitle} has been inactive for ${result.daysSinceActivity} days.`
+                  : `${clientName} — ${projectTitle} has been inactive for ${result.daysSinceActivity} days`;
+
+              await Notification.create({
+                userId: String((project as Record<string, unknown>).sponsorId),
+                type: result.status === "at_risk" ? "error" : "warning",
+                title: sponsorNotifTitle,
+                message: sponsorNotifMessage,
+                link: `/sponsor`,
+              });
+
+              try {
+                await sendEmail({
+                  to: sponsorEmail,
+                  subject:
+                    result.status === "at_risk"
+                      ? `⚠️ Project at risk: ${projectTitle}`
+                      : `⏸ Project update: ${projectTitle}`,
+                  html: sponsorStalledEmail({
+                    sponsorName: sponsorName ?? "Sponsor",
+                    clientName,
+                    projectTitle,
+                    daysSince: result.daysSinceActivity,
+                    severity: result.status as "stalled" | "at_risk",
+                    portalUrl: `${process.env.NEXTAUTH_URL ?? ""}/sponsor`,
+                    consultantName: assignedDoc?.name,
+                    consultantEmail: assignedDoc?.email,
+                  }),
+                });
+              } catch (emailErr) {
+                console.error("[STALENESS SYNC] Sponsor email failed:", emailErr);
+              }
+
+              notified++;
+            }
           }
         }
       }

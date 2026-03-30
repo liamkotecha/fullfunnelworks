@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, AlertTriangle, CheckCircle, Clock, Plus, X, TrendingUp, ClipboardCheck, RotateCcw } from "lucide-react";
+import { ArrowLeft, AlertTriangle, CheckCircle, Clock, Plus, X, TrendingUp, ClipboardCheck, RotateCcw, User } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -65,6 +65,13 @@ export default function ProjectDetailPage() {
   const [saving, setSaving] = useState(false);
   const [misalignments, setMisalignments] = useState<MisalignmentWarning[]>([]);
 
+  // Sponsor state
+  const [sponsorModal, setSponsorModal] = useState(false);
+  const [sponsorName, setSponsorName] = useState("");
+  const [sponsorEmail, setSponsorEmail] = useState("");
+  const [sponsorSaving, setSponsorSaving] = useState(false);
+  const [currentSponsor, setCurrentSponsor] = useState<{ name: string; email: string } | null>(null);
+
   const load = () => {
     fetch(`/api/projects/${id}`)
       .then((r) => r.json())
@@ -73,6 +80,20 @@ export default function ProjectDetailPage() {
         setProject(p);
         if (p) {
           setNewStatus(p.status);
+          // Load sponsor info if project has one
+          if (p.sponsor) {
+            setCurrentSponsor({ name: p.sponsor.name, email: p.sponsor.email });
+          } else if (p.sponsorId) {
+            // Fetch sponsor user details
+            fetch(`/api/users/${p.sponsorId}`)
+              .then((r) => r.json())
+              .then((u) => {
+                if (u.data) setCurrentSponsor({ name: u.data.name, email: u.data.email });
+              })
+              .catch(() => {});
+          } else {
+            setCurrentSponsor(null);
+          }
           // Fetch client progress for misalignment detection
           const clientId = typeof p.clientId === "object" ? p.clientId._id : p.clientId;
           fetch(`/api/responses/${clientId}`)
@@ -166,8 +187,44 @@ export default function ProjectDetailPage() {
     }
   };
 
+  const handleInviteSponsor = async () => {
+    if (!sponsorName || !sponsorEmail) return;
+    setSponsorSaving(true);
+    try {
+      const res = await fetch(`/api/projects/${id}/sponsor`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: sponsorName, email: sponsorEmail }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed to invite sponsor");
+      success("Sponsor invited", `${sponsorName} has been added as a sponsor${data.isNew ? " and an invite email sent" : ""}.`);
+      setCurrentSponsor({ name: sponsorName, email: sponsorEmail });
+      setSponsorModal(false);
+      setSponsorName("");
+      setSponsorEmail("");
+    } catch (e) {
+      toastError("Failed to invite sponsor", (e as Error).message);
+    } finally {
+      setSponsorSaving(false);
+    }
+  };
+
+  const handleRemoveSponsor = async () => {
+    setSponsorSaving(true);
+    try {
+      const res = await fetch(`/api/projects/${id}/sponsor`, { method: "DELETE" });
+      if (!res.ok) throw new Error((await res.json()).error ?? "Failed");
+      success("Sponsor removed");
+      setCurrentSponsor(null);
+    } catch (e) {
+      toastError("Failed to remove sponsor", (e as Error).message);
+    } finally {
+      setSponsorSaving(false);
+    }
+  };
+
   if (loading) return (
-    <div className="max-w-3xl mx-auto space-y-6">
       <SkeletonCard lines={5} />
       <SkeletonCard lines={3} />
     </div>
@@ -352,6 +409,60 @@ export default function ProjectDetailPage() {
         )}
       </motion.div>
 
+      {/* Sponsor */}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="card space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="font-semibold text-slate-900">Project Sponsor</h2>
+          {!currentSponsor && (
+            <Button
+              size="sm"
+              variant="secondary"
+              leftIcon={<Plus className="w-3.5 h-3.5" />}
+              onClick={() => setSponsorModal(true)}
+            >
+              Add Sponsor
+            </Button>
+          )}
+        </div>
+
+        {currentSponsor ? (
+          <div className="flex items-center gap-3">
+            <div className="flex-shrink-0 w-9 h-9 rounded-full bg-brand-blue/10 flex items-center justify-center">
+              <User className="w-4 h-4 text-brand-blue" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-slate-900">{currentSponsor.name}</p>
+              <p className="text-xs text-slate-500">{currentSponsor.email}</p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => {
+                  setSponsorName(currentSponsor.name);
+                  setSponsorEmail(currentSponsor.email);
+                  setSponsorModal(true);
+                }}
+              >
+                Change
+              </Button>
+              <Button
+                size="sm"
+                variant="danger"
+                isLoading={sponsorSaving}
+                onClick={handleRemoveSponsor}
+              >
+                Remove
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-slate-400 py-2 text-center">
+            No sponsor assigned. Sponsors receive read-only dashboard access and stale-project alerts.
+          </p>
+        )}
+      </motion.div>
+
       {/* Consultant Framework Sections */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="card space-y-4">
         <h2 className="font-semibold text-slate-900">Consultant Framework</h2>
@@ -503,6 +614,46 @@ export default function ProjectDetailPage() {
             value={newMilestone.dueDate}
             onChange={(e) => setNewMilestone((m) => ({ ...m, dueDate: e.target.value }))}
           />
+        </div>
+      </Modal>
+      {/* Sponsor Invite Modal */}
+      <Modal
+        isOpen={sponsorModal}
+        onClose={() => { setSponsorModal(false); setSponsorName(""); setSponsorEmail(""); }}
+        title={currentSponsor ? "Change Sponsor" : "Add Project Sponsor"}
+        size="sm"
+        footer={
+          <div className="flex gap-3 justify-end">
+            <Button variant="secondary" onClick={() => { setSponsorModal(false); setSponsorName(""); setSponsorEmail(""); }}>
+              Cancel
+            </Button>
+            <Button
+              isLoading={sponsorSaving}
+              disabled={!sponsorName || !sponsorEmail}
+              onClick={handleInviteSponsor}
+            >
+              {currentSponsor ? "Update Sponsor" : "Invite Sponsor"}
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <Input
+            label="Sponsor name"
+            value={sponsorName}
+            onChange={(e) => setSponsorName(e.target.value)}
+            placeholder="e.g. Sarah Johnson"
+          />
+          <Input
+            label="Sponsor email"
+            type="email"
+            value={sponsorEmail}
+            onChange={(e) => setSponsorEmail(e.target.value)}
+            placeholder="sarah@company.com"
+          />
+          <p className="text-xs text-slate-400">
+            The sponsor will receive an invite email and can view the project dashboard in read-only mode. They will also be notified if the project becomes stalled.
+          </p>
         </div>
       </Modal>
     </div>

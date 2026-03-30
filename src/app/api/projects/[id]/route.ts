@@ -41,6 +41,7 @@ export async function GET(
     const project = await Project.findById(params.id)
       .populate("clientId", "businessName assignedConsultant")
       .populate("assignedTo", "name email")
+      .populate("sponsorId", "name email")
       .lean();
 
     if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
@@ -53,7 +54,7 @@ export async function GET(
       }
     }
 
-    return NextResponse.json({ data: { ...(project as Record<string, unknown>), id: String((project as Record<string, unknown>)._id) } });
+    return NextResponse.json({ data: { ...(project as Record<string, unknown>), id: String((project as Record<string, unknown>)._id), sponsor: (project as Record<string, unknown>).sponsorId ?? null } });
   } catch (error) {
     console.error("[PROJECT GET]", error);
     return NextResponse.json({ error: "Failed to fetch project" }, { status: 500 });

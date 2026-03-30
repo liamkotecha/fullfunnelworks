@@ -38,7 +38,7 @@ export interface IUser extends Document {
   email: string;
   name: string;
   password?: string;
-  role: "admin" | "consultant" | "client";
+  role: "admin" | "consultant" | "client" | "sponsor";
   passkeyCredentials: IPasskeyCredential[];
   otpSecret?: string;
   otpExpiry?: Date;
@@ -70,7 +70,7 @@ const UserSchema = new Schema<IUser>(
     password: { type: String },
     role: {
       type: String,
-      enum: ["admin", "consultant", "client"],
+      enum: ["admin", "consultant", "client", "sponsor"],
       default: "client",
     },
     passkeyCredentials: [PasskeyCredentialSchema],

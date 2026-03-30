@@ -33,6 +33,7 @@ function LoginContent() {
   function redirectAfterLogin(role: string) {
     if (role === "admin") return "/admin/dashboard";
     if (role === "consultant") return "/consultant/dashboard";
+    if (role === "sponsor") return "/sponsor";
     return callbackUrl;
   }
 

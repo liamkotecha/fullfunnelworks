@@ -2,7 +2,7 @@ import type { SectionId } from "@/lib/concept-map";
 
 // ── Auth ─────────────────────────────────────────────────────
 
-export type UserRole = "admin" | "consultant" | "client";
+export type UserRole = "admin" | "consultant" | "client" | "sponsor";
 
 export interface SessionUser {
   id: string;
@@ -155,7 +155,9 @@ export interface ProjectDTO {
   blocks: BlockDTO[];
   package: string;
   milestones: MilestoneDTO[];
-  assignedTo?: { _id: string; name: string } | null;
+  assignedTo?: { _id: string; name: string; email?: string } | null;
+  sponsorId?: string | null;
+  sponsor?: { _id: string; name: string; email: string } | null;
   clientId: string | { _id: string; businessName: string };
   clientName?: string;
   dueDate?: string | null;

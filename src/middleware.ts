@@ -38,7 +38,13 @@ export async function middleware(req: NextRequest) {
   if (pathname === "/") {
     if (role === "admin") return NextResponse.redirect(new URL("/admin/dashboard", req.url));
     if (role === "consultant") return NextResponse.redirect(new URL("/consultant/dashboard", req.url));
+    if (role === "sponsor") return NextResponse.redirect(new URL("/sponsor", req.url));
     return NextResponse.redirect(new URL("/portal/overview", req.url));
+  }
+
+  // Block sponsors from the main portal — send them to their restricted view
+  if (pathname.startsWith("/portal") && role === "sponsor") {
+    return NextResponse.redirect(new URL("/sponsor", req.url));
   }
 
   // Consultants must not visit /admin — send them home
@@ -53,6 +59,11 @@ export async function middleware(req: NextRequest) {
 
   // Block clients from consultant routes
   if (pathname.startsWith("/consultant") && role !== "consultant" && role !== "admin") {
+    return NextResponse.redirect(new URL("/portal/overview", req.url));
+  }
+
+  // Block non-sponsors from sponsor routes (except admin)
+  if (pathname.startsWith("/sponsor") && role !== "sponsor" && role !== "admin") {
     return NextResponse.redirect(new URL("/portal/overview", req.url));
   }
 
