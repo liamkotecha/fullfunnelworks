@@ -438,7 +438,7 @@ export default function ConsultantDashboardPage() {
                   {/* Headline */}
                   <div>
                     <h2 className="text-white text-xl font-bold leading-snug mb-2">
-                      Know exactly what's in<br className="hidden md:block" />your pipeline at all times
+                      Know exactly what&apos;s in<br className="hidden md:block" />your pipeline at all times
                     </h2>
                     <p className="text-white/45 text-sm leading-relaxed max-w-sm">
                       Track every prospect from first touch to signed contract. See deal values, forecast revenue, and never let an opportunity go cold.
