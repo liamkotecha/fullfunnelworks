@@ -25,7 +25,7 @@ export async function GET() {
     const project = await Project.findOne({ sponsorId: userId })
       .populate("assignedTo", "name email")
       .populate("clientId", "businessName")
-      .lean();
+      .lean() as Record<string, unknown> | null;
 
     if (!project) {
       return NextResponse.json({ error: "No project found for this sponsor" }, { status: 404 });
