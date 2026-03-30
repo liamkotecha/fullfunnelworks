@@ -406,7 +406,7 @@ function LoginContent() {
 
         <p className="text-center text-sm text-slate-500 mt-5">
           New consultant?{" "}
-          <a href="/register" className="font-semibold text-navy hover:underline">
+          <a href="/register?role=consultant" className="font-semibold text-navy hover:underline">
             Create an account
           </a>
         </p>

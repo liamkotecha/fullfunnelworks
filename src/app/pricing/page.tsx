@@ -96,7 +96,7 @@ export default function PricingPage() {
               Sign in
             </Link>
             <Link
-              href="/register"
+              href="/register?role=consultant"
               className="text-sm font-semibold px-4 py-2 rounded-lg bg-navy text-white hover:bg-navy-600 transition-colors"
             >
               Get started
