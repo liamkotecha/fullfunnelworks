@@ -248,7 +248,7 @@ export default function PricingPage() {
             </a>
           </motion.div>
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.7, delay: 1.1 }} className="mt-16 flex flex-wrap items-center justify-center gap-x-10 gap-y-5">
-            {[{ v: "90-day", l: "execution sprints built in" }, { v: "3 CEOs", l: "reference clients" }, { v: "14-day", l: "free trial, no card needed" }].map((s) => (
+            {[{ v: "90-day", l: "execution sprints built in" }, { v: "6", l: "modules from diagnosis to delivery" }, { v: "14-day", l: "free trial, no card needed" }].map((s) => (
               <div key={s.l} className="flex items-center gap-3">
                 <span className="text-xl font-extrabold text-[#6CC2FF]">{s.v}</span>
                 <span className="text-sm text-slate-500">{s.l}</span>
