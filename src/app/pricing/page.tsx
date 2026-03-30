@@ -219,25 +219,24 @@ export default function PricingPage() {
             className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full border border-[#6CC2FF]/25 bg-[#6CC2FF]/10 text-[#6CC2FF] text-sm font-medium mb-10"
           >
             <span className="w-1.5 h-1.5 rounded-full bg-[#6CC2FF] animate-pulse shrink-0" />
-            14-day free trial · No credit card required
+            Business performance consulting, structured for scale
           </motion.div>
           <h1 className="text-[clamp(2.8rem,8vw,5.2rem)] font-extrabold tracking-tighter leading-[1.04] text-white mb-7">
             <span className="block overflow-hidden">
               <motion.span className="block" initial={{ y: "105%" }} animate={{ y: "0%" }} transition={{ duration: 0.88, delay: 0.18, ease: [0.25, 0.46, 0.45, 0.94] }}>
-                The platform that runs
+                Turn strategy into
               </motion.span>
             </span>
             <span className="block overflow-hidden">
               <motion.span className="block" initial={{ y: "105%" }} animate={{ y: "0%" }} transition={{ duration: 0.88, delay: 0.33, ease: [0.25, 0.46, 0.45, 0.94] }}>
-                {"your "}
-                <span style={{ background: "linear-gradient(135deg, #6CC2FF 0%, #6CC2FF 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-                  consulting practice.
+                <span style={{ background: "linear-gradient(135deg, #6CC2FF 0%, #a5d8ff 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+                  measurable results.
                 </span>
               </motion.span>
             </span>
           </h1>
           <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.74 }} className="text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed mb-11">
-            Deliver a proven, repeatable framework to every client — from first diagnosis to 90-day execution — with structured methodology, branded portals, and financial models in one professional platform.
+            Full Funnel gives growth consultants a structured platform to diagnose businesses, build executable strategies, and show clients exactly what good looks like. From first assessment to 90-day accountability sprint, every engagement runs on one platform.
           </motion.p>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.65, delay: 0.9 }} className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href="/register?role=consultant" className="group inline-flex items-center gap-2.5 px-8 py-4 rounded-2xl bg-[#6CC2FF] text-[#141414] font-bold text-sm transition-all hover:bg-[#6CC2FF] hover:shadow-[0_0_36px_rgba(108,194,255,0.45)] hover:scale-[1.025] active:scale-[0.98]">
@@ -249,7 +248,7 @@ export default function PricingPage() {
             </a>
           </motion.div>
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.7, delay: 1.1 }} className="mt-16 flex flex-wrap items-center justify-center gap-x-10 gap-y-5">
-            {[{ v: "6", l: "framework pillars" }, { v: "100%", l: "portal access included" }, { v: "14-day", l: "free trial" }].map((s) => (
+            {[{ v: "90-day", l: "execution sprints built in" }, { v: "3 CEOs", l: "reference clients" }, { v: "14-day", l: "free trial, no card needed" }].map((s) => (
               <div key={s.l} className="flex items-center gap-3">
                 <span className="text-xl font-extrabold text-[#6CC2FF]">{s.v}</span>
                 <span className="text-sm text-slate-500">{s.l}</span>
