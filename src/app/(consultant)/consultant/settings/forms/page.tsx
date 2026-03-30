@@ -380,6 +380,17 @@ export default function FormsPage() {
   const [newName, setNewName] = useState("");
   const [showCreate, setShowCreate] = useState(false);
 
+  // Plan gate
+  const [planName, setPlanName] = useState<string | null>(null);
+  const [planLoading, setPlanLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/consultant/billing")
+      .then((r) => r.json())
+      .then((d) => { setPlanName(d.plan?.name ?? null); setPlanLoading(false); })
+      .catch(() => setPlanLoading(false));
+  }, []);
+
   useEffect(() => {
     fetch("/api/consultant/forms")
       .then((r) => r.json())
@@ -412,71 +423,103 @@ export default function FormsPage() {
   };
 
   return (
-    <motion.div variants={stagger} initial="hidden" animate="show" className="max-w-2xl mx-auto space-y-6">
+    <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-6">
       <motion.div variants={fadeUp} className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Lead Forms</h1>
+          <h2 className="text-lg font-semibold text-slate-900">Lead Forms</h2>
           <p className="text-sm text-slate-500 mt-0.5">
             Embed forms on your website — submissions go straight into your pipeline
           </p>
         </div>
-        <Button
-          leftIcon={<Plus className="w-3.5 h-3.5" />}
-          onClick={() => setShowCreate((v) => !v)}
-        >
-          New form
-        </Button>
+        {!planLoading && planName !== null && (planName === "Growth" || planName === "Enterprise") && (
+          <Button
+            leftIcon={<Plus className="w-3.5 h-3.5" />}
+            onClick={() => setShowCreate((v) => !v)}
+          >
+            New form
+          </Button>
+        )}
       </motion.div>
 
-      <AnimatePresence>
-        {showCreate && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="card overflow-hidden"
-          >
-            <div className="flex items-end gap-3">
-              <div className="flex-1">
-                <Input
-                  label="Form name"
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  placeholder="e.g. Website contact form"
-                  onKeyDown={(e) => { if (e.key === "Enter") handleCreate(); }}
-                  autoFocus
-                />
-              </div>
-              <Button onClick={handleCreate} isLoading={creating}>Create</Button>
-              <Button variant="ghost" onClick={() => { setShowCreate(false); setNewName(""); }}>Cancel</Button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {loading ? (
-        <div className="space-y-4">
-          {[1, 2].map((i) => <div key={i} className="card h-40 animate-pulse bg-slate-50" />)}
-        </div>
-      ) : forms.length === 0 ? (
-        <motion.div variants={fadeUp} className="card text-center py-12">
-          <p className="text-slate-400 text-sm mb-4">No forms yet. Create one to get started.</p>
-          <Button leftIcon={<Plus className="w-3.5 h-3.5" />} onClick={() => setShowCreate(true)}>
-            Create your first form
-          </Button>
+      {/* ── Plan gate ─────────────────────────────────────────── */}
+      {planLoading ? (
+        <div className="card h-48 animate-pulse bg-slate-50" />
+      ) : planName !== "Growth" && planName !== "Enterprise" ? (
+        <motion.div
+          variants={fadeUp}
+          className="rounded-xl border border-slate-200 bg-white p-8 text-center space-y-4"
+        >
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 mx-auto">
+            <Plus className="w-5 h-5 text-slate-400" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900">Lead Forms require Growth or Enterprise</h3>
+            <p className="text-sm text-slate-500 mt-1 max-w-sm mx-auto">
+              Upgrade your plan to create embeddable lead capture forms and route submissions directly into your pipeline.
+            </p>
+          </div>
+          <ul className="text-sm text-slate-500 space-y-1 text-left max-w-xs mx-auto">
+            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-brand-blue flex-shrink-0" />Unlimited embeddable forms</li>
+            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-brand-blue flex-shrink-0" />Automatic pipeline routing</li>
+            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-brand-blue flex-shrink-0" />Custom brand colours &amp; redirect URLs</li>
+          </ul>
+          <a href="/consultant/billing">
+            <Button className="mt-2">Upgrade plan</Button>
+          </a>
         </motion.div>
       ) : (
-        <div className="space-y-4">
-          {forms.map((form) => (
-            <motion.div key={form.id} variants={fadeUp}>
-              <FormEditor
-                form={form}
-                onSaved={(updated) => setForms((prev) => prev.map((f) => (f.id === updated.id ? updated : f)))}
-                onDeleted={(id) => setForms((prev) => prev.filter((f) => f.id !== id))}
-              />
+        <>
+          <AnimatePresence>
+            {showCreate && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="card overflow-hidden"
+              >
+                <div className="flex items-end gap-3">
+                  <div className="flex-1">
+                    <Input
+                      label="Form name"
+                      value={newName}
+                      onChange={(e) => setNewName(e.target.value)}
+                      placeholder="e.g. Website contact form"
+                      onKeyDown={(e) => { if (e.key === "Enter") handleCreate(); }}
+                      autoFocus
+                    />
+                  </div>
+                  <Button onClick={handleCreate} isLoading={creating}>Create</Button>
+                  <Button variant="ghost" onClick={() => { setShowCreate(false); setNewName(""); }}>Cancel</Button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {loading ? (
+            <div className="space-y-4">
+              {[1, 2].map((i) => <div key={i} className="card h-40 animate-pulse bg-slate-50" />)}
+            </div>
+          ) : forms.length === 0 ? (
+            <motion.div variants={fadeUp} className="card text-center py-12">
+              <p className="text-slate-400 text-sm mb-4">No forms yet. Create one to get started.</p>
+              <Button leftIcon={<Plus className="w-3.5 h-3.5" />} onClick={() => setShowCreate(true)}>
+                Create your first form
+              </Button>
             </motion.div>
-          ))}
-        </div>
+          ) : (
+            <div className="space-y-4">
+              {forms.map((form) => (
+                <motion.div key={form.id} variants={fadeUp}>
+                  <FormEditor
+                    form={form}
+                    onSaved={(updated) => setForms((prev) => prev.map((f) => (f.id === updated.id ? updated : f)))}
+                    onDeleted={(id) => setForms((prev) => prev.filter((f) => f.id !== id))}
+                  />
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </motion.div>
   );
