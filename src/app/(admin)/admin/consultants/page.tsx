@@ -48,7 +48,7 @@ function PlanBadge({ name }: { name?: string | null }) {
   const cls = lower.includes("enterprise")
     ? "bg-purple-50 text-purple-700 ring-purple-200"
     : lower.includes("growth")
-    "bg-brand-blue/10 text-[#141414] ring-brand-blue/30"
+    ? "bg-brand-blue/10 text-[#141414] ring-brand-blue/30"
     : "bg-slate-100 text-slate-600 ring-slate-200";
   return (
     <span className={cn("inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ring-1", cls)}>
