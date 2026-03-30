@@ -183,7 +183,7 @@ function FormEditor({
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const formUrl = `${origin}/forms/${draft.slug}`;
+  const formUrl = `${origin}/forms/${draft.id}`;
   const iframeSnippet = `<iframe src="${formUrl}" width="100%" height="600" frameborder="0" style="border:none;" title="${draft.name}"></iframe>`;
 
   const handleSave = async () => {

@@ -7,18 +7,18 @@ import type { FlattenMaps } from "mongoose";
 type LeanForm = FlattenMaps<ILeadForm> & { _id: unknown };
 
 /**
- * GET /api/public/forms/[slug]
+ * GET /api/public/forms/[id]
  * Returns the form schema for rendering on the client.
  * No authentication required — intentionally public.
  */
 export async function GET(
   _req: Request,
-  { params }: { params: Promise<{ slug: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { slug } = await params;
+    const { id } = await params;
     await connectDB();
-    const form = await LeadForm.findOne({ slug, active: true })
+    const form = await LeadForm.findOne({ _id: id, active: true })
       .select("name fields primaryColor successMessage redirectUrl")
       .lean() as LeanForm | null;
 

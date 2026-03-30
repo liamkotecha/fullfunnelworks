@@ -23,7 +23,7 @@ interface FormSchema {
 
 export default function EmbedFormPage() {
   const params = useParams();
-  const slug = params?.slug as string;
+  const id = params?.id as string;
 
   const [schema, setSchema] = useState<FormSchema | null>(null);
   const [values, setValues] = useState<Record<string, string>>({});
@@ -35,8 +35,8 @@ export default function EmbedFormPage() {
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
-    if (!slug) return;
-    fetch(`/api/public/forms/${slug}`)
+    if (!id) return;
+    fetch(`/api/public/forms/${id}`)
       .then((r) => r.json())
       .then((d) => {
         if (d.error) { setGlobalError(d.error); setLoading(false); return; }
@@ -47,7 +47,7 @@ export default function EmbedFormPage() {
         setLoading(false);
       })
       .catch(() => { setGlobalError("Could not load form."); setLoading(false); });
-  }, [slug]);
+  }, [id]);
 
   const validate = () => {
     if (!schema) return false;
@@ -69,7 +69,7 @@ export default function EmbedFormPage() {
     setSubmitting(true);
     setGlobalError(null);
     try {
-      const res = await fetch(`/api/public/forms/${slug}/submit`, {
+      const res = await fetch(`/api/public/forms/${id}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),

@@ -9,18 +9,18 @@ type LeanForm = FlattenMaps<ILeadForm> & { _id: unknown };
 import { calculateLeadScore } from "@/lib/lead-scoring";
 
 /**
- * POST /api/public/forms/[slug]/submit
+ * POST /api/public/forms/[id]/submit
  * Public endpoint — no auth required. Creates a Prospect from form data.
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { slug } = await params;
+    const { id } = await params;
     await connectDB();
 
-    const form = await LeadForm.findOne({ slug, active: true }).lean() as LeanForm | null;
+    const form = await LeadForm.findOne({ _id: id, active: true }).lean() as LeanForm | null;
     if (!form) return NextResponse.json({ error: "Form not found" }, { status: 404 });
 
     const body = await req.json() as Record<string, unknown>;
