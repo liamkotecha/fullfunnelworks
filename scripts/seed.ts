@@ -87,11 +87,11 @@ async function seed() {
   console.log("👤 Admin: " + admin.email);
 
   // ── 2. CONSULTANTS ────────────────────────────────────────
-  const c1 = await upsertUser("laura.james@fullfunnelworks.co.uk", "Laura James", "consultant", {
+  const c1 = await upsertUser("consultant1@fullfunnelworks.co.uk", "Laura James", "consultant", {
     lastLoginAt: daysAgo(1),
     loginHistory: [daysAgo(1), daysAgo(5), daysAgo(12), daysAgo(20)],
   });
-  const c2 = await upsertUser("mark.stevens@fullfunnelworks.co.uk", "Mark Stevens", "consultant", {
+  const c2 = await upsertUser("consultant2@fullfunnelworks.co.uk", "Mark Stevens", "consultant", {
     lastLoginAt: daysAgo(4),
     loginHistory: [daysAgo(4), daysAgo(11), daysAgo(18)],
   });
@@ -111,7 +111,7 @@ async function seed() {
     lastLoginAt: daysAgo(1),
     loginHistory: [daysAgo(1), daysAgo(3)],
   });
-  console.log("👤 Consultants: laura.james, mark.stevens, sarah.connor, james.wright, emma.thornton, david.lee\n");
+  console.log("👤 Consultants: consultant1, consultant2, sarah.connor, james.wright, emma.thornton, david.lee\n");
 
   // ── 3. PLANS ──────────────────────────────────────────────
   const [starterPlan, growthPlan, enterprisePlan] = await Plan.insertMany([
@@ -525,8 +525,9 @@ async function seed() {
 
   await mongoose.disconnect();
   console.log("✅  Seed complete.\n");
-  console.log("  Admin:       admin@fullfunnelworks.co.uk / admin123");
-  console.log("  Consultants: laura.james@fullfunnelworks.co.uk / admin123  (etc.)");
+  console.log("  Admin:        admin@fullfunnelworks.co.uk / admin123");
+  console.log("  Consultant 1: consultant1@fullfunnelworks.co.uk / admin123");
+  console.log("  Consultant 2: consultant2@fullfunnelworks.co.uk / admin123");
 }
 
 seed().catch((err) => {

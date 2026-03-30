@@ -6,8 +6,6 @@ import { Lock, Mail, ArrowRight, Eye, EyeOff, Fingerprint } from "lucide-react";
 import { startAuthentication } from "@simplewebauthn/browser";
 import { useToast } from "@/components/notifications/ToastContext";
 import { useSearchParams } from "next/navigation";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
 import { cn } from "@/lib/utils";
 
 type Tab = "password" | "otp";
@@ -190,38 +188,44 @@ function LoginContent() {
   };
 
   return (
-    <div className="min-h-screen bg-cream flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#0C0C0C] flex items-center justify-center p-4">
+      {/* Subtle radial glow */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full bg-brand-blue/[0.07] blur-3xl" />
+      </div>
+
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: "easeOut" }}
-        className="w-full max-w-md"
+        className="w-full max-w-md relative"
       >
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
             <Image
               src="/logo_blue_650.webp"
               alt="Full Funnel"
-              width={180}
-              height={60}
+              width={160}
+              height={54}
               className="object-contain"
               priority
             />
           </div>
-          <p className="text-sm text-slate-500">Growth Strategy Portal</p>
+          <p className="text-sm text-white/40 tracking-wide">Growth Strategy Portal</p>
         </div>
 
-        <div className="card">
-          <div className="flex rounded-xl bg-gray-100 p-1 mb-6">
+        <div className="bg-[#161616] rounded-xl ring-1 ring-white/[0.07] shadow-2xl p-6">
+          {/* Tab switcher */}
+          <div className="flex bg-[#0d0d0d] rounded-lg p-1 mb-6 ring-1 ring-white/[0.05]">
             {(["password", "otp"] as Tab[]).map((t) => (
               <button
                 key={t}
                 onClick={() => { setTab(t); setOtpStep("email"); setCode(["", "", "", "", "", ""]); }}
                 className={cn(
-                  "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200",
+                  "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-md text-sm font-semibold transition-all duration-200",
                   tab === t
-                    ? "bg-white text-navy shadow-sm"
-                    : "text-slate-500 hover:text-slate-700"
+                    ? "bg-white/[0.1] text-white shadow-sm"
+                    : "text-white/35 hover:text-white/60"
                 )}
               >
                 {t === "password" ? <Lock className="w-4 h-4" /> : <Mail className="w-4 h-4" />}
@@ -240,43 +244,58 @@ function LoginContent() {
                 transition={{ duration: 0.2 }}
                 className="space-y-4"
               >
-                <Input
-                  label="Email address"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@company.com"
-                  leftIcon={<Mail className="w-4 h-4" />}
-                />
-                <div className="relative">
-                  <Input
-                    label="Password"
-                    type={showPw ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
-                    onKeyDown={(e) => e.key === "Enter" && handlePasswordLogin()}
-                    leftIcon={<Lock className="w-4 h-4" />}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPw(!showPw)}
-                    aria-label={showPw ? "Hide password" : "Show password"}
-                    className="absolute right-3 top-[38px] text-slate-400 hover:text-slate-600 transition-colors"
-                    tabIndex={-1}
-                  >
-                    {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
+                {/* Email */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-white/50 uppercase tracking-wider">Email address</label>
+                  <div className="relative">
+                    <Mail className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25" />
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@company.com"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-white/[0.06] border border-white/[0.1] text-white text-sm placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-brand-blue/40 focus:border-brand-blue/50 transition-all"
+                    />
+                  </div>
                 </div>
-                <Button
-                  className="w-full"
-                  isLoading={loading}
+                {/* Password */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-white/50 uppercase tracking-wider">Password</label>
+                  <div className="relative">
+                    <Lock className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25" />
+                    <input
+                      type={showPw ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Enter your password"
+                      onKeyDown={(e) => e.key === "Enter" && handlePasswordLogin()}
+                      className="w-full pl-10 pr-10 py-2.5 rounded-lg bg-white/[0.06] border border-white/[0.1] text-white text-sm placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-brand-blue/40 focus:border-brand-blue/50 transition-all"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPw(!showPw)}
+                      aria-label={showPw ? "Hide password" : "Show password"}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/25 hover:text-white/50 transition-colors"
+                      tabIndex={-1}
+                    >
+                      {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+                <button
                   onClick={handlePasswordLogin}
-                  disabled={!email || !password}
-                  rightIcon={<ArrowRight className="w-4 h-4" />}
+                  disabled={!email || !password || loading}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-brand-blue text-[#141414] text-sm font-bold transition-all hover:bg-brand-blue/90 hover:shadow-[0_0_24px_rgba(108,194,255,0.3)] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  Sign In
-                </Button>
+                  {loading ? (
+                    <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                  ) : (
+                    <>Sign In <ArrowRight className="w-4 h-4" /></>
+                  )}
+                </button>
               </motion.div>
             )}
 
@@ -289,24 +308,34 @@ function LoginContent() {
                 transition={{ duration: 0.2 }}
                 className="space-y-5"
               >
-                <Input
-                  label="Email address"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@company.com"
-                  onKeyDown={(e) => e.key === "Enter" && handleSendOTP()}
-                  leftIcon={<Mail className="w-4 h-4" />}
-                />
-                <Button
-                  className="w-full"
-                  isLoading={loading}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-white/50 uppercase tracking-wider">Email address</label>
+                  <div className="relative">
+                    <Mail className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25" />
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@company.com"
+                      onKeyDown={(e) => e.key === "Enter" && handleSendOTP()}
+                      className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-white/[0.06] border border-white/[0.1] text-white text-sm placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-brand-blue/40 focus:border-brand-blue/50 transition-all"
+                    />
+                  </div>
+                </div>
+                <button
                   onClick={handleSendOTP}
-                  disabled={!email}
-                  rightIcon={<ArrowRight className="w-4 h-4" />}
+                  disabled={!email || loading}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-brand-blue text-[#141414] text-sm font-bold transition-all hover:bg-brand-blue/90 hover:shadow-[0_0_24px_rgba(108,194,255,0.3)] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  Send Code
-                </Button>
+                  {loading ? (
+                    <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                  ) : (
+                    <>Send Code <ArrowRight className="w-4 h-4" /></>
+                  )}
+                </button>
               </motion.div>
             )}
 
@@ -320,8 +349,8 @@ function LoginContent() {
                 className="space-y-5"
               >
                 <div className="text-center">
-                  <p className="text-sm text-slate-600">Enter the 6-digit code sent to</p>
-                  <p className="font-semibold text-navy text-sm">{email}</p>
+                  <p className="text-sm text-white/50">Enter the 6-digit code sent to</p>
+                  <p className="font-semibold text-white text-sm mt-0.5">{email}</p>
                 </div>
                 <div className="flex gap-2 justify-center">
                   {code.map((digit, i) => (
@@ -336,44 +365,50 @@ function LoginContent() {
                       onKeyDown={(e) => handleCodeKeyDown(e, i)}
                       onPaste={handleCodePaste}
                       className={cn(
-                        "w-12 h-12 text-center text-xl font-bold rounded-lg border-2 text-navy",
-                        "focus:outline-none focus:ring-2 focus:ring-navy/30 focus:border-navy transition-all",
-                        digit ? "border-navy bg-navy/5" : "border-gray-200 bg-white"
+                        "w-12 h-12 text-center text-xl font-bold rounded-lg border-2 text-white transition-all",
+                        "focus:outline-none focus:ring-2 focus:ring-brand-blue/40",
+                        digit
+                          ? "border-brand-blue/60 bg-brand-blue/10"
+                          : "border-white/[0.1] bg-white/[0.05]"
                       )}
                     />
                   ))}
                 </div>
                 <div className="space-y-2">
-                  <Button
-                    className="w-full"
-                    isLoading={loading}
+                  <button
                     onClick={handleVerifyOTP}
-                    disabled={code.join("").length !== 6}
+                    disabled={code.join("").length !== 6 || loading}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-brand-blue text-[#141414] text-sm font-bold transition-all hover:bg-brand-blue/90 hover:shadow-[0_0_24px_rgba(108,194,255,0.3)] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
                   >
-                    Verify Code
-                  </Button>
+                    {loading ? (
+                      <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                    ) : "Verify Code"}
+                  </button>
                   <button
                     onClick={() => { setOtpStep("email"); setCode(["", "", "", "", "", ""]); }}
-                    className="w-full text-center text-sm text-slate-500 hover:text-navy transition-colors py-1"
+                    className="w-full text-center text-sm text-white/35 hover:text-white/60 transition-colors py-1"
                   >
                     Change email or resend
                   </button>
                 </div>
-                <p className="text-center text-xs text-slate-400">Code expires in 10 minutes</p>
+                <p className="text-center text-xs text-white/25">Code expires in 10 minutes</p>
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* Passkey sign-in — shown when browser supports it */}
+          {/* Passkey sign-in */}
           {passkeySupported && (
-            <div className="mt-5 pt-5 border-t border-slate-100">
+            <div className="mt-5 pt-5 border-t border-white/[0.06]">
               <button
                 type="button"
                 onClick={handlePasskeyLogin}
                 disabled={passkeyLoading}
-                className="w-full flex items-center justify-center gap-2.5 py-2.5 px-4 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2.5 py-2.5 px-4 rounded-lg border border-white/[0.1] bg-white/[0.04] text-sm font-medium text-white/60 hover:bg-white/[0.08] hover:text-white/80 hover:border-white/[0.18] transition-all disabled:opacity-40"
               >
-                <Fingerprint className="w-4 h-4 text-slate-500" />
+                <Fingerprint className="w-4 h-4" />
                 {passkeyLoading ? "Verifying…" : "Sign in with passkey"}
               </button>
             </div>
@@ -382,21 +417,20 @@ function LoginContent() {
 
         {/* Demo quick-login — only visible in development */}
         {process.env.NODE_ENV === "development" && (
-          <div className="mt-6 pt-5 border-t border-slate-100">
-            <p className="text-center text-xs text-slate-400 mb-3 uppercase tracking-wide font-medium">
+          <div className="mt-6 pt-5 border-t border-white/[0.06]">
+            <p className="text-center text-xs text-white/25 mb-3 uppercase tracking-wide font-medium">
               Demo accounts
             </p>
             <div className="flex gap-2 justify-center flex-wrap">
               {[
-                { label: "Admin",      email: "admin@demo.fullf.io",      pw: "demo1234" },
-                { label: "Consultant", email: "consultant@demo.fullf.io", pw: "demo1234" },
-                { label: "Client",     email: "client@demo.fullf.io",     pw: "demo1234" },
+                { label: "Admin",      email: "admin@fullfunnelworks.co.uk",       pw: "admin123" },
+                { label: "Consultant", email: "consultant1@fullfunnelworks.co.uk", pw: "admin123" },
               ].map((d) => (
                 <button
                   key={d.label}
                   type="button"
                   onClick={() => { setTab("password"); setEmail(d.email); setPassword(d.pw); }}
-                  className="px-3 py-1.5 rounded-md bg-slate-100 hover:bg-slate-200 text-xs font-medium text-slate-600 transition-colors"
+                  className="px-3 py-1.5 rounded-md bg-white/[0.06] hover:bg-white/[0.1] text-xs font-medium text-white/50 hover:text-white/80 transition-colors border border-white/[0.08]"
                 >
                   {d.label}
                 </button>
@@ -405,14 +439,14 @@ function LoginContent() {
           </div>
         )}
 
-        <p className="text-center text-sm text-slate-500 mt-5">
+        <p className="text-center text-sm text-white/35 mt-5">
           New consultant?{" "}
-          <a href="/register?role=consultant" className="font-semibold text-navy hover:underline">
+          <a href="/register?role=consultant" className="font-semibold text-brand-blue hover:text-brand-blue/80 transition-colors">
             Create an account
           </a>
         </p>
 
-        <p className="text-center text-xs text-slate-400 mt-3">
+        <p className="text-center text-xs text-white/20 mt-3">
           Private portal — authorised access only
         </p>
       </motion.div>
