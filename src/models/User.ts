@@ -22,6 +22,16 @@ export interface IConsultantProfile {
   roundRobinWeight: number;
   lastAssignedAt?: Date;
   totalLeadsAssigned: number;
+  // Profile extras
+  phone?: string;
+  bio?: string;
+  website?: string;
+  companyName?: string;
+  // Notification preferences
+  notifyNewClient?: boolean;
+  notifyInvoicePaid?: boolean;
+  notifyProjectBlocked?: boolean;
+  notifyWeeklyDigest?: boolean;
   // Health override — admin can manually mark a consultant as healthy
   healthOverride?: "healthy" | null;
   healthOverrideNote?: string;
@@ -96,6 +106,14 @@ const UserSchema = new Schema<IUser>(
       healthOverride: { type: String, enum: ["healthy", null], default: null },
       healthOverrideNote: { type: String },
       healthOverrideAt: { type: Date },
+      phone: { type: String, trim: true },
+      bio: { type: String, trim: true },
+      website: { type: String, trim: true },
+      companyName: { type: String, trim: true },
+      notifyNewClient: { type: Boolean, default: true },
+      notifyInvoicePaid: { type: Boolean, default: true },
+      notifyProjectBlocked: { type: Boolean, default: true },
+      notifyWeeklyDigest: { type: Boolean, default: true },
       adminNotes: [{
         text: { type: String, required: true },
         createdByName: { type: String, required: true },
