@@ -43,7 +43,7 @@ export async function GET() {
       const respDocs = await SessionResponse.find({
         sessionId: resolved.session._id,
         participantId: null,
-      }).select("fieldKey").lean() as Array<{ fieldKey: string }>;
+      }).select("fieldKey").lean() as unknown as Array<{ fieldKey: string }>;
       const answeredSet = new Set(respDocs.map((r) => r.fieldKey));
       for (const section of FRAMEWORK_NAV) {
         for (const sub of section.children) {
