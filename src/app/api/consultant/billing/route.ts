@@ -8,6 +8,7 @@ import { connectDB } from "@/lib/db";
 import Subscription from "@/models/Subscription";
 import Client from "@/models/Client";
 import User from "@/models/User";
+import Plan from "@/models/Plan";
 import { requireAuth } from "@/lib/api-helpers";
 import type { IPlan } from "@/models/Plan";
 import type { ISubscription } from "@/models/Subscription";
