@@ -19,7 +19,7 @@ export { SectionGuidance } from "./SectionGuidance";
 export { SectionHolding } from "./SectionHolding";
 export { WhatsNext } from "./WhatsNext";
 export { TtsButton } from "./TtsButton";
-export { TeamAssessmentBanner, useTeamReadOnly } from "./TeamAssessmentBanner";
+export { TeamAssessmentBanner } from "./TeamAssessmentBanner";
 
 // Section 2 & 3 table components
 export { MeasureTable } from "./MeasureTable";

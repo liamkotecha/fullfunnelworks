@@ -6,13 +6,14 @@ export const dynamic = "force-dynamic";
  * Body: { clientId, email, name, role }
  * - Admin/consultant only
  * - Find or create User
- * - Add to Client.teamUserIds
- * - Add to IntakeResponse.teamMembers, set teamMode = true
+ * - Add to Client.teamUserIds (access gating — always kept in sync)
+ * - New model path: create Participant, set Session.teamMode = true
+ * - Legacy path: upsert IntakeResponse.teamMembers
  * - Send invite email
  */
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
-import { requireAuth } from "@/lib/api-helpers";
+import { requireAuth, resolveClientSession } from "@/lib/api-helpers";
 import User from "@/models/User";
 import Client from "@/models/Client";
 import IntakeResponse from "@/models/IntakeResponse";
@@ -79,37 +80,52 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 4. Upsert IntakeResponse and add team member
-    const memberEntry = {
-      userId: teamUser._id,
-      name,
-      email: email.toLowerCase(),
-      role,
-      invitedAt: new Date(),
-      invitedBy: admin.id,
-    };
+    // 4. Add to session or legacy IntakeResponse
+    const resolved = await resolveClientSession(clientId);
 
-    // Check if already a team member
-    const existing = await IntakeResponse.findOne({
-      clientId,
-      "teamMembers.userId": teamUser._id,
-    });
+    if (resolved) {
+      // ── New model path ───────────────────────────────────────
+      const { session } = resolved;
+      const { default: Participant } = await import("@/models/Participant");
 
-    if (!existing) {
-      await IntakeResponse.findOneAndUpdate(
-        { clientId },
-        {
-          $set: { teamMode: true },
-          $push: { teamMembers: memberEntry },
-        },
-        { upsert: true, new: true }
-      );
+      const alreadyParticipant = await Participant.exists({ sessionId: session._id, userId: teamUser._id });
+      if (alreadyParticipant) {
+        return NextResponse.json({ error: "User is already a participant in this session" }, { status: 409 });
+      }
+
+      await Participant.create({
+        sessionId: session._id,
+        userId: teamUser._id,
+        role,
+        invitedAt: new Date(),
+        invitedBy: admin.id,
+      });
+
+      if (!session.teamMode) {
+        session.teamMode = true;
+        await session.save();
+      }
     } else {
-      // Already a member, just ensure teamMode is on
-      await IntakeResponse.updateOne(
-        { clientId },
-        { $set: { teamMode: true } }
-      );
+      // ── Legacy path ───────────────────────────────────────
+      const memberEntry = {
+        userId: teamUser._id,
+        name,
+        email: email.toLowerCase(),
+        role,
+        invitedAt: new Date(),
+        invitedBy: admin.id,
+      };
+
+      const existingIntake = await IntakeResponse.findOne({ clientId, "teamMembers.userId": teamUser._id });
+      if (!existingIntake) {
+        await IntakeResponse.findOneAndUpdate(
+          { clientId },
+          { $set: { teamMode: true }, $push: { teamMembers: memberEntry } },
+          { upsert: true, new: true }
+        );
+      } else {
+        await IntakeResponse.updateOne({ clientId }, { $set: { teamMode: true } });
+      }
     }
 
     // 5. Send invite email

@@ -171,8 +171,9 @@ export interface ProjectDTO {
   updatedAt: string;
 }
 
-// ── Intake ────────────────────────────────────────────────────
+// ── Intake (legacy — superseded by Session/Participant/Response) ──────────────
 
+/** @deprecated Use SessionDTO + ResponseDTO instead */
 export interface IntakeResponseDTO {
   _id: string;
   clientId: string;
@@ -181,6 +182,50 @@ export interface IntakeResponseDTO {
   sectionProgress: Record<SectionId, boolean>;
   submittedAt?: string | null;
   lastSavedAt?: string | null;
+}
+
+// ── Session / Participant / Response ─────────────────────────
+
+export type SessionStatus = "active" | "submitted" | "synthesised";
+
+export interface SessionDTO {
+  _id: string;
+  projectId: string;
+  teamMode: boolean;
+  status: SessionStatus;
+  lastActiveSub: string;
+  synthesisCompletedAt?: string | null;
+  synthesisCompletedBy?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ParticipantDTO {
+  _id: string;
+  sessionId: string;
+  userId: string;
+  name: string;
+  email: string;
+  role: string;
+  invitedAt: string;
+  invitedBy: string;
+  submittedAt?: string | null;
+  isComplete: boolean;
+}
+
+export type ResponseSource = "consultant" | "consensus" | "individual";
+
+export interface ResponseDTO {
+  _id: string;
+  sessionId: string;
+  /** null = consultant canonical / synthesised */
+  participantId: string | null;
+  fieldKey: string;
+  value: unknown;
+  source?: ResponseSource;
+  divergence?: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ── Consultant Notes ──────────────────────────────────────────

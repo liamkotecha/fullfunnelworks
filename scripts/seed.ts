@@ -58,6 +58,9 @@ async function seed() {
   const { default: Invoice } = await import("../src/models/Invoice");
   const { default: Prospect } = await import("../src/models/Prospect");
   const { default: IntakeResponse } = await import("../src/models/IntakeResponse");
+  const { default: EngagementSession } = await import("../src/models/EngagementSession");
+  const { default: Participant } = await import("../src/models/Participant");
+  const { default: SessionResponse } = await import("../src/models/Response");
   const { default: HiringPlan } = await import("../src/models/HiringPlan");
   const { default: ModellerBase } = await import("../src/models/ModellerBase");
   const { default: ModellerScenario } = await import("../src/models/ModellerScenario");
@@ -73,6 +76,9 @@ async function seed() {
     Invoice.deleteMany({}),
     Prospect.deleteMany({}),
     IntakeResponse.deleteMany({}),
+    EngagementSession.deleteMany({}),
+    Participant.deleteMany({}),
+    SessionResponse.deleteMany({}),
     HiringPlan.deleteMany({}),
     ModellerBase.deleteMany({}),
     ModellerScenario.deleteMany({}),

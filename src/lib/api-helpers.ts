@@ -216,3 +216,76 @@ export async function resolvePortalClient(
   if (!client) return null;
   return { clientId: String(client._id), isViewAs: false };
 }
+
+// ── Session resolution ────────────────────────────────────────
+
+/**
+ * resolveClientSession — finds or lazily creates the EngagementSession for
+ * the given clientId.
+ *
+ * Canonical selection rule:
+ *   findOne({ projectId, status: { $ne: "synthesised" } }).sort({ createdAt: -1 })
+ * i.e. the most recently created non-synthesised session for the client's
+ * active project.  If all sessions are synthesised, the most recent overall
+ * is returned.
+ *
+ * Routing guard: if IntakeResponse.migratedAt is NOT set for this clientId,
+ * the caller must fall back to the old IntakeResponse path — this function
+ * returns null in that case so callers can branch cleanly.
+ *
+ * Returns null when no Project exists for the client and one cannot be
+ * lazily created (e.g. the client record itself is missing).
+ */
+export async function resolveClientSession(
+  clientId: string
+): Promise<{ session: import("@/models/EngagementSession").IEngagementSession; project: Record<string, unknown> } | null> {
+  const { default: IntakeResponse } = await import("@/models/IntakeResponse");
+  const intake = await IntakeResponse.findOne({ clientId })
+    .select("migratedAt")
+    .lean() as Record<string, unknown> | null;
+
+  // If an IntakeResponse exists but has NOT been migrated yet, return null so
+  // the caller falls back to the legacy path (prevents silent data loss during cutover).
+  if (intake && !intake.migratedAt) return null;
+
+  const { default: Project } = await import("@/models/Project");
+  const { default: EngagementSession } = await import("@/models/EngagementSession");
+
+  // Find the client's active project (prefer in_progress, fall back to any)
+  let project = await Project.findOne({ clientId, status: "in_progress" })
+    .sort({ createdAt: -1 })
+    .lean() as Record<string, unknown> | null;
+
+  if (!project) {
+    project = await Project.findOne({ clientId })
+      .sort({ createdAt: -1 })
+      .lean() as Record<string, unknown> | null;
+  }
+
+  if (!project) return null;
+
+  // Canonical selection rule — documented on EngagementSession index
+  let session = await EngagementSession.findOne({
+    projectId: project._id,
+    status: { $ne: "synthesised" },
+  }).sort({ createdAt: -1 });
+
+  // Fall back to most recent overall if all are synthesised
+  if (!session) {
+    session = await EngagementSession.findOne({ projectId: project._id }).sort({
+      createdAt: -1,
+    });
+  }
+
+  // Lazy creation: first save for a fully migrated client that has no session yet
+  if (!session) {
+    session = await EngagementSession.create({
+      projectId: project._id,
+      teamMode: false,
+      status: "active",
+      lastActiveSub: "",
+    });
+  }
+
+  return { session, project };
+}

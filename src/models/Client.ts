@@ -7,7 +7,6 @@ export interface IClient extends Document {
   status: "invited" | "onboarding" | "active" | "paused";
   onboardingCompletedAt?: Date;
   assignedConsultant?: Types.ObjectId;
-  intakeResponses?: Types.ObjectId;
   notes?: string;
   // Contact details
   contactName?: string;
@@ -39,7 +38,6 @@ const ClientSchema = new Schema<IClient>(
     },
     onboardingCompletedAt: { type: Date },
     assignedConsultant: { type: Schema.Types.ObjectId, ref: "User" },
-    intakeResponses: { type: Schema.Types.ObjectId, ref: "IntakeResponse" },
     notes: { type: String },
     contactName: { type: String, trim: true },
     jobTitle:    { type: String, trim: true },

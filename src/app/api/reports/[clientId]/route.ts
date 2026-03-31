@@ -14,7 +14,7 @@ import FrameworkQuestion from "@/models/FrameworkQuestion";
 import ConsultantNote from "@/models/ConsultantNote";
 import ModellerBase from "@/models/ModellerBase";
 import ConsultantResponse from "@/models/ConsultantResponse";
-import { requireAuth, apiError, type AuthenticatedUser } from "@/lib/api-helpers";
+import { requireAuth, apiError, resolveClientSession, type AuthenticatedUser } from "@/lib/api-helpers";
 import { FRAMEWORK_NAV } from "@/lib/framework-nav";
 import {
   generateClientReport,
@@ -108,8 +108,18 @@ export async function GET(
       }
     }
 
-    // Get responses
-    const responses = (intakeDoc?.responses as Record<string, unknown>) ?? {};
+    // Get responses — dual-path
+    let responses: Record<string, unknown> = (intakeDoc?.responses as Record<string, unknown>) ?? {};
+    const resolved = await resolveClientSession(clientId);
+    if (resolved) {
+      const { default: SessionResponse } = await import("@/models/Response");
+      const respDocs = await SessionResponse.find({
+        sessionId: resolved.session._id,
+        participantId: null,
+      }).select("fieldKey value").lean() as unknown as Array<{ fieldKey: string; value: unknown }>;
+      responses = {};
+      for (const r of respDocs) responses[r.fieldKey] = r.value;
+    }
 
     // Build ReportData sections from FRAMEWORK_NAV
     const sections: ReportSection[] = [];

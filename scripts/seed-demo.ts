@@ -20,7 +20,7 @@ dotenv.config({ path: path.resolve(process.cwd(), ".env.local") });
 import User from "../src/models/User";
 import Client from "../src/models/Client";
 import Project from "../src/models/Project";
-import IntakeResponse from "../src/models/IntakeResponse";
+import EngagementSession from "../src/models/EngagementSession";
 
 const MONGODB_URI = process.env.MONGODB_URI;
 if (!MONGODB_URI) {
@@ -93,9 +93,9 @@ async function main() {
   );
 
   // Ensure a project exists for the demo client
-  const existingProject = await Project.findOne({ clientId: clientRecord._id });
-  if (!existingProject) {
-    await Project.create({
+  let project = await Project.findOne({ clientId: clientRecord._id });
+  if (!project) {
+    project = await Project.create({
       clientId: clientRecord._id,
       title: "Demo Project",
       description: "Sandbox project for demo purposes",
@@ -109,22 +109,16 @@ async function main() {
     console.log("📁 Created demo project");
   }
 
-  // Ensure an IntakeResponse stub exists (so portal doesn't 404)
-  const existingIntake = await IntakeResponse.findOne({ clientId: clientRecord._id });
-  if (!existingIntake) {
-    await IntakeResponse.create({
-      clientId: clientRecord._id,
-      completedBy: "client",
-      responses: new Map(),
-      sectionProgress: new Map(),
-      subSectionProgress: new Map(),
-      lastActiveSub: "assessment/checklist",
+  // Ensure an EngagementSession exists for the demo client
+  const existingSession = await EngagementSession.findOne({ projectId: project._id });
+  if (!existingSession) {
+    await EngagementSession.create({
+      projectId: project._id,
       teamMode: false,
-      teamMembers: [],
-      individualResponses: new Map(),
-      synthesisResponses: new Map(),
+      status: "active",
+      lastActiveSub: "assessment/checklist",
     });
-    console.log("📝 Created empty intake response for demo client");
+    console.log("📝 Created EngagementSession for demo client");
   }
 
   console.log("\n✅  Demo seed complete");
