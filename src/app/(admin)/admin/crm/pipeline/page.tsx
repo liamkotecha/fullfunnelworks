@@ -143,7 +143,8 @@ export default function PipelinePage() {
   const router = useRouter();
   useEffect(() => {
     if (status === "loading") return;
-    if ((session?.user as { role?: string })?.role !== "admin") router.replace("/admin/dashboard");
+    const role = (session?.user as { role?: string })?.role;
+    if (role !== "admin" && role !== "consultant") router.replace("/login");
   }, [session, status, router]);
 
   const [prospects, setProspects] = useState<ProspectDTO[]>([]);

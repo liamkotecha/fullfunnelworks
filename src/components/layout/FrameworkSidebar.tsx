@@ -660,7 +660,7 @@ function FrameworkSidebarInner({
           className="flex flex-col overflow-y-auto py-3 px-2 scrollbar-thin scrollbar-thumb-white/10"
           style={{ height: "calc(100vh - 4rem)" }}
         >
-          <nav className="space-y-1 flex-1">
+          <nav className={cn("space-y-1 flex-1 transition-opacity duration-200", !modulesLoaded && "opacity-0")}>
             {FRAMEWORK_NAV.filter((section) => !(isViewAs && section.id === "invoices")).map((section) => {
               const isActive =
                 section.href

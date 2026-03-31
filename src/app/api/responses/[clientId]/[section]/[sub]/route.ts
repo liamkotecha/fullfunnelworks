@@ -29,12 +29,6 @@ export async function PATCH(
     const userOrRes = await requireAuth();
     if (userOrRes instanceof NextResponse) return userOrRes;
 
-    // Block saves in view-as mode
-    const viewAsCookie = req.cookies.get("view-as-client-id")?.value;
-    if (viewAsCookie) {
-      return NextResponse.json({ error: "View-as mode is read-only" }, { status: 403 });
-    }
-
     const { clientId, section, sub } = await params;
     const subSectionId = `${section}-${sub}`;
 
